@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import models, schemas, auth_utils
 from database import engine, get_db
+import schemas
+
 
 # Tạo bảng nếu chưa có
 models.Base.metadata.create_all(bind=engine)
