@@ -1,36 +1,22 @@
-# User Service
+# User Service (FastAPI)
 
-## Mô tả
-User Service là dịch vụ quản lý thông tin người dùng, cung cấp các API để truy xuất và cập nhật thông tin.
+## Run local
 
-## Công nghệ sử dụng
-- **FastAPI**: Framework chính để xây dựng API.
-- **SQLAlchemy**: ORM để làm việc với cơ sở dữ liệu.
-- **Pydantic**: Xác thực và quản lý dữ liệu.
-- **PostgreSQL**: Cơ sở dữ liệu chính.
-- **Docker**: Để triển khai dịch vụ.
+1️⃣ Create database:
+```sql
+CREATE DATABASE users_db;
+```
 
-## Cách chạy
-### Yêu cầu
-- Docker và Docker Compose đã được cài đặt.
-- Python 3.9+ nếu chạy cục bộ.
+2️⃣ Create virtual env and install deps:
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-### Chạy bằng Docker
-- Sử dụng `docker-compose.yml` để khởi chạy:
-  ```bash
-  docker-compose up --build
-  ```
-- Dịch vụ sẽ chạy trên cổng `8002`.
+3️⃣ Start service:
+```bash
+uvicorn app.main:app --reload --port 8002
+```
 
-### Chạy cục bộ
-- Cài đặt các thư viện cần thiết:
-  ```bash
-  pip install -r requirements.txt
-  ```
-- Chạy ứng dụng:
-  ```bash
-  uvicorn main:app --host 0.0.0.0 --port 8002
-  ```
-
-## API chính
-- `GET /`: Kiểm tra trạng thái dịch vụ.
+Swagger UI: [http://127.0.0.1:8002/docs](http://127.0.0.1:8002/docs)
