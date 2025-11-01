@@ -154,6 +154,11 @@ def get_full_profile(user_id: int, session: Session = Depends(get_session)):
 
     return result
 
+@router.get("/", response_model=List[schemas.UserRead])
+def get_all_users(session: Session = Depends(get_session)):
+    return session.exec(select(models.User)).all()
+
+
 # --- helper conversion ---
 def _student_to_read(sp: models.StudentProfile):
     skills = sp.skills.split(",") if sp.skills else []
