@@ -1,14 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional
+from datetime import datetime
 
-
-class UploadResponse(BaseModel):
+class FileSchema(BaseModel):
     id: int
     filename: str
-    download_url: str
+    user_id: int | None
+    uploaded_at: datetime
 
-
-class FileItem(BaseModel):
-    id: int
-    filename: str
-    created_at: Optional[str]
+    class Config:
+        orm_mode = True
