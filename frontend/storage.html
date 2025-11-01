@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Storage Service Test</title>
+  <style>body{font-family:Arial;padding:20px}</style>
+</head>
+<body>
+  <h1>Storage Service</h1>
+  <p>Authorization token (Bearer): <input id="token" style="width:400px" /></p>
+
+  <h3>Upload file</h3>
+  <form id="uploadForm">
+    <input type="file" id="file" />
+    <button type="submit">Upload</button>
+  </form>
+
+  <h3>Your files</h3>
+  <button id="refresh">Refresh</button>
+  <ul id="files"></ul>
+
+  <script src="./storage.js"></script>
+</body>
+</html>

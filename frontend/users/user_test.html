@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Service - API Test</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #fafafa; }
+    input, button { margin: 6px; padding: 8px; }
+    .user-card { background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin: 5px 0; }
+    button { cursor: pointer; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>👤 User Service Test (Local)</h1>
+
+  <section>
+    <h2>Create User</h2>
+    <input id="name" placeholder="Full Name" />
+    <input id="email" placeholder="Email" />
+    <input id="password" placeholder="Password" />
+    <button onclick="createUser()">Create</button>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>All Users</h2>
+    <button onclick="getUsers()">Load Users</button>
+    <div id="users"></div>
+  </section>
+
+  <script>
+    const BASE_URL = "http://127.0.0.1:8002"; // user-service
+
+    async function createUser() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        alert("Please fill all fields!");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BASE_URL}/users/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert(`✅ User created: ${data.email}`);
+          getUsers();
+        } else {
+          alert(`❌ Error: ${data.detail || JSON.stringify(data)}`);
+        }
+      } catch (err) {
+        alert("⚠️ Cannot connect to backend!");
+      }
+    }
+
+    async function getUsers() {
+      try {
+        const res = await fetch(`${BASE_URL}/users/`);
+        const data = await res.json();
+        const container = document.getElementById("users");
+        container.innerHTML = "";
+        data.forEach((user) => {
+          const div = document.createElement("div");
+          div.className = "user-card";
+          div.innerHTML = `
+            <strong>${user.name}</strong> (${user.email})
+            <button onclick="deleteUser(${user.id})">Delete</button>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        alert("⚠️ Cannot load users!");
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm("Delete user ID " + id + "?")) return;
+      await fetch(`${BASE_URL}/users/${id}`, { method: "DELETE" });
+      getUsers();
+    }
+  </script>
+</body>
+</html>

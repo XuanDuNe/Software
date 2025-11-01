@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AI Recommendation Test</title>
+  <style>body{font-family:Arial;padding:20px}</style>
+</head>
+<body>
+  <h1>AI Recommendation</h1>
+  <p>Applicant (JSON):</p>
+  <textarea id="applicant" style="width:100%;height:120px">{"skills":["python","machine learning"],"gpa":3.5,"location":"Hanoi","research_fields":["AI"]}</textarea>
+
+  <p>Scholarships (JSON array):</p>
+  <textarea id="scholarships" style="width:100%;height:160px">[{"id":1,"title":"AI PhD","required_skills":["machine learning","python"],"min_gpa":3.0,"location":"Hanoi","research_fields":["AI"]},{"id":2,"title":"Data Science","required_skills":["python","statistics"],"min_gpa":3.2,"location":"Saigon","research_fields":["Data"]}]</textarea>
+
+  <button id="run">Run Match</button>
+
+  <h3>Results</h3>
+  <pre id="res"></pre>
+
+  <script src="./ai.js"></script>
+</body>
+</html>
