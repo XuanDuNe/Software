@@ -2,28 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Auth Register & Login Test</title>
+  <title>Auth Service Tester</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
+      margin: 30px;
+      background-color: #f8f9fa;
+    }
+    h1 {
+      color: #333;
     }
     form {
-      margin-bottom: 30px;
-      padding: 20px;
+      margin-bottom: 25px;
+      padding: 15px;
       border: 1px solid #ccc;
-      width: 320px;
       border-radius: 10px;
-      background-color: #f9f9f9;
+      background-color: #fff;
+      width: 350px;
     }
     label {
       display: inline-block;
-      width: 80px;
+      width: 90px;
     }
     input {
       width: 200px;
       padding: 5px;
-      margin-bottom: 10px;
+      margin: 5px 0;
     }
     button {
       padding: 6px 12px;
@@ -32,47 +36,56 @@
       background-color: #007bff;
       color: white;
       cursor: pointer;
+      margin-top: 8px;
     }
     button:hover {
       background-color: #0056b3;
     }
     #result {
+      margin-top: 20px;
       font-weight: bold;
-      margin-top: 15px;
+    }
+    pre {
+      background: #eee;
+      padding: 10px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <h1>🔐 Auth Test Page</h1>
+  <h1>🔐 Auth Service Test</h1>
 
-  <!-- Register Form -->
+  <!-- Register -->
   <form id="register-form">
-    <h2>Register</h2>
-    <label>Email:</label>
-    <input type="email" id="reg-email" required><br>
-
-    <label>Password:</label>
-    <input type="password" id="reg-password" required><br>
-
-    <label>Role:</label>
-    <input type="text" id="reg-role" placeholder="admin or user" required><br>
-
+    <h3>Register</h3>
+    <label>Email:</label><input type="email" id="reg-email" required><br>
+    <label>Password:</label><input type="password" id="reg-password" required><br>
+    <label>Role:</label><input type="text" id="reg-role" placeholder="user/admin" required><br>
     <button type="submit">Register</button>
   </form>
 
-  <!-- Login Form -->
+  <!-- Login -->
   <form id="login-form">
-    <h2>Login</h2>
-    <label>Email:</label>
-    <input type="email" id="login-email" required><br>
-
-    <label>Password:</label>
-    <input type="password" id="login-password" required><br>
-
+    <h3>Login</h3>
+    <label>Email:</label><input type="email" id="login-email" required><br>
+    <label>Password:</label><input type="password" id="login-password" required><br>
     <button type="submit">Login</button>
   </form>
 
-  <p id="result"></p>
+  <!-- Verify Token -->
+  <form id="verify-form">
+    <h3>Verify Token</h3>
+    <label>Token:</label><input type="text" id="verify-token" required><br>
+    <button type="submit">Verify</button>
+  </form>
+
+  <!-- Get Users -->
+  <form id="users-form">
+    <h3>Get All Users</h3>
+    <button type="submit">Get Users</button>
+  </form>
+
+  <div id="result"></div>
 
   <script>
     const result = document.getElementById("result");
@@ -83,25 +96,16 @@
       const email = document.getElementById("reg-email").value;
       const password = document.getElementById("reg-password").value;
       const role = document.getElementById("reg-role").value;
-
       try {
         const res = await fetch("http://127.0.0.1:8001/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, role }),
         });
-
         const data = await res.json();
-        if (res.ok) {
-          result.textContent = `✅ Registered: ${data.email} (${data.role})`;
-          result.style.color = "green";
-        } else {
-          result.textContent = `❌ Error: ${data.detail || JSON.stringify(data)}`;
-          result.style.color = "red";
-        }
+        result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
       } catch (err) {
         result.textContent = "⚠️ Cannot connect to backend!";
-        result.style.color = "orange";
       }
     });
 
@@ -110,25 +114,53 @@
       e.preventDefault();
       const email = document.getElementById("login-email").value;
       const password = document.getElementById("login-password").value;
-
       try {
         const res = await fetch("http://127.0.0.1:8001/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-
         const data = await res.json();
-        if (res.ok) {
-          result.textContent = `✅ Login success! Token: ${data.access_token || "(no token returned)"}`;
-          result.style.color = "green";
-        } else {
-          result.textContent = `❌ Login failed: ${data.detail || JSON.stringify(data)}`;
-          result.style.color = "red";
+        result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        if (data.access_token) {
+          localStorage.setItem("token", data.access_token);
+          alert("✅ Token saved to browser storage!");
         }
       } catch (err) {
         result.textContent = "⚠️ Cannot connect to backend!";
-        result.style.color = "orange";
+      }
+    });
+
+    // --- VERIFY TOKEN ---
+    document.getElementById("verify-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = document.getElementById("verify-token").value || localStorage.getItem("token");
+      try {
+        const res = await fetch("http://127.0.0.1:8001/auth/verify-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        const data = await res.json();
+        result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (err) {
+        result.textContent = "⚠️ Cannot connect to backend!";
+      }
+    });
+
+    // --- GET USERS ---
+    document.getElementById("users-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://127.0.0.1:8001/auth/users", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (err) {
+        result.textContent = "⚠️ Cannot connect to backend!";
       }
     });
   </script>
