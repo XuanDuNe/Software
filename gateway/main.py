@@ -6,10 +6,10 @@ app = FastAPI(title="API Gateway")
 # Map tới các service thật
 SERVICES = {
     "auth": "http://auth-service:8001",
-    "application": "http://application-service:8002",
-    "matching": "http://matching-service:8003",
-    "notification": "http://notification-service:8004",
-    "opportunity": "http://opportunity-service:8005"
+    "application": "http://application-service:8004",
+    "matching": "http://matching-service:8007",
+    "notification": "http://notification-service:8005",
+    "opportunity": "http://opportunity-service:8003"
 }
 
 # Hàm forward request

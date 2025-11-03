@@ -1,9 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
 
-# Thông tin kết nối PostgreSQL
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:12345678@localhost:5432/auth_db"
+# Đọc URL kết nối PostgreSQL từ biến môi trường để chạy trong Docker
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

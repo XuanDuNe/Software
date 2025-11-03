@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   # API Gateway
-  api-gateway:
-    build: ./api-gateway
+  gateway:
+    build: ./gateway
     ports:
       - "8000:8000"
     depends_on:
       - auth-service
-      - user-service
       - opportunity-service
       - application-service
       - notification-service
+      - matching-service
 
   # Auth Service
   auth-service:
@@ -27,23 +27,6 @@ services:
     image: postgres:15
     environment:
       POSTGRES_DB: auth_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-
-  # User Service
-  user-service:
-    build: ./services/user-service
-    ports:
-      - "8002:8002"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@postgres-user:5432/user_db
-    depends_on:
-      - postgres-user
-
-  postgres-user:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: user_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
 
@@ -88,13 +71,18 @@ services:
       - "8005:8005"
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres-notification:5432/notification_db
-      - USER_SERVICE_URL=http://user-service:8002
     depends_on:
       - postgres-notification
-   
+  
   postgres-notification:
     image: postgres:15
     environment:
       POSTGRES_DB: notification_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
+
+  # Matching (AI Recommendation) Service
+  matching-service:
+    build: ./services/matching-service
+    ports:
+      - "8007:8007"
