@@ -19,7 +19,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - DATABASE_URL=postgresql://user:pass@postgres-auth:5432/auth_db
+      - DATABASE_URL=postgresql://postgre:12345678@postgres-auth:5432/auth_db
     depends_on:
       - postgres-auth
 
