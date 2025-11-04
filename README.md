@@ -83,8 +83,4 @@ docker compose down
 - `services/notification-service/`: Thông báo/chat/WebSocket (SQLModel + PostgreSQL)
 - `services/matching-service/`: Gợi ý/AI (không dùng DB)
 
-## Ghi chú
-- Frontend hiện chỉ có các file HTML tĩnh tham khảo, không được đưa vào docker-compose.
-- Nếu bạn muốn seed dữ liệu hoặc chạy migration, bổ sung script riêng và gọi trong `Dockerfile` hoặc `docker-compose.yml` (mục `command`/`entrypoint`).
-
 
