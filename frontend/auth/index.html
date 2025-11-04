@@ -53,14 +53,20 @@
   </style>
 </head>
 <body>
-  <h1>🔐 Auth Service Test</h1>
+  <h1>🔐 Auth Service Test (qua Gateway)</h1>
+  <p>
+    <small>
+      API Base: <code id="api-base"></code>
+      <button id="check-backend" style="margin-left:8px; background:#28a745">Kiểm tra backend</button>
+    </small>
+  </p>
 
   <!-- Register -->
   <form id="register-form">
     <h3>Register</h3>
     <label>Email:</label><input type="email" id="reg-email" required><br>
     <label>Password:</label><input type="password" id="reg-password" required><br>
-    <label>Role:</label><input type="text" id="reg-role" placeholder="user/admin" required><br>
+    <label>Role:</label><input type="text" id="reg-role" placeholder="student/provider/admin" required><br>
     <button type="submit">Register</button>
   </form>
 
@@ -89,6 +95,18 @@
 
   <script>
     const result = document.getElementById("result");
+    const BASE = localStorage.getItem("api_base") || "http://localhost:8000/auth"; // gọi qua gateway
+    document.getElementById("api-base").textContent = BASE;
+
+    document.getElementById("check-backend").addEventListener("click", async () => {
+      try {
+        const res = await fetch(`${BASE}/`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        alert("✅ Backend reachable");
+      } catch (e) {
+        alert("❌ Backend không truy cập được. Hãy đảm bảo docker compose đang chạy và cổng 8000 mở.");
+      }
+    });
 
     // --- REGISTER ---
     document.getElementById("register-form").addEventListener("submit", async (e) => {
@@ -97,15 +115,20 @@
       const password = document.getElementById("reg-password").value;
       const role = document.getElementById("reg-role").value;
       try {
-        const res = await fetch("http://127.0.0.1:8001/auth/register", {
+        const res = await fetch(`${BASE}/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, role }),
         });
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        if (!res.ok) {
+          alert(`❌ Register failed: ${data?.detail || res.status}`);
+        }
         result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
       } catch (err) {
-        result.textContent = "⚠️ Cannot connect to backend!";
+        result.textContent = `⚠️ Cannot connect to backend! ${err?.message || ""}`;
       }
     });
 
@@ -115,19 +138,26 @@
       const email = document.getElementById("login-email").value;
       const password = document.getElementById("login-password").value;
       try {
-        const res = await fetch("http://127.0.0.1:8001/auth/login", {
+        const res = await fetch(`${BASE}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
-        const data = await res.json();
-        result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-        if (data.access_token) {
-          localStorage.setItem("token", data.access_token);
-          alert("✅ Token saved to browser storage!");
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        if (!res.ok) {
+          alert(`❌ Login failed: ${data?.detail || res.status}`);
+        } else {
+          result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+          if (data.access_token) {
+            localStorage.setItem("token", data.access_token);
+            // chuyển hướng về trang chủ frontend
+            window.location.href = "../index.html";
+          }
         }
       } catch (err) {
-        result.textContent = "⚠️ Cannot connect to backend!";
+        result.textContent = `⚠️ Cannot connect to backend! ${err?.message || ""}`;
       }
     });
 
@@ -136,15 +166,20 @@
       e.preventDefault();
       const token = document.getElementById("verify-token").value || localStorage.getItem("token");
       try {
-        const res = await fetch("http://127.0.0.1:8001/auth/verify-token", {
+        const res = await fetch(`${BASE}/verify-token`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
         });
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        if (!res.ok) {
+          alert(`❌ Verify failed: ${data?.detail || res.status}`);
+        }
         result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
       } catch (err) {
-        result.textContent = "⚠️ Cannot connect to backend!";
+        result.textContent = `⚠️ Cannot connect to backend! ${err?.message || ""}`;
       }
     });
 
@@ -153,16 +188,27 @@
       e.preventDefault();
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://127.0.0.1:8001/auth/users", {
+        const res = await fetch(`${BASE}/users`, {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await res.json();
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = { raw: text }; }
+        if (!res.ok) {
+          alert(`❌ Get users failed: ${data?.detail || res.status}`);
+        }
         result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
       } catch (err) {
-        result.textContent = "⚠️ Cannot connect to backend!";
+        result.textContent = `⚠️ Cannot connect to backend! ${err?.message || ""}`;
       }
     });
+
+    // Thông tin DB (chỉ là mô tả nơi DB chạy, không phải lỗi)
+    const dbInfo = document.createElement('div');
+    dbInfo.style.marginTop = '16px';
+    dbInfo.innerHTML = `<small>Thông tin DB (Auth) đang chạy trong Docker: service <b>postgres-auth</b>, DB: <b>auth_db</b>, user: <b>postgres</b>. Kết nối nội bộ service-to-service: <code>postgresql://postgres:12345678@postgres-auth:5432/auth_db</code>. Truy cập này không khả dụng từ trình duyệt.</small>`;
+    document.body.appendChild(dbInfo);
   </script>
 </body>
 </html>

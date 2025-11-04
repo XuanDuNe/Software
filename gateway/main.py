@@ -1,11 +1,22 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Response
 import httpx
 
 app = FastAPI(title="API Gateway")
 
+# CORS for browser-based frontend testing
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Map tới các service thật
 SERVICES = {
-    "auth": "http://auth-service:8001",
+    "auth": "http://auth-service:8001/auth",
     "application": "http://application-service:8004",
     "matching": "http://matching-service:8007",
     "notification": "http://notification-service:8005",
@@ -30,4 +41,4 @@ async def proxy(service: str, path: str, request: Request):
     if service not in SERVICES:
         return {"error": "Service not found"}
     resp = await forward_request(SERVICES[service], path, request)
-    return resp.json()
+    return Response(content=resp.content, status_code=resp.status_code, headers=dict(resp.headers))

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Trang chủ</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; background: #f7f7f7; }
+    .card { background: #fff; padding: 16px; border-radius: 10px; border: 1px solid #ddd; max-width: 700px; }
+    button { padding: 6px 12px; border: none; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    pre { background: #eee; padding: 10px; border-radius: 6px; }
+    a { color: #007bff; }
+  </style>
+  <script>
+    const BASE = "http://localhost:8000/auth";
+    function showToken() {
+      const token = localStorage.getItem('token');
+      document.getElementById('token').textContent = token ? token : '(chưa đăng nhập)';
+    }
+    async function me() {
+      const token = localStorage.getItem('token');
+      if (!token) { alert('Chưa có token'); return; }
+      const res = await fetch(`${BASE}/verify-token`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      document.getElementById('output').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+    async function listUsers() {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${BASE}/users`, { headers: { Authorization: `Bearer ${token}` } });
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      if (!res.ok) alert(`❌ Get users failed: ${data?.detail || res.status}`);
+      document.getElementById('output').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+    function logout() {
+      localStorage.removeItem('token');
+      showToken();
+      alert('Đã đăng xuất');
+    }
+    window.onload = showToken;
+  </script>
+  </head>
+  <body>
+    <h1>🏠 Trang chủ</h1>
+    <div class="card">
+      <p>Token hiện tại:</p>
+      <pre id="token"></pre>
+      <p>
+        <a href="./auth/index.html">Đăng ký / Đăng nhập</a>
+      </p>
+      <p>
+        <button onclick="me()">Verify token</button>
+        <button onclick="listUsers()">Danh sách người dùng</button>
+        <button onclick="logout()" style="background:#dc3545">Đăng xuất</button>
+      </p>
+      <div id="output"></div>
+      <hr>
+      <small>Auth DB: service <b>postgres-auth</b>, DB <b>auth_db</b>, user <b>postgres</b> (nội bộ Docker).</small>
+    </div>
+  </body>
+  </html>
+
+

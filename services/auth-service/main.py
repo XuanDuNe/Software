@@ -6,8 +6,7 @@ from database import engine, get_db
 import schemas
 
 
-# Tạo bảng nếu chưa có
-models.Base.metadata.create_all(bind=engine)
+ # Tạo bảng khi service khởi động, đảm bảo DB đã sẵn sàng
 
 app = FastAPI(title="Auth Service", version="1.0")
 
@@ -24,8 +23,23 @@ app.add_middleware(
 def root():
     return {"service": "Auth Service", "status": "running", "port": 8001}
 
+@app.get("/auth/")
+def auth_root():
+    return {"service": "auth", "status": "ok"}
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        models.Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        # Để logs trong container cho dễ debug khi DB chưa sẵn sàng
+        print(f"DB init error: {e}")
+
 @app.post("/auth/register", response_model=schemas.Token)
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    # bcrypt giới hạn 72 bytes
+    if len(user.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password too long (max 72 bytes)")
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -45,7 +59,12 @@ def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
 @app.post("/auth/login", response_model=schemas.Token)
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if not db_user or not auth_utils.verify_password(user.password, db_user.password_hash):
+    try:
+        valid_pw = db_user is not None and auth_utils.verify_password(user.password, db_user.password_hash)
+    except ValueError:
+        # trường hợp password >72 bytes
+        valid_pw = False
+    if not valid_pw:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     token = auth_utils.create_access_token({"sub": db_user.email, "role": db_user.role, "user_id": db_user.id})
