@@ -3,9 +3,9 @@ from sqlmodel import Session, select
 from typing import List
 from datetime import datetime
 
-from .database import get_session
-from . import models, schemas, email_utils, push_utils
-from .websocket_manager import manager
+from database import get_session
+import models, schemas, email_utils, push_utils
+from websocket_manager import manager
 
 router = APIRouter(prefix="/api", tags=["Notification Service"])
 

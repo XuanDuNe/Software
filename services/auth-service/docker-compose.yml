@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - user-service
+      - opportunity-service
+      - application-service
+      - notification-service
+
+  # Auth Service
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-auth:5432/auth_db
+    depends_on:
+      - postgres-auth
+
+  postgres-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  # User Service
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-user:5432/user_db
+    depends_on:
+      - postgres-user
+
+  postgres-user:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  # Opportunity Service
+  opportunity-service:
+    build: ./services/opportunity-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-opportunity:5432/opportunity_db
+    depends_on:
+      - postgres-opportunity
+
+  postgres-opportunity:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: opportunity_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  # Application Service
+  application-service:
+    build: ./services/application-service
+    ports:
+      - "8004:8004"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-application:5432/application_db
+    depends_on:
+      - postgres-application
+
+  postgres-application:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: application_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+
+  # Notification Service
+  notification-service:
+    build: ./services/notification-service
+    ports:
+      - "8005:8005"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-notification:5432/notification_db
+      - USER_SERVICE_URL=http://user-service:8002
+    depends_on:
+      - postgres-notification
+   
+  postgres-notification:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      

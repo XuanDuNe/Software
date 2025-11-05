@@ -8,10 +8,10 @@ services:
       - "8000:8000"
     depends_on:
       - auth-service
-      - opportunity-service
       - application-service
       - notification-service
       - matching-service
+      - provider-service
 
   # Auth Service
   auth-service:
@@ -36,24 +36,8 @@ services:
       timeout: 5s
       retries: 10
 
-  # Opportunity Service
-  opportunity-service:
-    build: ./services/opportunity-service
-    ports:
-      - "8003:8003"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@postgres-opportunity:5432/opportunity_db
-    depends_on:
-      - postgres-opportunity
 
-  postgres-opportunity:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: opportunity_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-
-  # Application Service
+  # Application Service 
   application-service:
     build: ./services/application-service
     ports:
@@ -61,7 +45,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres-application:5432/application_db
     depends_on:
-      - postgres-application
+      postgres-application:            
+        condition: service_healthy   
 
   postgres-application:
     image: postgres:15
@@ -69,16 +54,23 @@ services:
       POSTGRES_DB: application_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
+    healthcheck:                     
+      test: ["CMD-SHELL", "pg_isready -U user -d application_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  # Notification Service
+  # Notification Service 
   notification-service:
     build: ./services/notification-service
     ports:
       - "8005:8005"
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres-notification:5432/notification_db
+      - USER_SERVICE_URL=http://user-service:8002 
     depends_on:
-      - postgres-notification
+      postgres-notification:         
+        condition: service_healthy   
   
   postgres-notification:
     image: postgres:15
@@ -86,6 +78,39 @@ services:
       POSTGRES_DB: notification_db
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
+    healthcheck:                     
+      test: ["CMD-SHELL", "pg_isready -U user -d notification_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  provider-service:
+    build: ./services/provider-service
+    ports:
+      - "8006:8006" 
+    environment:
+      - DATABASE_URL=postgresql://provider_user:provider_pass@postgres-provider:5432/provider_db
+      - APPLICATION_SERVICE_URL=http://application-service:8004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+    depends_on:
+      postgres-provider:            
+        condition: service_healthy
+      application-service:
+        condition: service_started 
+      notification-service:
+        condition: service_started 
+
+  postgres-provider:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: provider_db
+      POSTGRES_USER: provider_user
+      POSTGRES_PASSWORD: provider_pass
+    healthcheck:                     
+      test: ["CMD-SHELL", "pg_isready -U provider_user -d provider_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # Matching (AI Recommendation) Service
   matching-service:

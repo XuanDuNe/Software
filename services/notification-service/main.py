@@ -1,16 +1,13 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
-from .database import create_db_and_tables, get_session
-from .routes import router as api_router
-from .websocket_manager import manager
-import httpx
+from database import engine, get_session
+from routes import router as api_router
+from websocket_manager import manager
+from sqlmodel import SQLModel 
 
 async def get_user_from_token(token: str):
-
-
     if token == "invalid-token":
         return None
     return int(token) 
-
 
 app = FastAPI(
     title="EduMatch - Notification Service",
@@ -20,7 +17,10 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    try:
+        SQLModel.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"DB init error: {e}")
 
 app.include_router(api_router)
 

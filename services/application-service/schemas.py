@@ -1,15 +1,14 @@
 from sqlmodel import SQLModel
 from typing import Optional, List
 from datetime import datetime
-from .models import ApplicationStatus
+from models import ApplicationStatus 
+
 
 class DocumentBase(SQLModel):
     document_type: str
     document_url: str
 
-class DocumentCreate(DocumentBase):
-    pass
-
+class DocumentCreate(DocumentBase): pass
 class DocumentRead(DocumentBase):
     id: int
     application_id: int
@@ -17,8 +16,8 @@ class DocumentRead(DocumentBase):
 class ApplicationBase(SQLModel):
     opportunity_id: int
     student_user_id: int
-    provider_user_id: int
 
+    
 class ApplicationCreate(ApplicationBase):
     documents: List[DocumentCreate] = []
 
@@ -28,6 +27,16 @@ class ApplicationRead(ApplicationBase):
     submitted_at: datetime
     updated_at: datetime
     documents: List[DocumentRead] = []
+    provider_user_id: int 
 
 class ApplicationStatusUpdate(SQLModel):
     status: ApplicationStatus
+    
+class OpportunityRead(SQLModel):
+    id: int
+    provider_user_id: int
+    title: str
+    description: str
+    
+class ApplicationReadDetail(ApplicationRead):
+    opportunity: Optional[OpportunityRead] = None # Sẽ call API để lấy

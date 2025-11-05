@@ -17,11 +17,14 @@ app.add_middleware(
 # Map tới các service thật
 SERVICES = {
     "auth": "http://auth-service:8001/auth",
-    "application": "http://application-service:8004",
+    "application": "http://application-service:8004/api/applications",
     "matching": "http://matching-service:8007",
-    "notification": "http://notification-service:8005",
-    "opportunity": "http://opportunity-service:8003"
+    "notification": "http://notification-service:8005/api", 
+    "opportunity": "http://provider-service:8006/api/opportunities",
+    "provider_app": "http://provider-service:8006/api/applications"
 }
+
+
 
 # Hàm forward request
 async def forward_request(service_url: str, path: str, request: Request):

@@ -1,6 +1,6 @@
 import httpx
-from .database import get_session
-from .models import EmailLog
+from database import get_session
+from models import EmailLog
 from datetime import datetime
 
 async def send_email_async(log_id: int, subject: str, recipient_email: str, body: str):

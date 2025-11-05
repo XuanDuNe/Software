@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduMatch - Test Platform</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; }
+        h1, h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        .container { display: flex; gap: 20px; }
+        .column { flex: 1; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .section { padding: 15px; border-bottom: 1px solid #eee; }
+        .section:last-child { border-bottom: none; }
+        input[type="text"], input[type="email"], input[type="password"], select {
+            width: calc(100% - 10px); padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+        }
+        button {
+            padding: 8px 12px; border: none; border-radius: 4px; background-color: #007bff; color: white; cursor: pointer; margin-right: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #5a6268; }
+        button.danger { background-color: #dc3545; }
+        button.danger:hover { background-color: #c82333; }
+        pre { background: #e9ecef; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; }
+        #ws-messages { max-height: 300px; overflow-y: auto; }
+        .hidden { display: none; }
+        #user-info { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 EduMatch - Test Platform (Gateway: <code id="gateway-url"></code>)</h1>
+
+    <div class="container">
+        <div class="column">
+            <div class="section">
+                <h2>1. Xác thực (Auth)</h2>
+                <div id="login-form">
+                    <input type="email" id="login-email" placeholder="Email (e.g., student@email.com)" value="student@email.com">
+                    <input type="password" id="login-password" placeholder="Password" value="123456">
+                    <button onclick="login()">Đăng nhập</button>
+                    <button classs="secondary" onclick="register()">Đăng ký</button>
+                </div>
+                <div id="user-info" class="hidden">
+                    <pre id="user-display"></pre>
+                    <button class="danger" onclick="logout()">Đăng xuất</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>2. WebSocket (Notification)</h2>
+                <div id="ws-status">Chưa kết nối. (Hãy đăng nhập)</div>
+                <pre id="ws-messages"></pre>
+            </div>
+        </div>
+
+        <div class="column">
+            <div id="provider-section" class="section hidden">
+                <h2>3. Provider Actions</h2>
+                <div>
+                    <strong>Tạo Opportunity:</strong><br>
+                    <input type="text" id="opp-title" placeholder="Opportunity Title" value="Học bổng ABC">
+                    <input type="text" id="opp-desc" placeholder="Description" value="Mô tả học bổng...">
+                    <button onclick="createOpportunity()">Tạo Opportunity</button>
+                </div>
+                <hr>
+                <div>
+                    <strong>Quản lý Applications:</strong><br>
+                    <button onclick="getReceivedApplications()">Xem hồ sơ đã nhận</button>
+                    <pre id="provider-apps"></pre>
+                </div>
+                <hr>
+                <div>
+                    <strong>Cập nhật trạng thái:</strong><br>
+                    <input type="text" id="update-app-id" placeholder="Application ID">
+                    <select id="update-status">
+                        <option value="viewed">Viewed</option>
+                        <option value="interview">Interview</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <button onclick="updateAppStatus()">Cập nhật Status</button>
+                </div>
+            </div>
+
+            <div id="student-section" class="section hidden">
+                <h2>4. Student Actions</h2>
+                <div>
+                    <strong>Xem Opportunities:</strong><br>
+                    <button onclick="getAllOpportunities()">Xem tất cả Opportunities</button>
+                    <pre id="student-opps"></pre>
+                </div>
+                <hr>
+                <div>
+                    <strong>Nộp Application:</strong><br>
+                    <input type="text" id="apply-opp-id" placeholder="Opportunity ID">
+                    <button onclick="submitApplication()">Nộp Application</button>
+                </div>
+                <hr>
+                <div>
+                    <strong>Hồ sơ của tôi:</strong><br>
+                    <button onclick="getMyApplications()">Xem hồ sơ đã nộp</button>
+                    <pre id="student-apps"></pre>
+                </div>
+            </div>
+            
+            <div id="common-section" class="section hidden">
+                <h2>5. Hiển thị Database (Views)</h2>
+                 <button onclick="getDbNotifications()">Get My DB Notifications</button>
+                 <pre id="db-notifications"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GATEWAY_BASE = "http://localhost:8000";
+        // Cổng 8000 (Gateway) KHÔNG proxy WebSocket.
+        // Kết nối WS trực tiếp đến cổng 8005 của Notification Service.
+        const WS_NOTIFICATION_SERVICE_BASE = "ws://localhost:8005"; 
+        document.getElementById('gateway-url').textContent = GATEWAY_BASE;
+
+        let currentUser = null;
+        let ws = null;
+
+        // --- AUTH ---
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                // 1. Login to get token
+                const res = await fetch(`${GATEWAY_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Login failed');
+                
+                localStorage.setItem('token', data.access_token);
+                
+                // 2. Verify token to get user info
+                await fetchUserData(data.access_token);
+
+            } catch (e) {
+                logMessage('ws-messages', `Auth Error: ${e.message}`, 'error');
+            }
+        }
+        
+        async function register() {
+            // Tương tự login, nhưng dùng /auth/register
+            alert('Chức năng đăng ký chưa được thêm vào UI này. Vui lòng dùng tệp auth/index.html để đăng ký, hoặc đảm bảo user đã tồn tại.');
+        }
+
+        async function fetchUserData(token) {
+             try {
+                const res = await fetch(`${GATEWAY_BASE}/auth/verify-token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Verify failed');
+
+                currentUser = {
+                    id: data.user_id,
+                    email: data.email,
+                    role: data.role,
+                    token: token
+                };
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                updateUIForUser();
+                connectWebSocket();
+            } catch (e) {
+                 logMessage('ws-messages', `Auth Error: ${e.message}`, 'error');
+                 logout();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            if (ws) ws.close();
+            updateUIForUser();
+            logMessage('ws-messages', 'Đã đăng xuất.', 'info');
+        }
+
+        // --- UI UPDATES ---
+        function updateUIForUser() {
+            if (currentUser) {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('user-info').classList.remove('hidden');
+                document.getElementById('user-display').textContent = JSON.stringify(currentUser, null, 2);
+                document.getElementById('common-section').classList.remove('hidden');
+
+                if (currentUser.role === 'provider') {
+                    document.getElementById('provider-section').classList.remove('hidden');
+                    document.getElementById('student-section').classList.add('hidden');
+                } else if (currentUser.role === 'student') {
+                    document.getElementById('provider-section').classList.add('hidden');
+                    document.getElementById('student-section').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('user-info').classList.add('hidden');
+                document.getElementById('provider-section').classList.add('hidden');
+                document.getElementById('student-section').classList.add('hidden');
+                document.getElementById('common-section').classList.add('hidden');
+            }
+        }
+
+        // --- WEBSOCKET ---
+        function connectWebSocket() {
+            if (!currentUser) return;
+            if (ws) ws.close();
+
+            // Endpoint: /ws/{user_id} (từ notification-service/main.py)
+            const wsUrl = `${WS_NOTIFICATION_SERVICE_BASE}/ws/${currentUser.id}`;
+            ws = new WebSocket(wsUrl);
+            
+            const wsStatus = document.getElementById('ws-status');
+            
+            ws.onopen = () => {
+                wsStatus.textContent = `✅ Đã kết nối WebSocket cho user ${currentUser.id} (tại ${wsUrl})`;
+                logMessage('ws-messages', `[WS] Connected to ${wsUrl}`, 'success');
+            };
+            ws.onmessage = (event) => {
+                logMessage('ws-messages', `[WS] RECV: ${event.data}`, 'info');
+            };
+            ws.onerror = (event) => {
+                wsStatus.textContent = '❌ Lỗi WebSocket.';
+                logMessage('ws-messages', `[WS] Error: ${JSON.stringify(event)}`, 'error');
+            };
+            ws.onclose = () => {
+                wsStatus.textContent = '🔌 Đã ngắt kết nối WebSocket.';
+                logMessage('ws-messages', '[WS] Disconnected.', 'error');
+                ws = null;
+            };
+        }
+
+        // --- API HELPERS ---
+        async function fetchWithAuth(url, options = {}) {
+            if (!currentUser) throw new Error('Chưa đăng nhập');
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}`,
+                ...options.headers,
+            };
+
+            const res = await fetch(url, { ...options, headers });
+            const text = await res.text();
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                data = { raw: text };
+            }
+
+            if (!res.ok) {
+                throw new Error(data.detail || data.raw || `HTTP Error ${res.status}`);
+            }
+            return data;
+        }
+        
+        function logMessage(preId, message, type = 'info') {
+            const pre = document.getElementById(preId);
+            const line = document.createElement('div');
+            line.textContent = message;
+            if (type === 'error') line.style.color = 'red';
+            if (type === 'success') line.style.color = 'green';
+            pre.appendChild(line);
+            pre.scrollTop = pre.scrollHeight;
+        }
+
+        // --- PROVIDER ACTIONS ---
+        async function createOpportunity() {
+            try {
+                const title = document.getElementById('opp-title').value;
+                const description = document.getElementById('opp-desc').value;
+                
+                // Endpoint: /opportunity/ (map tới provider-service:8006/api/opportunities/)
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        provider_user_id: currentUser.id,
+                        title: title,
+                        description: description,
+                        type: "scholarship" 
+                    })
+                });
+                alert(`Tạo thành công Opportunity ID: ${data.id}`);
+            } catch (e) {
+                alert(`Lỗi: ${e.message}`);
+            }
+        }
+        
+        async function getReceivedApplications() {
+             try {
+                // Endpoint: /provider_app/provider/{user_id} (map tới provider-service:8006/api/applications/provider/{user_id})
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/provider_app/provider/${currentUser.id}`);
+                document.getElementById('provider-apps').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('provider-apps').textContent = `Lỗi: ${e.message}`;
+            }
+        }
+        
+        async function updateAppStatus() {
+            try {
+                const appId = document.getElementById('update-app-id').value;
+                const status = document.getElementById('update-status').value;
+                if (!appId) {
+                    alert('Vui lòng nhập Application ID');
+                    return;
+                }
+                
+                // Endpoint: /provider_app/{app_id}/status (map tới provider-service:8006/api/applications/{app_id}/status)
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/provider_app/${appId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: status })
+                });
+                alert(`Cập nhật thành công. Student ID ${data.student_user_id} sẽ nhận được thông báo.`);
+                getReceivedApplications(); // Tải lại danh sách
+            } catch (e) {
+                alert(`Lỗi: ${e.message}`);
+            }
+        }
+
+        // --- STUDENT ACTIONS ---
+        async function getAllOpportunities() {
+            try {
+                // Endpoint: /opportunity/ (map tới provider-service:8006/api/opportunities/)
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/`);
+                document.getElementById('student-opps').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('student-opps').textContent = `Lỗi: ${e.message}`;
+            }
+        }
+
+        async function submitApplication() {
+             try {
+                const oppId = document.getElementById('apply-opp-id').value;
+                 if (!oppId) {
+                    alert('Vui lòng nhập Opportunity ID');
+                    return;
+                }
+
+                // Endpoint: /application/ (map tới application-service:8004/api/applications/)
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/application/`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        opportunity_id: parseInt(oppId),
+                        student_user_id: currentUser.id,
+                        documents: [
+                            { document_type: "CV", document_url: "http://example.com/cv.pdf" },
+                            { document_type: "Transcript", document_url: "http://example.com/transcript.pdf" }
+                        ]
+                    })
+                });
+                alert(`Nộp hồ sơ thành công (ID: ${data.id}). Provider ID ${data.provider_user_id} sẽ nhận được thông báo.`);
+                getMyApplications(); // Tải lại danh sách
+            } catch (e) {
+                alert(`Lỗi: ${e.message}`);
+            }
+        }
+        
+        async function getMyApplications() {
+            try {
+                // Endpoint: /application/student/{user_id} (map tới application-service:8004/api/applications/student/{user_id})
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/application/student/${currentUser.id}`);
+                document.getElementById('student-apps').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('student-apps').textContent = `Lỗi: ${e.message}`;
+            }
+        }
+
+        // --- DATABASE VIEW ---
+        async function getDbNotifications() {
+             try {
+                // Endpoint: /notification/notifications/{user_id} (map tới notification-service:8005/api/notifications/{user_id})
+                const data = await fetchWithAuth(`${GATEWAY_BASE}/notification/notifications/${currentUser.id}`);
+                document.getElementById('db-notifications').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('db-notifications').textContent = `Lỗi: ${e.message}`;
+            }
+        }
+
+        // --- LOAD ON STARTUP ---
+        (function() {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+                updateUIForUser();
+                connectWebSocket();
+            }
+        })();
+    </script>
+
+</body>
+</html>
