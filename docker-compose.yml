@@ -13,6 +13,17 @@ services:
       - matching-service
       - provider-service
 
+  # Frontend (React, served by NGINX)
+  frontend:
+    build:
+      context: ./frontend/react
+      args:
+        VITE_API_BASE_URL: http://gateway:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+
   # Auth Service
   auth-service:
     build: ./services/auth-service

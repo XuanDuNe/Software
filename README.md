@@ -24,7 +24,7 @@ Các service sử dụng cơ sở dữ liệu PostgreSQL riêng (trừ matching-
 
 - Docker Desktop (Windows/macOS) hoặc Docker Engine + Docker Compose (Linux)
 
-## Cách chạy
+## Chạy toàn bộ (Frontend + Gateway + Services)
 
 1) Build và chạy toàn bộ stack:
 ```bash
@@ -36,17 +36,21 @@ docker compose up -d --build
 docker compose ps
 ```
 
-3) Truy cập các endpoint cơ bản:
+3) Mở ứng dụng Frontend:
+- Frontend (NGINX): `http://localhost:5173`
+- Frontend chỉ gọi Gateway: base URL được set khi build là `http://gateway:8000` (trong mạng Docker). Khi chạy dev cục bộ, dùng `VITE_API_BASE_URL=http://localhost:8000`.
+
+4) Các endpoint cơ bản (tham khảo/debug):
 - Gateway: `http://localhost:8000/{service}/{path}` (proxy tới các service)
 - Auth: `http://localhost:8001/`
-- Opportunity: `http://localhost:8003/`
 - Application: `http://localhost:8004/`
 - Notification: `http://localhost:8005/`
+- Provider: `http://localhost:8006/`
 - Matching: `http://localhost:8007/`
 
-Ví dụ gọi qua gateway:
+Gọi qua Gateway (ví dụ):
 ```bash
-# Ví dụ gọi root của auth-service qua gateway
+# Root của auth-service qua gateway
 curl http://localhost:8000/auth/
 ```
 
@@ -73,6 +77,58 @@ docker compose build auth-service && docker compose up -d auth-service
 ```bash
 docker compose down
 ```
+
+## Đăng ký, đăng nhập qua Gateway (để vào Frontend)
+
+Auth Service dùng schema có trường `email`, `password`, `role`. Bạn có thể tạo tài khoản và đăng nhập hoàn toàn qua Gateway:
+
+1) Đăng ký (ví dụ role student):
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "student@example.com",
+    "password": "12345678",
+    "role": "student"
+  }'
+```
+
+2) Đăng nhập (lấy access_token):
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "student@example.com",
+    "password": "12345678"
+  }'
+```
+
+3) Xác minh token (FE dùng để lấy `role` và `user_id`):
+```bash
+curl -X POST http://localhost:8000/auth/verify-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "<JWT từ bước đăng nhập>"
+  }'
+```
+
+Sau khi có tài khoản, mở `http://localhost:5173`, đăng nhập bằng email/password. FE sẽ lưu JWT vào `localStorage`, đọc `role` để điều hướng:
+- student → `/student/dashboard`
+- provider → `/provider/dashboard`
+
+## Student Dashboard (FE) đang làm gì?
+- Liệt kê cơ hội (Provider Service) qua Gateway: `GET /opportunity/`
+- Liệt kê hồ sơ đã nộp (Application Service) qua Gateway: `GET /application/student/{user_id}`
+- Nộp hồ sơ (Application Service) qua Gateway: `POST /application/`
+
+## Chạy Frontend ở chế độ dev (tùy chọn)
+```bash
+cd frontend/react
+npm install
+echo VITE_API_BASE_URL=http://localhost:8000 > .env
+npm run dev
+```
+Mở `http://localhost:5173`. Ở chế độ Docker, biến URL đã được set khi build image.
 
 ## Thư mục quan trọng
 
