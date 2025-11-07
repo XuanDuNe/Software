@@ -5,11 +5,16 @@ import StudentDashboard from './pages/StudentDashboard.jsx';
 import ProviderDashboard from './pages/ProviderDashboard.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { getStoredUser } from './utils/auth.js';
+import Notifications from './pages/Notifications.jsx';
+import Matching from './pages/Matching.jsx';
+import NavBar from './components/NavBar.jsx';
 
 function App() {
   const user = getStoredUser();
 
   return (
+    <>
+    <NavBar />
     <Routes>
       <Route path="/login" element={<Login />} />
 
@@ -30,6 +35,22 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["student", "provider"]}>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/matching"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <Matching />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/"
@@ -46,6 +67,7 @@ function App() {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

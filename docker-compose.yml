@@ -128,3 +128,8 @@ services:
     build: ./services/matching-service
     ports:
       - "8007:8007"
+    environment:
+      - PROVIDER_SERVICE_URL=http://provider-service:8006
+    depends_on:
+      provider-service:
+        condition: service_started

@@ -8,6 +8,7 @@ function StudentDashboard() {
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [error, setError] = useState('');
+  const [cvUrl, setCvUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -46,7 +47,9 @@ function StudentDashboard() {
       const payload = {
         opportunity_id: opportunityId,
         student_user_id: user.id,
-        documents: []
+        documents: cvUrl ? [
+          { document_type: 'cv', document_url: cvUrl }
+        ] : []
       };
       await api.submitApplication(payload);
       const apps = await api.listMyApplications(user.id);
@@ -67,6 +70,9 @@ function StudentDashboard() {
       {error && <div style={{ color: '#c0392b', marginBottom: 12 }}>{error}</div>}
 
       <h3>Danh sách cơ hội</h3>
+      <div style={{ marginBottom: 10 }}>
+        <input placeholder="Link CV (Google Drive, v.v.)" value={cvUrl} onChange={e => setCvUrl(e.target.value)} style={{ width: '100%', maxWidth: 480 }} />
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
         {(opportunities || []).map((opp) => (
           <div key={opp.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
