@@ -27,11 +27,27 @@ def create_opportunity(
     opp_in: schemas.OpportunityCreate, 
     session: Session = Depends(get_session)
 ):
-    db_opp = models.Opportunity.from_orm(opp_in)
-    session.add(db_opp)
-    session.commit()
-    session.refresh(db_opp)
-    return db_opp
+    try:
+        payload = opp_in.dict()
+        # Coerce type if necessary
+        if isinstance(payload.get("type"), str):
+            try:
+                payload["type"] = models.OpportunityType(payload["type"])
+            except Exception:
+                raise HTTPException(status_code=400, detail="Invalid opportunity type")
+        if not payload.get("title") or not payload.get("description"):
+            raise HTTPException(status_code=400, detail="Title and description are required")
+        if not isinstance(payload.get("provider_user_id"), int):
+            raise HTTPException(status_code=400, detail="provider_user_id must be an integer")
+        db_opp = models.Opportunity(**payload)
+        session.add(db_opp)
+        session.commit()
+        session.refresh(db_opp)
+        return db_opp
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Create opportunity failed: {str(e)}")
 
 @router.get("/opportunities/", response_model=List[schemas.OpportunityReadWithCriteria])
 def get_all_opportunities(session: Session = Depends(get_session)):
@@ -51,14 +67,13 @@ def get_all_opportunities(session: Session = Depends(get_session)):
                 deadline=criteria.deadline,
                 required_documents=parse_str_to_list(criteria.required_documents)
             )
-        
-        # --- SỬA Ở ĐÂY ---
-        # 1. Tạo đối tượng từ ORM
-        opp_with_criteria = schemas.OpportunityReadWithCriteria.from_orm(opp)
-        # 2. Gán trường criteria đã xử lý
-        opp_with_criteria.criteria = criteria_read
+        # Xây thủ công để tránh from_orm auto-map quan hệ criteria (string) gây lỗi list
+        opp_read = schemas.OpportunityRead.from_orm(opp)
+        opp_with_criteria = schemas.OpportunityReadWithCriteria(
+            **opp_read.dict(),
+            criteria=criteria_read
+        )
         results.append(opp_with_criteria)
-        # --- KẾT THÚC SỬA ---
 
     return results
 
@@ -84,13 +99,12 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
             required_documents=parse_str_to_list(criteria.required_documents)
         )
     
-    # --- SỬA Ở ĐÂY ---
-    # 1. Tạo đối tượng từ ORM
-    opp_with_criteria = schemas.OpportunityReadWithCriteria.from_orm(opp)
-    # 2. Gán trường criteria đã xử lý
-    opp_with_criteria.criteria = criteria_read
-    return opp_with_criteria
-    # --- KẾT THÚC SỬA ---
+    # Xây thủ công để tránh from_orm auto-map quan hệ criteria (string) gây lỗi list
+    opp_read = schemas.OpportunityRead.from_orm(opp)
+    return schemas.OpportunityReadWithCriteria(
+        **opp_read.dict(),
+        criteria=criteria_read
+    )
 
 @router.put("/opportunities/{opp_id}", response_model=schemas.OpportunityRead)
 def update_opportunity(

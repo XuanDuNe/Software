@@ -41,6 +41,16 @@ function ProviderDashboard() {
   async function createOpp(e) {
     e.preventDefault();
     try {
+      // Client-side validate để khớp backend, tránh 500 không cần thiết
+      if (!form.title?.trim() || !form.description?.trim()) {
+        throw new Error('Vui lòng nhập đầy đủ Title và Description');
+      }
+      if (!['scholarship', 'research_lab', 'program'].includes(form.type)) {
+        throw new Error('Loại cơ hội không hợp lệ');
+      }
+      if (!user?.id || Number.isNaN(Number(user.id))) {
+        throw new Error('Thiếu provider_user_id hợp lệ (hãy đăng nhập lại)');
+      }
       const payload = {
         provider_user_id: user?.id,
         title: form.title,
@@ -49,10 +59,15 @@ function ProviderDashboard() {
       };
       const created = await api.createOpportunity(payload);
       if (criteria.deadline || criteria.gpa_min || criteria.skills || criteria.required_documents) {
+        // Chuẩn hóa deadline sang ISO datetime nếu người dùng nhập YYYY-MM-DD
+        let deadline = criteria.deadline?.trim() || null;
+        if (deadline && !deadline.includes('T')) {
+          deadline = `${deadline}T00:00:00`;
+        }
         await api.upsertCriteria(created.id, {
           gpa_min: Number(criteria.gpa_min) || 0,
           skills: criteria.skills.split(',').map(s => s.trim()).filter(Boolean),
-          deadline: criteria.deadline || null,
+          deadline,
           required_documents: criteria.required_documents.split(',').map(s => s.trim()).filter(Boolean)
         });
       }
@@ -108,7 +123,7 @@ function ProviderDashboard() {
           <div key={app.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
             <div>ID: {app.id} | Opp: {app.opportunity_id} | Student: {app.student_user_id} | Trạng thái: {app.status}</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button onClick={() => setStatus(app.id, 'approved')}>Duyệt</button>
+              <button onClick={() => setStatus(app.id, 'accepted')}>Duyệt</button>
               <button onClick={() => setStatus(app.id, 'rejected')}>Từ chối</button>
             </div>
           </div>
