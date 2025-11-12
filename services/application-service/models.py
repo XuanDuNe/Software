@@ -4,7 +4,7 @@ from typing import Optional, List
 from datetime import datetime
 import enum
 
-# --- Enums (Giữ lại để dùng) ---
+# --- Enums S ---
 class ApplicationStatus(str, enum.Enum):
     PENDING = "pending"
     VIEWED = "viewed"
@@ -12,13 +12,13 @@ class ApplicationStatus(str, enum.Enum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
 
-# --- APPLICATION SERVICE (Models chính) ---
+# --- APPLICATION SERVICE  ---
 class Application(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     
-    opportunity_id: int = Field(index=True) # Giữ ID, nhưng không còn foreign key
+    opportunity_id: int = Field(index=True) 
     student_user_id: int = Field(index=True)
-    provider_user_id: int = Field(index=True) # Sẽ lấy từ provider-service khi tạo
+    provider_user_id: int = Field(index=True) 
     status: ApplicationStatus = Field(default=ApplicationStatus.PENDING, index=True)
     submitted_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

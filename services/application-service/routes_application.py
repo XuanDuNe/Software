@@ -1,5 +1,5 @@
 # services/application-service/routes_application.py
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, File, UploadFile, Form 
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
@@ -33,19 +33,30 @@ async def notify_user(user_id: int, content: str, link_url: Optional[str] = None
 
 @router.post("/", response_model=schemas.ApplicationRead)
 async def submit_application(
-    app_in: schemas.ApplicationCreate, 
-    background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session)
+    # SỬA LỖI: background_tasks là tham số không có giá trị mặc định, được chuyển lên đầu
+    background_tasks: BackgroundTasks, 
+    # session là Dependency có giá trị mặc định
+    session: Session = Depends(get_session), 
+    # Các tham số Form/File cũng có giá trị mặc định
+    opportunity_id: int = Form(...), 
+    student_user_id: int = Form(...), 
+    cv_file: UploadFile = File(None, description="Tải lên file CV"),
 ):
     """
-    Sinh viên nộp hồ sơ (ĐÃ REFACTOR).
+    Sinh viên nộp hồ sơ (ĐÃ REFACTOR VÀ CÓ THÊM UPLOAD CV).
+    Endpoint này nhận dữ liệu qua multipart/form-data.
     """
     
-    # 1. Gọi Provider-service để lấy thông tin Opportunity
+    # 1. Chuẩn bị dữ liệu và gọi Provider-service để lấy thông tin Opportunity
+    app_base = schemas.ApplicationBase(
+        opportunity_id=opportunity_id,
+        student_user_id=student_user_id
+    )
+    
     opp_data = None
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{PROVIDER_SERVICE_URL}/api/opportunities/{app_in.opportunity_id}")
+            response = await client.get(f"{PROVIDER_SERVICE_URL}/api/opportunities/{app_base.opportunity_id}")
             response.raise_for_status()
             opp_data = response.json()
     except (httpx.RequestError, httpx.HTTPStatusError):
@@ -57,8 +68,8 @@ async def submit_application(
     # 2. Kiểm tra hồ sơ đã tồn tại
     existing = session.exec(
         select(models.Application)
-        .where(models.Application.student_user_id == app_in.student_user_id)
-        .where(models.Application.opportunity_id == app_in.opportunity_id)
+        .where(models.Application.student_user_id == app_base.student_user_id)
+        .where(models.Application.opportunity_id == app_base.opportunity_id)
     ).first()
     
     if existing:
@@ -66,8 +77,8 @@ async def submit_application(
     
     # 3. Tạo Application (với provider_user_id tra cứu được)
     db_app = models.Application(
-        opportunity_id=app_in.opportunity_id,
-        student_user_id=app_in.student_user_id,
+        opportunity_id=app_base.opportunity_id,
+        student_user_id=app_base.student_user_id,
         provider_user_id=provider_user_id, # Lấy từ provider-service
         status=models.ApplicationStatus.PENDING
     )
@@ -76,28 +87,39 @@ async def submit_application(
     session.commit()
     session.refresh(db_app)
     
-    # ... (Lưu documents, giữ nguyên)
+    # 3a. Xử lý File CV (Mô phỏng lưu trữ và tạo URL)
     db_docs = []
-    for doc in app_in.documents:
+    if cv_file:
+        # Đọc file để đảm bảo file được xử lý (thao tác I/O với file upload)
+        await cv_file.read() 
+        
+        # NOTE: URL GIẢ ĐỊNH - trong thực tế đây sẽ là URL tới S3/GCS
+        document_url = f"/api/files/applications/{db_app.id}/cv/{cv_file.filename}" 
+        
         db_doc = models.ApplicationDocument(
             application_id=db_app.id,
-            document_type=doc.document_type,
-            document_url=doc.document_url
+            document_type="CV", # Loại tài liệu là CV
+            document_url=document_url
         )
         session.add(db_doc)
         db_docs.append(db_doc)
+        
     session.commit()
     
-    # 4. Gửi thông báo cho Provider (giữ nguyên)
+    # 4. Gửi thông báo cho Provider
     background_tasks.add_task(
         notify_user,
         user_id=provider_user_id,
-        content=f"Bạn có hồ sơ ứng tuyển mới cho cơ hội '{opp_title}'.",
+        content=f"Bạn có hồ sơ ứng tuyển mới (kèm CV) cho cơ hội '{opp_title}'.",
         link_url=f"/provider/application/{db_app.id}"
     )
     
     app_read = schemas.ApplicationRead.from_orm(db_app)
-    app_read.documents = [schemas.DocumentRead.from_orm(doc) for doc in db_docs]
+    # Lấy danh sách documents đã được lưu lại
+    refreshed_docs = session.exec(
+        select(models.ApplicationDocument).where(models.ApplicationDocument.application_id == db_app.id)
+    ).all()
+    app_read.documents = [schemas.DocumentRead.from_orm(doc) for doc in refreshed_docs]
     
     return app_read
 

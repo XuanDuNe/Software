@@ -3,29 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduMatch - Test Platform</title>
+    <title>EduMatch - Test Platform (Comprehensive)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; }
-        h1, h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
-        .container { display: flex; gap: 20px; }
-        .column { flex: 1; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .section { padding: 15px; border-bottom: 1px solid #eee; }
-        .section:last-child { border-bottom: none; }
-        input[type="text"], input[type="email"], input[type="password"], select {
-            width: calc(100% - 10px); padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+        /* ------------------- BASE STYLES ------------------- */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background-color: #f0f2f5; /* Light gray background */
+            color: #333;
         }
+        
+        h1 { 
+            color: #007bff; /* Primary blue */
+            border-bottom: 3px solid #007bff; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        h2 { 
+            color: #333; 
+            font-size: 1.5rem; 
+            margin-top: 0;
+        }
+
+        /* ------------------- LAYOUT ------------------- */
+        .container { 
+            display: flex; 
+            gap: 20px; 
+            align-items: flex-start; /* Align items to the top */
+        }
+        
+        .main-content {
+            flex: 3; /* Chiếm 3/4 chiều rộng */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .side-column { 
+            flex: 1; /* Chiếm 1/4 chiều rộng */
+            flex-direction: column;
+            gap: 20px;
+            min-width: 280px;
+        }
+
+        .card { 
+            background: #fff; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Modern shadow */
+            padding: 20px; 
+            border: 1px solid #e0e0e0;
+        }
+        
+        /* ------------------- INPUTS & BUTTONS ------------------- */
+        input[type="text"], 
+        input[type="email"], 
+        input[type="password"], 
+        select, 
+        textarea, 
+        input[type="date"],
+        input[type="number"] {
+            width: calc(100% - 20px); 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 80px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
         button {
-            padding: 8px 12px; border: none; border-radius: 4px; background-color: #007bff; color: white; cursor: pointer; margin-right: 5px;
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 6px; 
+            background-color: #007bff; 
+            color: white; 
+            cursor: pointer; 
+            margin-top: 5px;
+            margin-right: 8px;
+            transition: background-color 0.2s, transform 0.1s;
         }
-        button:hover { background-color: #0056b3; }
+        button:hover { 
+            background-color: #0056b3; 
+            transform: translateY(-1px);
+        }
         button.secondary { background-color: #6c757d; }
         button.secondary:hover { background-color: #5a6268; }
         button.danger { background-color: #dc3545; }
         button.danger:hover { background-color: #c82333; }
-        pre { background: #e9ecef; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; }
-        #ws-messages { max-height: 300px; overflow-y: auto; }
+        button.success { background-color: #28a745; }
+        button.success:hover { background-color: #1e7e34; }
+
+
+        /* ------------------- OUTPUT & STATUS ------------------- */
+        pre { 
+            background: #2d2d2d; /* Dark background for code/JSON */
+            color: #f8f8f2;
+            padding: 15px; 
+            border-radius: 6px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            font-size: 13px; 
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        #ws-messages { 
+            max-height: 250px; 
+            overflow-y: auto; 
+            font-size: 12px;
+            background: #f8f8f8;
+            color: #333;
+        }
         .hidden { display: none; }
-        #user-info { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 4px; }
+        #user-info { 
+            background: #e6f2ff; /* Light blue for user info */
+            border: 1px solid #b3d9ff; 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin-bottom: 15px;
+        }
+        #ws-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .service-map { font-size: 0.9rem; line-height: 1.8; }
+        .service-map code { 
+            background-color: #e9ecef; 
+            padding: 2px 5px; 
+            border-radius: 4px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -33,47 +156,106 @@
     <h1>🚀 EduMatch - Test Platform (Gateway: <code id="gateway-url"></code>)</h1>
 
     <div class="container">
-        <div class="column">
-            <div class="section">
-                <h2>1. Xác thực (Auth)</h2>
+        
+        <div class="main-content">
+            <div class="card">
+                <h2>🔑 Xác thực & Thông báo Real-time</h2>
+                
                 <div id="login-form">
-                    <input type="email" id="login-email" placeholder="Email (e.g., student@email.com)" value="student@email.com">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" placeholder="e.g., student@email.com" value="student@email.com">
+                    
+                    <label for="login-password">Password:</label>
                     <input type="password" id="login-password" placeholder="Password" value="123456">
-                    <button onclick="login()">Đăng nhập</button>
-                    <button classs="secondary" onclick="register()">Đăng ký</button>
+                    
+                    <button onclick="login()" class="success">Đăng nhập</button>
+                    <button class="secondary" onclick="register()">Đăng ký (Mô phỏng)</button>
                 </div>
+                
                 <div id="user-info" class="hidden">
+                    <h3>👤 User đã đăng nhập</h3>
                     <pre id="user-display"></pre>
                     <button class="danger" onclick="logout()">Đăng xuất</button>
                 </div>
-            </div>
 
-            <div class="section">
-                <h2>2. WebSocket (Notification)</h2>
+                <hr style="margin: 15px 0;">
+
+                <h3>💬 WebSocket Status</h3>
                 <div id="ws-status">Chưa kết nối. (Hãy đăng nhập)</div>
                 <pre id="ws-messages"></pre>
             </div>
-        </div>
-
-        <div class="column">
-            <div id="provider-section" class="section hidden">
-                <h2>3. Provider Actions</h2>
+            
+            <div id="student-section" class="card hidden">
+                <h2>🎓 Student Actions (Application Service)</h2>
+                
+                <div style="border-bottom: 1px dashed #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3>🔍 Xem Opportunities</h3>
+                    <button onclick="getAllOpportunities()">Tải tất cả Opportunities</button>
+                    <pre id="student-opps"></pre>
+                </div>
+                
+                <div style="border-bottom: 1px dashed #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3>📝 Nộp Application (kèm CV)</h3>
+                    <label for="apply-opp-id">Opportunity ID muốn nộp:</label>
+                    <input type="number" id="apply-opp-id" placeholder="ID Opportunity">
+                    
+                    <label for="apply-cv-file">Chọn file CV:</label>
+                    <input type="file" id="apply-cv-file" accept=".pdf,.doc,.docx" style="width: 100%; margin-bottom: 15px;">
+                    
+                    <button onclick="submitApplication()">Nộp Application & Upload File</button>
+                </div>
+                
                 <div>
-                    <strong>Tạo Opportunity:</strong><br>
-                    <input type="text" id="opp-title" placeholder="Opportunity Title" value="Học bổng ABC">
-                    <input type="text" id="opp-desc" placeholder="Description" value="Mô tả học bổng...">
+                    <h3>📄 Hồ sơ đã nộp của tôi</h3>
+                    <button onclick="getMyApplications()">Xem hồ sơ đã nộp</button>
+                    <pre id="student-apps"></pre>
+                </div>
+            </div>
+
+            <div id="provider-section" class="card hidden">
+                <h2>💼 Provider Actions (Opportunity Service)</h2>
+                
+                <div style="border-bottom: 1px dashed #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3>✨ Tạo Opportunity mới</h3>
+                    <label for="opp-title">Tên cơ hội:</label>
+                    <input type="text" id="opp-title" placeholder="Tên học bổng, khóa học..." value="Học bổng ABC">
+                    
+                    <label for="opp-description">Mô tả:</label>
+                    <textarea id="opp-description" placeholder="Mô tả chi tiết cơ hội..."></textarea>
+                    
+                    <label for="opp-type">Loại:</label>
+                    <select id="opp-type">
+                        <option value="scholarship">Học bổng</option>
+                        <option value="research_lab">Phòng lab nghiên cứu</option>
+                        <option value="program">Chương trình đào tạo/khác</option>
+                    </select>
+
+                    <label for="opp-criteria-gpa">GPA tối thiểu:</label>
+                    <input type="number" step="0.01" id="opp-criteria-gpa" placeholder="Ví dụ: 3.0">
+
+                    <label for="opp-required-skills">Kỹ năng yêu cầu (phân cách bởi dấu phẩy):</label>
+                    <input type="text" id="opp-required-skills" placeholder="Python, Machine Learning, Tiếng Anh" value="Python, ML">
+
+                    <label for="opp-deadline">Hạn chót:</label>
+                    <input type="date" id="opp-deadline" value="2025-12-31">
+
+                    <label for="opp-required-docs">Tài liệu yêu cầu (phân cách bởi dấu phẩy):</label>
+                    <input type="text" id="opp-required-docs" placeholder="CV, Bảng điểm, Thư giới thiệu..." value="CV, Bảng điểm">
+
                     <button onclick="createOpportunity()">Tạo Opportunity</button>
                 </div>
-                <hr>
-                <div>
-                    <strong>Quản lý Applications:</strong><br>
-                    <button onclick="getReceivedApplications()">Xem hồ sơ đã nhận</button>
+                
+                <div style="border-bottom: 1px dashed #eee; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3>📥 Quản lý Applications đã nhận</h3>
+                    <button onclick="getReceivedApplications()">Tải danh sách hồ sơ</button>
                     <pre id="provider-apps"></pre>
                 </div>
-                <hr>
+                
                 <div>
-                    <strong>Cập nhật trạng thái:</strong><br>
-                    <input type="text" id="update-app-id" placeholder="Application ID">
+                    <h3>🔄 Cập nhật trạng thái Hồ sơ</h3>
+                    <label for="update-app-id">Application ID:</label>
+                    <input type="number" id="update-app-id" placeholder="Nhập Application ID">
+                    <label for="update-status">Trạng thái mới:</label>
                     <select id="update-status">
                         <option value="viewed">Viewed</option>
                         <option value="interview">Interview</option>
@@ -84,39 +266,44 @@
                 </div>
             </div>
 
-            <div id="student-section" class="section hidden">
-                <h2>4. Student Actions</h2>
-                <div>
-                    <strong>Xem Opportunities:</strong><br>
-                    <button onclick="getAllOpportunities()">Xem tất cả Opportunities</button>
-                    <pre id="student-opps"></pre>
-                </div>
-                <hr>
-                <div>
-                    <strong>Nộp Application:</strong><br>
-                    <input type="text" id="apply-opp-id" placeholder="Opportunity ID">
-                    <button onclick="submitApplication()">Nộp Application</button>
-                </div>
-                <hr>
-                <div>
-                    <strong>Hồ sơ của tôi:</strong><br>
-                    <button onclick="getMyApplications()">Xem hồ sơ đã nộp</button>
-                    <pre id="student-apps"></pre>
-                </div>
-            </div>
-            
-            <div id="common-section" class="section hidden">
-                <h2>5. Hiển thị Database (Views)</h2>
-                 <button onclick="getDbNotifications()">Get My DB Notifications</button>
+             <div id="common-section" class="card hidden">
+                <h2>🔔 Lịch sử thông báo DB (Notification Service)</h2>
+                 <button onclick="getDbNotifications()">Tải My DB Notifications</button>
                  <pre id="db-notifications"></pre>
+            </div>
+        </div>
+        
+        <div class="side-column">
+             <div class="card">
+                <h2>📚 Tài liệu Kỹ thuật</h2>
+                <h3>Cấu trúc Service Ports</h3>
+                <div class="service-map">
+                    <ul>
+                        <li>**API Gateway:** <code>:8000</code> (Proxy)</li>
+                        <li>**Auth Service:** <code>:8001</code></li>
+                        <li>**Application Service:** <code>:8004</code></li>
+                        <li>**Notification Service:** <code>:8005</code> (HTTP/WS)</li>
+                        <li>**Provider Service:** <code>:8006</code></li>
+                        <li>**Matching Service:** <code>:8007</code> (TBD)</li>
+                    </ul>
+                </div>
+                <hr>
+                <h3>Gateway Endpoint Map</h3>
+                <div class="service-map">
+                    <p><code>/auth/*</code> &rarr; Auth Service (<code>:8001</code>)</p>
+                    <p><code>/application/*</code> &rarr; Application Service (<code>:8004</code>)</p>
+                    <p><code>/notification/*</code> &rarr; Notification Service (<code>:8005</code>)</p>
+                    <p><code>/opportunity/*</code> &rarr; Provider Service (<code>:8006</code>)</p>
+                    <p><code>/provider_app/*</code> &rarr; Provider Service (<code>:8006</code>)</p>
+                    <p>WS Direct: <code>ws://localhost:8005/ws/{user_id}</code></p>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Cổng mặc định
         const GATEWAY_BASE = "http://localhost:8000";
-        // Cổng 8000 (Gateway) KHÔNG proxy WebSocket.
-        // Kết nối WS trực tiếp đến cổng 8005 của Notification Service.
         const WS_NOTIFICATION_SERVICE_BASE = "ws://localhost:8005"; 
         document.getElementById('gateway-url').textContent = GATEWAY_BASE;
 
@@ -149,8 +336,7 @@
         }
         
         async function register() {
-            // Tương tự login, nhưng dùng /auth/register
-            alert('Chức năng đăng ký chưa được thêm vào UI này. Vui lòng dùng tệp auth/index.html để đăng ký, hoặc đảm bảo user đã tồn tại.');
+            alert('Chức năng đăng ký mô phỏng: Đảm bảo user "student@email.com" (role=student) và "provider@email.com" (role=provider) đã tồn tại trong DB.');
         }
 
         async function fetchUserData(token) {
@@ -198,9 +384,13 @@
                 if (currentUser.role === 'provider') {
                     document.getElementById('provider-section').classList.remove('hidden');
                     document.getElementById('student-section').classList.add('hidden');
+                    // Set default email for easy switching
+                    document.getElementById('login-email').value = 'provider@email.com'; 
                 } else if (currentUser.role === 'student') {
                     document.getElementById('provider-section').classList.add('hidden');
                     document.getElementById('student-section').classList.remove('hidden');
+                    // Set default email for easy switching
+                    document.getElementById('login-email').value = 'student@email.com'; 
                 }
             } else {
                 document.getElementById('login-form').classList.remove('hidden');
@@ -224,6 +414,8 @@
             
             ws.onopen = () => {
                 wsStatus.textContent = `✅ Đã kết nối WebSocket cho user ${currentUser.id} (tại ${wsUrl})`;
+                wsStatus.style.backgroundColor = '#d4edda';
+                wsStatus.style.color = '#155724';
                 logMessage('ws-messages', `[WS] Connected to ${wsUrl}`, 'success');
             };
             ws.onmessage = (event) => {
@@ -231,10 +423,14 @@
             };
             ws.onerror = (event) => {
                 wsStatus.textContent = '❌ Lỗi WebSocket.';
+                wsStatus.style.backgroundColor = '#f8d7da';
+                wsStatus.style.color = '#721c24';
                 logMessage('ws-messages', `[WS] Error: ${JSON.stringify(event)}`, 'error');
             };
             ws.onclose = () => {
                 wsStatus.textContent = '🔌 Đã ngắt kết nối WebSocket.';
+                wsStatus.style.backgroundColor = '#fefefe';
+                wsStatus.style.color = '#6c757d';
                 logMessage('ws-messages', '[WS] Disconnected.', 'error');
                 ws = null;
             };
@@ -245,10 +441,14 @@
             if (!currentUser) throw new Error('Chưa đăng nhập');
             
             const headers = {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentUser.token}`,
                 ...options.headers,
             };
+
+            // Set Content-Type only if not multipart/form-data
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
 
             const res = await fetch(url, { ...options, headers });
             const text = await res.text();
@@ -257,10 +457,12 @@
             try {
                 data = JSON.parse(text);
             } catch (e) {
-                data = { raw: text };
+                // If it fails to parse, return raw text or a status message
+                data = { raw: text, message: `Raw response (status ${res.status}): ${text}` };
             }
 
             if (!res.ok) {
+                // Return server detail if available, otherwise raw text
                 throw new Error(data.detail || data.raw || `HTTP Error ${res.status}`);
             }
             return data;
@@ -270,8 +472,15 @@
             const pre = document.getElementById(preId);
             const line = document.createElement('div');
             line.textContent = message;
-            if (type === 'error') line.style.color = 'red';
-            if (type === 'success') line.style.color = 'green';
+            // Clear old messages if too many (for performance)
+            if (pre.children.length > 50) {
+                pre.removeChild(pre.firstChild);
+            }
+
+            if (type === 'error') line.style.color = '#dc3545';
+            else if (type === 'success') line.style.color = '#28a745';
+            else if (type === 'info') line.style.color = '#007bff';
+            
             pre.appendChild(line);
             pre.scrollTop = pre.scrollHeight;
         }
@@ -280,21 +489,46 @@
         async function createOpportunity() {
             try {
                 const title = document.getElementById('opp-title').value;
-                const description = document.getElementById('opp-desc').value;
-                
+                const description = document.getElementById('opp-description').value;
+                const type = document.getElementById('opp-type').value;
+                const gpaMin = document.getElementById('opp-criteria-gpa').value;
+                const requiredSkills = document.getElementById('opp-required-skills').value
+                                        .split(',')
+                                        .map(doc => doc.trim())
+                                        .filter(doc => doc !== '');
+                const deadline = document.getElementById('opp-deadline').value;
+                const requiredDocs = document.getElementById('opp-required-docs').value
+                                        .split(',')
+                                        .map(doc => doc.trim())
+                                        .filter(doc => doc !== '');
+
                 // Endpoint: /opportunity/ (map tới provider-service:8006/api/opportunities/)
-                const data = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/`, {
+                const oppData = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/`, {
                     method: 'POST',
                     body: JSON.stringify({
                         provider_user_id: currentUser.id,
                         title: title,
                         description: description,
-                        type: "scholarship" 
+                        type: type, 
                     })
                 });
-                alert(`Tạo thành công Opportunity ID: ${data.id}`);
+
+                // Tạo/Cập nhật Criteria
+                const criteriaData = {
+                    gpa_min: gpaMin ? parseFloat(gpaMin) : null,
+                    skills: requiredSkills,
+                    deadline: deadline,
+                    required_documents: requiredDocs
+                };
+
+                 const data = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/${oppData.id}/criteria`, {
+                    method: 'POST',
+                    body: JSON.stringify(criteriaData)
+                });
+
+                alert(`✅ Tạo thành công Opportunity ID: ${oppData.id} và Criteria.`);
             } catch (e) {
-                alert(`Lỗi: ${e.message}`);
+                alert(`❌ Lỗi: ${e.message}`);
             }
         }
         
@@ -302,9 +536,11 @@
              try {
                 // Endpoint: /provider_app/provider/{user_id} (map tới provider-service:8006/api/applications/provider/{user_id})
                 const data = await fetchWithAuth(`${GATEWAY_BASE}/provider_app/provider/${currentUser.id}`);
+                
+                // Hiển thị chi tiết Application, bao gồm documents (CV URL)
                 document.getElementById('provider-apps').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
-                document.getElementById('provider-apps').textContent = `Lỗi: ${e.message}`;
+                document.getElementById('provider-apps').textContent = `❌ Lỗi: ${e.message}`;
             }
         }
         
@@ -322,10 +558,10 @@
                     method: 'PATCH',
                     body: JSON.stringify({ status: status })
                 });
-                alert(`Cập nhật thành công. Student ID ${data.student_user_id} sẽ nhận được thông báo.`);
+                alert(`✅ Cập nhật thành công. Student ID ${data.student_user_id} sẽ nhận được thông báo.`);
                 getReceivedApplications(); // Tải lại danh sách
             } catch (e) {
-                alert(`Lỗi: ${e.message}`);
+                alert(`❌ Lỗi: ${e.message}`);
             }
         }
 
@@ -336,34 +572,43 @@
                 const data = await fetchWithAuth(`${GATEWAY_BASE}/opportunity/`);
                 document.getElementById('student-opps').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
-                document.getElementById('student-opps').textContent = `Lỗi: ${e.message}`;
+                document.getElementById('student-opps').textContent = `❌ Lỗi: ${e.message}`;
             }
         }
 
         async function submitApplication() {
              try {
                 const oppId = document.getElementById('apply-opp-id').value;
+                const cvFile = document.getElementById('apply-cv-file').files[0];
+
                  if (!oppId) {
                     alert('Vui lòng nhập Opportunity ID');
                     return;
                 }
+                
+                if (!cvFile) {
+                    alert('Vui lòng chọn file CV');
+                    return;
+                }
+
+                // Sử dụng FormData cho multipart/form-data
+                const formData = new FormData();
+                formData.append('opportunity_id', oppId);
+                formData.append('student_user_id', currentUser.id);
+                formData.append('cv_file', cvFile); // Tên tham số phải khớp với FastAPI (@router.post)
 
                 // Endpoint: /application/ (map tới application-service:8004/api/applications/)
+                // Lưu ý: fetchWithAuth sẽ không thêm 'Content-Type: application/json'
                 const data = await fetchWithAuth(`${GATEWAY_BASE}/application/`, {
                     method: 'POST',
-                    body: JSON.stringify({
-                        opportunity_id: parseInt(oppId),
-                        student_user_id: currentUser.id,
-                        documents: [
-                            { document_type: "CV", document_url: "http://example.com/cv.pdf" },
-                            { document_type: "Transcript", document_url: "http://example.com/transcript.pdf" }
-                        ]
-                    })
+                    body: formData,
+                    headers: {} // Không set Content-Type, trình duyệt sẽ tự set multipart/form-data
                 });
-                alert(`Nộp hồ sơ thành công (ID: ${data.id}). Provider ID ${data.provider_user_id} sẽ nhận được thông báo.`);
+
+                alert(`✅ Nộp hồ sơ thành công (ID: ${data.id}). Provider ID ${data.provider_user_id} sẽ nhận được thông báo.`);
                 getMyApplications(); // Tải lại danh sách
             } catch (e) {
-                alert(`Lỗi: ${e.message}`);
+                alert(`❌ Lỗi: ${e.message}`);
             }
         }
         
@@ -373,7 +618,7 @@
                 const data = await fetchWithAuth(`${GATEWAY_BASE}/application/student/${currentUser.id}`);
                 document.getElementById('student-apps').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
-                document.getElementById('student-apps').textContent = `Lỗi: ${e.message}`;
+                document.getElementById('student-apps').textContent = `❌ Lỗi: ${e.message}`;
             }
         }
 
@@ -384,7 +629,7 @@
                 const data = await fetchWithAuth(`${GATEWAY_BASE}/notification/notifications/${currentUser.id}`);
                 document.getElementById('db-notifications').textContent = JSON.stringify(data, null, 2);
             } catch (e) {
-                document.getElementById('db-notifications').textContent = `Lỗi: ${e.message}`;
+                document.getElementById('db-notifications').textContent = `❌ Lỗi: ${e.message}`;
             }
         }
 
