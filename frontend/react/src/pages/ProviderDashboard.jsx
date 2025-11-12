@@ -63,7 +63,7 @@ const OpportunityModal = ({ isOpen, onClose, onSave }) => {
         setLoading(true);
         setError('');
         try {
-            await onSave({ title, description, status: 'open' }); 
+            await onSave({ title, description });
             onClose();
             setTitle('');
             setDescription('');
@@ -151,11 +151,6 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                 {detail && (
                     <div className="detail-content">
                         <h4 style={{ fontSize: '24px', marginBottom: '10px' }}>{detail.title}</h4>
-                        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '15px' }}>
-                            Trạng thái: <span style={{ color: detail.status === 'open' ? 'green' : 'red', fontWeight: 'bold' }}>
-                                {detail.status === 'open' ? 'Đang mở' : 'Đã đóng'}
-                            </span>
-                        </p>
 
                         <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                             <strong className="label">Mô tả chi tiết:</strong>
@@ -218,7 +213,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                             <tr>
                                 <th style={{ width: '40%' }}>Tên Cơ hội</th>
                                 <th style={{ width: '15%' }}>Ứng viên</th>
-                                <th style={{ width: '25%' }}>Trạng thái</th>
                                 <th style={{ width: '20%' }}>Hành động</th>
                             </tr>
                         </thead>
@@ -227,20 +221,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                 <tr key={opp.id}>
                                     <td>{opp.title}</td>
                                     <td>{opp.applications_count || 0}</td> 
-                                    <td style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <label className="toggle-switch" title={opp.status === 'open' ? 'Đóng Cơ hội' : 'Mở lại Cơ hội'}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={opp.status === 'open'} 
-                                                onChange={() => handleToggleStatus(opp.id, opp.status)} 
-                                            />
-                                            <span className="slider"></span>
-                                        </label>
-                                        <span style={{ color: opp.status === 'open' ? 'green' : 'red', fontWeight: 'bold', fontSize: '14px' }}>
-                                            {opp.status === 'open' ? 'Đang mở' : 'Đã đóng'}
-                                        </span>
-                                    </td>
-                                    <td>
+                                                                        <td>
                                         {/* Cập nhật nút Xem chi tiết */}
                                         <button 
                                             onClick={() => handleViewDetail(opp.id)} 
@@ -438,30 +419,38 @@ const ProviderDashboard = () => {
 
     // Hàm xử lý các hành động CRUD (Giữ nguyên, thêm viewDetail)
     const handleOpportunityAction = async (action, id, payload) => {
-        setError('');
-        try {
-            if (action === 'create') {
-                setIsCreateModalOpen(true);
-                return;
-            } else if (action === 'saveNew') {
-                await api.createOpportunity(payload);
-                alert('Đã thêm cơ hội thành công!');
-            } else if (action === 'delete') {
-                await api.deleteOpportunity(id);
-                alert('Đã xóa cơ hội thành công!');
-            } else if (action === 'toggleStatus') {
-                await api.updateOpportunityStatus(id, payload);
-                alert(`Đã ${payload === 'open' ? 'mở lại' : 'đóng'} cơ hội thành công!`);
-            } else if (action === 'viewDetail') {
-                setSelectedOpportunityId(id); 
-                return;
-            }
-            // Tải lại dữ liệu sau khi thực hiện hành động thành công
-            fetchData(); 
-        } catch (err) {
-            setError(err.message || `Lỗi khi thực hiện hành động ${action}`);
+    setError('');
+    try {
+        if (action === 'create') {
+            setIsCreateModalOpen(true);
+            return;
+        } else if (action === 'saveNew') {
+
+            // --- BẮT ĐẦU SỬA LỖI ---
+            // Thêm các trường provider_user_id và type mà backend yêu cầu
+            const newPayload = {
+                ...payload,
+                provider_user_id: providerUserId,
+                type: "default_type" // <-- Bạn cần quyết định giá trị 'type' ở đây (ví dụ: "internship", "part-time", ...)
+            };
+
+            await api.createOpportunity(newPayload); // Gửi payload đã được bổ sung
+            // --- KẾT THÚC SỬA LỖI ---
+
+            alert('Đã thêm cơ hội thành công!');
+        } else if (action === 'delete') {
+            await api.deleteOpportunity(id);
+            alert('Đã xóa cơ hội thành công!');
+        } else if (action === 'viewDetail') {
+            setSelectedOpportunityId(id); 
+            return;
         }
-    };
+        // Tải lại dữ liệu sau khi thực hiện hành động thành công
+        fetchData(); 
+    } catch (err) {
+        setError(err.message || `Lỗi khi thực hiện hành động ${action}`);
+    }
+};
 
 
     // ... (Phần stats và renderContent giữ nguyên) ...
@@ -472,14 +461,10 @@ const ProviderDashboard = () => {
         const pendingApplications = applications.filter(app => 
             app.status === 'pending' || app.status === 'submitted'
         ).length;
-
-        const activeOpportunities = opportunities.filter(opp => opp.status === 'open').length;
-
         return [
             { title: 'Tổng số cơ hội', value: totalOpportunities, icon: '📝', color: '#3b82f6' },
             { title: 'Tổng ứng viên', value: totalApplications, icon: '👥', color: '#f59e0b' },
             { title: 'Ứng viên chờ duyệt', value: pendingApplications, icon: '⏳', color: '#ef4444' },
-            { title: 'Cơ hội đang hoạt động', value: activeOpportunities, icon: '🟢', color: '#10b981' },
         ];
     }, [opportunities, applications]);
 
@@ -497,7 +482,7 @@ const ProviderDashboard = () => {
                 return (
                     <>
                         <h1 style={{ fontSize: '28px', color: '#1f2937' }}>Tổng quan Dashboard</h1>
-                        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginTop: '20px' }}>
+                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginTop: '20px' }}>
                             {stats.map((stat, index) => (
                                 <StatCard key={index} {...stat} />
                             ))}

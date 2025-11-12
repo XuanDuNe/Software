@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlmodel import Session, select
 from typing import List, Optional
 from database import get_session
@@ -110,7 +110,28 @@ def update_opportunity(
     session.refresh(db_opp)
     return db_opp
 
-# --- Criteria CRUD ---
+@router.delete("/{opp_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_opportunity(
+    opp_id: int,
+    session: Session = Depends(get_session)
+):
+    """
+    Xóa một cơ hội theo ID.
+    """
+    db_opp = session.get(models.Opportunity, opp_id)
+    if not db_opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    db_criteria = session.exec(
+        select(models.Criteria).where(models.Criteria.opportunity_id == opp_id)
+    ).first()
+    
+    if db_criteria:
+        session.delete(db_criteria)
+        session.delete(db_opp)
+        session.commit()
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
 
 @router.post("/{opp_id}/criteria", response_model=schemas.CriteriaRead)
 def create_or_update_criteria(
