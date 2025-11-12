@@ -33,16 +33,16 @@ function Notifications() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="container p-6">
       <h2>Thông báo</h2>
-      {error && <div style={{ color: '#c0392b' }}>{error}</div>}
-      <div style={{ display: 'grid', gap: 8 }}>
+      {error && <div className="alert-error">{error}</div>}
+      <div className="grid gap-4">
         {(items || []).map(n => (
-          <div key={n.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+          <div key={n.id} className="notification-item">
             <div>{n.content}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>{new Date(n.created_at).toLocaleString()}</div>
-            <div style={{ marginTop: 8 }}>
-              {!n.read_status && <button onClick={() => markRead(n.id)}>Đánh dấu đã đọc</button>}
+            <div className="notification-date">{new Date(n.created_at).toLocaleString()}</div>
+            <div className="notification-action">
+              {!n.read_status && <button onClick={() => markRead(n.id)} className="btn btn-primary btn-sm">Đánh dấu đã đọc</button>}
             </div>
           </div>
         ))}
@@ -52,5 +52,3 @@ function Notifications() {
 }
 
 export default Notifications;
-
-

@@ -1,8 +1,11 @@
+// src/services/api.js (Sửa đổi)
+
 import { getToken, clearAuth } from '../utils/auth.js';
 
 const BASE_URL = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:8000';
 
 async function request(path, options = {}) {
+// ... (request function body remains the same) ...
   const token = getToken();
   const headers = new Headers(options.headers || {});
   headers.set('Content-Type', 'application/json');
@@ -60,6 +63,15 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(payload)
   }),
+  // NEW: Delete Opportunity
+  deleteOpportunity: (id) => request(`/opportunity/${id}`, {
+    method: 'DELETE'
+  }),
+  // SỬA LỖI METHOD NOT ALLOWED: Đổi từ 'PATCH' sang 'PUT'
+  updateOpportunityStatus: (id, status) => request(`/opportunity/${id}/status`, {
+    method: 'PUT', 
+    body: JSON.stringify({ status })
+  }),
   upsertCriteria: (id, payload) => request(`/opportunity/${id}/criteria`, {
     method: 'POST',
     body: JSON.stringify(payload)
@@ -99,5 +111,3 @@ export const api = {
 };
 
 export { BASE_URL };
-
-

@@ -1,59 +1,151 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api.js';
-import { clearAuth, getStoredUser } from '../utils/auth.js';
+import { getStoredUser } from '../utils/auth.js';
 
+// Component con để hiển thị tóm tắt các hồ sơ đã nộp (Giữ nguyên)
+const MyApplicationsSummary = ({ applications, opportunities }) => {
+    if (!applications || applications.length === 0) {
+        return (
+            <div className="card" style={{ padding: '15px', textAlign: 'center', color: '#64748b', marginTop: '15px' }}>
+                Bạn chưa nộp bất kỳ hồ sơ nào.
+            </div>
+        );
+    }
+
+    const getOpportunityTitle = (opportunityId) => {
+        const opp = opportunities.find(o => o.id === opportunityId);
+        return opp ? opp.title : `[Cơ hội #${opportunityId}]`;
+    };
+
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'pending':
+            case 'submitted':
+                return { color: '#f59e0b', background: '#fffbeb' };
+            case 'reviewed':
+                return { color: '#3b82f6', background: '#eff6ff' };
+            case 'accepted':
+                return { color: '#10b981', background: '#ecfdf5' };
+            case 'rejected':
+                return { color: '#ef4444', background: '#fef2f2' };
+            default:
+                return { color: '#64748b', background: '#f3f4f6' };
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'pending': return 'Chờ duyệt';
+            case 'submitted': return 'Đã nộp';
+            case 'reviewed': return 'Đã xem xét';
+            case 'accepted': return 'Được chấp nhận';
+            case 'rejected': return 'Bị từ chối';
+            default: return status;
+        }
+    };
+
+    return (
+        <div style={{ marginTop: '15px' }}>
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                {applications.map((app) => {
+                    const statusInfo = getStatusStyle(app.status);
+                    return (
+                        <div key={app.id} className="card" style={{ borderLeft: `5px solid ${statusInfo.color}`, padding: '15px' }}>
+                            <div style={{ fontWeight: 600, marginBottom: '5px' }}>
+                                {getOpportunityTitle(app.opportunity_id)}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#64748b', marginBottom: '10px' }}>
+                                Nộp ngày: {new Date(app.created_at).toLocaleDateString()}
+                            </div>
+                            <span 
+                                style={{ 
+                                    padding: '4px 8px', 
+                                    borderRadius: '4px', 
+                                    fontSize: '12px', 
+                                    fontWeight: 'bold', 
+                                    color: statusInfo.color,
+                                    background: statusInfo.background
+                                }}
+                            >
+                                Trạng thái: {getStatusText(app.status)}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+// Component chính StudentDashboard
 function StudentDashboard() {
-  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [error, setError] = useState('');
-  const [cvUrl, setCvUrl] = useState('');
+  // Thay thế cvUrl bằng cvFile
+  const [cvFile, setCvFile] = useState(null); 
   const [submitting, setSubmitting] = useState(false);
+
+  const user = getStoredUser();
+  const studentUserId = user?.id;
+
+  async function fetchAllData() {
+    if (!studentUserId) return;
+    try {
+        const [apps, opps] = await Promise.all([
+            api.listMyApplications(studentUserId),
+            api.listOpportunities()
+        ]);
+        setApplications(apps || []);
+        setOpportunities(opps || []);
+    } catch (err) {
+        setError(err.message || 'Lỗi tải dữ liệu');
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      try {
-        const user = getStoredUser();
-        if (!user?.id) throw new Error('Thiếu user_id trong token');
-        const [apps, opps] = await Promise.all([
-          api.listMyApplications(user.id),
-          api.listOpportunities()
-        ]);
-        if (mounted) {
-          setApplications(apps || []);
-          setOpportunities(opps || []);
-        }
-      } catch (err) {
-        if (mounted) setError(err.message || 'Lỗi tải dữ liệu');
-      }
-    })();
+    if (mounted) fetchAllData();
     return () => { mounted = false; };
-  }, []);
+  }, [studentUserId]);
 
-  function logout() {
-    clearAuth();
-    navigate('/login', { replace: true });
-  }
-
-  const user = getStoredUser();
+  // Kiểm tra xem sinh viên đã nộp hồ sơ cho cơ hội này chưa
+  const hasApplied = (opportunityId) => {
+    return applications.some(app => app.opportunity_id === opportunityId);
+  };
 
   async function submitApplication(opportunityId) {
-    if (!user?.id) return;
+    if (!studentUserId) return;
     setSubmitting(true);
     setError('');
+    
+    if (hasApplied(opportunityId)) {
+        setError('Bạn đã nộp hồ sơ cho cơ hội này rồi.');
+        setSubmitting(false);
+        return;
+    }
+
+    // Kiểm tra file CV
+    if (!cvFile) {
+        setError('Vui lòng chọn tệp CV trước khi nộp hồ sơ.');
+        setSubmitting(false);
+        return;
+    }
+
     try {
-      const payload = {
-        opportunity_id: opportunityId,
-        student_user_id: user.id,
-        documents: cvUrl ? [
-          { document_type: 'cv', document_url: cvUrl }
-        ] : []
-      };
-      await api.submitApplication(payload);
-      const apps = await api.listMyApplications(user.id);
-      setApplications(apps || []);
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      // Các trường dữ liệu khác
+      formData.append('opportunity_id', opportunityId);
+      formData.append('student_user_id', studentUserId);
+      // Tệp CV
+      formData.append('cv_file', cvFile); // Giả định backend nhận trường là 'cv_file'
+      
+      await api.submitApplication(formData);
+      
+      // Tải lại danh sách hồ sơ sau khi nộp thành công
+      await fetchAllData(); 
+      alert('Nộp hồ sơ thành công!');
     } catch (err) {
       setError(err.message || 'Nộp hồ sơ thất bại');
     } finally {
@@ -62,41 +154,54 @@ function StudentDashboard() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="container p-6">
       <h2>Trang sinh viên</h2>
-      <div style={{ marginBottom: 12 }}>Xin chào, {user?.id ? `User #${user.id}` : 'Sinh viên'}</div>
-      <button onClick={logout} style={{ marginBottom: 16 }}>Đăng xuất</button>
-      {error && <div style={{ color: '#c0392b' }}>{error}</div>}
-      {error && <div style={{ color: '#c0392b', marginBottom: 12 }}>{error}</div>}
+      
+      {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
-      <h3>Danh sách cơ hội</h3>
-      <div style={{ marginBottom: 10 }}>
-        <input placeholder="Link CV (Google Drive, v.v.)" value={cvUrl} onChange={e => setCvUrl(e.target.value)} style={{ width: '100%', maxWidth: 480 }} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-        {(opportunities || []).map((opp) => (
-          <div key={opp.id} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
-            <div style={{ fontWeight: 600 }}>{opp.title}</div>
-            <div style={{ fontSize: 12, color: '#475569' }}>{opp.description}</div>
-            <button
-              disabled={submitting}
-              onClick={() => submitApplication(opp.id)}
-              style={{ marginTop: 8 }}
-            >
-              {submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
-            </button>
-          </div>
-        ))}
+      {/* Phần Tóm tắt Hồ sơ đã nộp */}
+      <h3 style={{ marginTop: 24, marginBottom: 10 }}>Hồ sơ của bạn</h3>
+      <MyApplicationsSummary applications={applications} opportunities={opportunities} />
+
+      {/* Phần Nộp hồ sơ */}
+      <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
+      
+      <div className="card" style={{ padding: 15, marginBottom: 20, maxWidth: 600 }}>
+        <p className="label" style={{ marginBottom: 8 }}>Tệp CV (PDF, DOCX)</p>
+        <input 
+          type="file" // Đổi thành input type="file"
+          accept=".pdf,.doc,.docx" // Giới hạn loại tệp
+          onChange={e => setCvFile(e.target.files[0])} // Lấy tệp đầu tiên
+          className="input"
+          style={{ padding: '8px' }} // Điều chỉnh padding cho input file
+        />
+        <small style={{ color: '#64748b', display: 'block', marginTop: 8 }}>
+            Tệp CV hiện tại: <strong>{cvFile ? cvFile.name : 'Chưa chọn tệp'}</strong>
+        </small>
       </div>
 
-      <h3 style={{ marginTop: 24 }}>Hồ sơ của bạn</h3>
-      <pre style={{ background: '#f8fafc', padding: 12, borderRadius: 8 }}>
-        {JSON.stringify(applications, null, 2)}
-      </pre>
+      <div className="opportunity-list">
+        {(opportunities || []).map((opp) => {
+            const applied = hasApplied(opp.id);
+            return (
+                <div key={opp.id} className="opportunity-card">
+                    <div className="opportunity-title">{opp.title}</div>
+                    <div className="opportunity-description">{opp.description}</div>
+                    <button
+                        // Thêm disabled nếu chưa chọn file
+                        disabled={submitting || applied || !cvFile} 
+                        onClick={() => submitApplication(opp.id)}
+                        className={`btn ${applied || !cvFile ? 'btn-disabled' : 'btn-secondary'}`}
+                        style={{ marginTop: 8 }}
+                    >
+                        {applied ? 'Đã Nộp' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
+                    </button>
+                </div>
+            );
+        })}
+      </div>
     </div>
   );
 }
 
 export default StudentDashboard;
-
-
