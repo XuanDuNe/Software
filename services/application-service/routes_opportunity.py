@@ -121,15 +121,16 @@ def delete_opportunity(
     db_opp = session.get(models.Opportunity, opp_id)
     if not db_opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
+
     db_criteria = session.exec(
         select(models.Criteria).where(models.Criteria.opportunity_id == opp_id)
     ).first()
-    
+
     if db_criteria:
         session.delete(db_criteria)
         session.delete(db_opp)
         session.commit()
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

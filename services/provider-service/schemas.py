@@ -31,6 +31,7 @@ class OpportunityRead(OpportunityBase):
 class OpportunityUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    type: Optional[OpportunityType] = None
 
 class CriteriaBase(SQLModel):
     gpa_min: Optional[float] = None

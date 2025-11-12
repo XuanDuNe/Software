@@ -8,7 +8,9 @@ async function request(path, options = {}) {
 // ... (request function body remains the same) ...
   const token = getToken();
   const headers = new Headers(options.headers || {});
+  if (!(options.body instanceof FormData)) {
   headers.set('Content-Type', 'application/json');
+}
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -25,7 +27,7 @@ async function request(path, options = {}) {
   const text = await res.text();
   let data = null;
   if (text && contentType.includes('application/json')) {
-    try { data = JSON.parse(text); } catch (_) { /* fall back below */ }
+    try { data = JSON.parse(text); } catch (_) { }
   }
   if (!res.ok) {
     let message = (data && (data.detail || data.message)) || text || res.statusText || 'Request failed';
@@ -46,13 +48,12 @@ export const api = {
     method: 'POST',
     body: JSON.stringify({ token })
   }),
-  // Student/application flows
   listMyApplications: (userId) => request(`/application/student/${userId}`),
   submitApplication: (data) => request('/application/', {
     method: 'POST',
-    body: JSON.stringify(data)
+    body: data
   }),
-  // Opportunities (from provider service)
+
   listOpportunities: () => request('/opportunity/'),
   getOpportunity: (id) => request(`/opportunity/${id}`),
   createOpportunity: (payload) => request('/opportunity/', {
@@ -63,11 +64,11 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(payload)
   }),
-  // NEW: Delete Opportunity
+
   deleteOpportunity: (id) => request(`/opportunity/${id}`, {
     method: 'DELETE'
   }),
-  // SỬA LỖI METHOD NOT ALLOWED: Đổi từ 'PATCH' sang 'PUT'
+
   updateOpportunityStatus: (id, status) => request(`/opportunity/${id}/status`, {
     method: 'PUT', 
     body: JSON.stringify({ status })
@@ -76,7 +77,7 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(payload)
   }),
-  // Provider example
+
   getProviderInfo: () => request('/provider/info'),
   listProviderApplications: (providerUserId) => request(`/provider_app/provider/${providerUserId}`),
   updateApplicationStatus: (appId, status) => request(`/provider_app/${appId}/status`, {

@@ -1,5 +1,6 @@
 # services/provider-service/routes.py
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from urllib import response
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
@@ -122,6 +123,26 @@ def update_opportunity(
     session.commit()
     session.refresh(db_opp)
     return db_opp
+
+@router.delete("/opportunities/{opp_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_opportunity(opp_id: int, session: Session = Depends(get_session)):
+    """
+    Xóa một cơ hội.
+    """
+    db_opp = session.get(models.Opportunity, opp_id)
+    if not db_opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    try:
+        session.delete(db_opp)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, 
+            detail=f"Không thể xóa cơ hội vì có dữ liệu liên quan: {str(e)}"
+        )
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.post("/opportunities/{opp_id}/criteria", response_model=schemas.CriteriaRead)
 def create_or_update_criteria(

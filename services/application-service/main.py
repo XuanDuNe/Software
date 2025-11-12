@@ -1,15 +1,19 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  
-# Sửa import: Bỏ create_db_and_tables, thêm engine
+from fastapi.middleware.cors import CORSMiddleware 
+from fastapi.staticfiles import StaticFiles
 from database import engine 
 from routes_application import router as app_router
-from sqlmodel import SQLModel 
+from sqlmodel import SQLModel
+import os
 
 app = FastAPI(
     title="EduMatch - Application Service", 
     description="Quản lý Hồ sơ ứng tuyển (nghiệp vụ của Student).", 
     version="1.0"
 )
+
+os.makedirs("static_files/cvs", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static_files"), name="static")  
 
 # Cấu hình CORS
 app.add_middleware(

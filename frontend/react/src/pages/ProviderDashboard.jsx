@@ -49,12 +49,30 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
 };
 
 // Component Modal Thêm/Sửa Cơ hội (Giữ nguyên)
-const OpportunityModal = ({ isOpen, onClose, onSave }) => {
-    // ... (logic tạo/sửa cơ hội giữ nguyên) ...
+const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [type, setType] = useState('program');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            if (existingData) {
+                setTitle(existingData.title);
+                setDescription(existingData.description);
+                const validType = ['scholarship', 'research_lab', 'program'].includes(existingData.type) 
+                    ? existingData.type 
+                    : 'program';
+                setType(validType);
+            } else {
+                setTitle('');
+                setDescription('');
+                setType('program');
+            }
+            setError(''); 
+        }
+    }, [isOpen, existingData]);
 
     if (!isOpen) return null;
 
@@ -63,10 +81,11 @@ const OpportunityModal = ({ isOpen, onClose, onSave }) => {
         setLoading(true);
         setError('');
         try {
-            await onSave({ title, description });
+            await onSave({ title, description, type });
             onClose();
             setTitle('');
             setDescription('');
+            setType('program');
         } catch (err) {
             setError(err.message || 'Lỗi khi lưu cơ hội.');
         } finally {
@@ -92,6 +111,19 @@ const OpportunityModal = ({ isOpen, onClose, onSave }) => {
                             onChange={(e) => setTitle(e.target.value)}
                             required
                         />
+                    </div>
+                    <div className="form-group">
+                        <label className="label">Loại Cơ hội</label>
+                        <select
+                            className="input" 
+                            value={type}
+                            onChange={(e) => setType(e.target.value)}
+                            required
+                        >
+                            <option value="program">Chương trình (Program)</option>
+                            <option value="scholarship">Học bổng (Scholarship)</option>
+                            <option value="research_lab">Lab nghiên cứu (Research Lab)</option>
+                        </select>
                     </div>
                     <div className="form-group">
                         <label className="label">Mô tả</label>
@@ -221,20 +253,30 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                 <tr key={opp.id}>
                                     <td>{opp.title}</td>
                                     <td>{opp.applications_count || 0}</td> 
-                                                                        <td>
-                                        {/* Cập nhật nút Xem chi tiết */}
+                                    <td style={{ display: 'flex', gap: '8px' }}>
+                                        {/* Nút Xem chi tiết */}
                                         <button 
                                             onClick={() => handleViewDetail(opp.id)} 
                                             className="action-link"
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-primary)', marginRight: '8px' }}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-primary)' }}
                                         >
                                             Xem
                                         </button> 
+                                        
+                                        |
+                                        <button 
+                                            onClick={() => onOpportunityAction('edit', opp.id, opp)} 
+                                            className="action-link"
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#f59e0b' }} 
+                                        >
+                                            Sửa
+                                        </button>
+
                                         |
                                         <button 
                                             onClick={() => handleDelete(opp.id, opp.title)} 
                                             className="action-link delete" 
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 8px' }}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                                         >
                                             Xóa
                                         </button>
@@ -366,7 +408,8 @@ const ProviderDashboard = () => {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); 
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [editingOpportunity, setEditingOpportunity] = useState(null);
     const [selectedOpportunityId, setSelectedOpportunityId] = useState(null); 
     
     const user = getStoredUser();
@@ -417,43 +460,56 @@ const ProviderDashboard = () => {
     };
 
 
-    // Hàm xử lý các hành động CRUD (Giữ nguyên, thêm viewDetail)
     const handleOpportunityAction = async (action, id, payload) => {
-    setError('');
-    try {
-        if (action === 'create') {
-            setIsCreateModalOpen(true);
-            return;
-        } else if (action === 'saveNew') {
+        setError('');
+        try {
+            if (action === 'create') {
+                setEditingOpportunity(null); 
+                setIsCreateModalOpen(true);
+                return; 
+            }
+            
+            if (action === 'edit') {
+                setEditingOpportunity(payload); 
+                setIsCreateModalOpen(true);
+                return; 
+            }
+            
+            if (action === 'viewDetail') {
+                setSelectedOpportunityId(id); 
+                return; 
+            }
 
-            // --- BẮT ĐẦU SỬA LỖI ---
-            // Thêm các trường provider_user_id và type mà backend yêu cầu
-            const newPayload = {
-                ...payload,
-                provider_user_id: providerUserId,
-                type: "default_type" // <-- Bạn cần quyết định giá trị 'type' ở đây (ví dụ: "internship", "part-time", ...)
-            };
 
-            await api.createOpportunity(newPayload); // Gửi payload đã được bổ sung
-            // --- KẾT THÚC SỬA LỖI ---
+            if (action === 'saveNew') {
+                const newPayload = {
+                    ...payload,
+                    provider_user_id: providerUserId,
+                };
+                await api.createOpportunity(newPayload); 
+                alert('Đã thêm cơ hội thành công!');
 
-            alert('Đã thêm cơ hội thành công!');
-        } else if (action === 'delete') {
-            await api.deleteOpportunity(id);
-            alert('Đã xóa cơ hội thành công!');
-        } else if (action === 'viewDetail') {
-            setSelectedOpportunityId(id); 
-            return;
+            } else if (action === 'saveUpdate') {
+                // 'id' là opp.id, 'payload' là { title, description, type } từ modal
+                await api.updateOpportunity(id, payload);
+                alert('Đã cập nhật cơ hội thành công!');
+
+            } else if (action === 'delete') {
+                await api.deleteOpportunity(id);
+                alert('Đã xóa cơ hội thành công!');
+            }
+
+            // Dọn dẹp và tải lại dữ liệu sau khi (saveNew, saveUpdate, delete)
+            setIsCreateModalOpen(false);
+            setEditingOpportunity(null);
+            fetchData(); 
+
+        } catch (err) {
+            setError(err.message || `Lỗi khi thực hiện hành động ${action}`);
         }
-        // Tải lại dữ liệu sau khi thực hiện hành động thành công
-        fetchData(); 
-    } catch (err) {
-        setError(err.message || `Lỗi khi thực hiện hành động ${action}`);
-    }
-};
+    };
 
 
-    // ... (Phần stats và renderContent giữ nguyên) ...
     const stats = useMemo(() => {
         const totalOpportunities = opportunities.length;
         const totalApplications = applications.length;
@@ -516,22 +572,27 @@ const ProviderDashboard = () => {
 
     return (
         <div className="flex">
-            {/* 1. Sidebar (Fixed Left) */}
             <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-            {/* 2. Main Content Area */}
             <div className="dashboard-content">
                 {renderContent()}
             </div>
 
-            {/* Modal cho việc Thêm Cơ hội Mới */}
+
             <OpportunityModal 
                 isOpen={isCreateModalOpen} 
-                onClose={() => setIsCreateModalOpen(false)} 
-                onSave={(payload) => handleOpportunityAction('saveNew', null, payload)}
+                onClose={() => {
+                    setIsCreateModalOpen(false);
+                    setEditingOpportunity(null); 
+                }} 
+                onSave={(payload) => handleOpportunityAction(
+                    editingOpportunity ? 'saveUpdate' : 'saveNew', 
+                    editingOpportunity ? editingOpportunity.id : null, 
+                    payload 
+                )}
+                existingData={editingOpportunity} 
             />
 
-            {/* Modal cho việc Xem Chi tiết Cơ hội */}
             <OpportunityDetailModal 
                 opportunityId={selectedOpportunityId} 
                 onClose={() => setSelectedOpportunityId(null)} 

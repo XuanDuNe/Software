@@ -136,14 +136,13 @@ function StudentDashboard() {
       // Tạo FormData để upload file
       const formData = new FormData();
       // Các trường dữ liệu khác
-      formData.append('opportunity_id', opportunityId);
-      formData.append('student_user_id', studentUserId);
+      formData.append('opportunity_id', opportunityId.toString());
+      formData.append('student_user_id', studentUserId.toString());
       // Tệp CV
-      formData.append('cv_file', cvFile); // Giả định backend nhận trường là 'cv_file'
+      formData.append('cv_file', cvFile); 
       
       await api.submitApplication(formData);
       
-      // Tải lại danh sách hồ sơ sau khi nộp thành công
       await fetchAllData(); 
       alert('Nộp hồ sơ thành công!');
     } catch (err) {
@@ -167,10 +166,10 @@ function StudentDashboard() {
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
       
       <div className="card" style={{ padding: 15, marginBottom: 20, maxWidth: 600 }}>
-        <p className="label" style={{ marginBottom: 8 }}>Tệp CV (PDF, DOCX)</p>
+        <p className="label" style={{ marginBottom: 8 }}>Tệp CV (PDF)</p>
         <input 
-          type="file" // Đổi thành input type="file"
-          accept=".pdf,.doc,.docx" // Giới hạn loại tệp
+          type="file" 
+          accept=".pdf" 
           onChange={e => setCvFile(e.target.files[0])} // Lấy tệp đầu tiên
           className="input"
           style={{ padding: '8px' }} // Điều chỉnh padding cho input file
