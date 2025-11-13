@@ -7,7 +7,6 @@ import { getStoredUser } from '../utils/auth.js';
 
 // --- HELPER COMPONENTS ---
 
-// Component Placeholder: Card thống kê nhanh (Giữ nguyên)
 const StatCard = ({ title, value, icon, color }) => (
     <div className="stat-card" data-color={color || '#3b82f6'}>
         <div>
@@ -20,7 +19,6 @@ const StatCard = ({ title, value, icon, color }) => (
     </div>
 );
 
-// Component Placeholder: Thanh Sidebar (Giữ nguyên)
 const Sidebar = ({ activeTab, onSelectTab }) => {
     const navItems = [
         { id: 'overview', name: 'Tổng quan', icon: '📊' },
@@ -48,7 +46,6 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
     );
 };
 
-// Component Modal Thêm/Sửa Cơ hội (Giữ nguyên)
 const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -144,7 +141,6 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
     );
 };
 
-// NEW Component: Modal Xem Chi tiết Cơ hội
 const OpportunityDetailModal = ({ opportunityId, onClose }) => {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -189,15 +185,12 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                             <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0 0 0' }}>{detail.description}</p>
                         </div>
 
-                        {/* Thêm các thông tin chi tiết khác từ API nếu có */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '14px' }}>
                             <div><strong>ID Cơ hội:</strong> {detail.id}</div>
                             <div><strong>Người tạo:</strong> User #{detail.created_by_user_id || 'N/A'}</div>
                             <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
-                            {/* ... Các trường khác như requirements, location, etc. có thể thêm vào đây */}
                         </div>
 
-                        {/* Có thể thêm phần quản lý tiêu chí ở đây nếu cần */}
                     </div>
                 )}
             </div>
@@ -206,15 +199,8 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
 };
 
 
-// Component Placeholder: Bảng Quản lý Cơ hội
 const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
     
-    // Hàm xử lý việc chuyển đổi trạng thái (Đóng/Mở)
-    const handleToggleStatus = (opportunityId, currentStatus) => {
-        const newStatus = currentStatus === 'open' ? 'closed' : 'open';
-        onOpportunityAction('toggleStatus', opportunityId, newStatus);
-    };
-
     // Hàm xử lý việc xóa cơ hội
     const handleDelete = (opportunityId, title) => {
         if (window.confirm(`Bạn có chắc chắn muốn xóa cơ hội: "${title}"?`)) {
@@ -254,7 +240,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                     <td>{opp.title}</td>
                                     <td>{opp.applications_count || 0}</td> 
                                     <td style={{ display: 'flex', gap: '8px' }}>
-                                        {/* Nút Xem chi tiết */}
                                         <button 
                                             onClick={() => handleViewDetail(opp.id)} 
                                             className="action-link"
@@ -291,7 +276,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
     );
 };
 
-// Component Placeholder: Bảng Ứng viên (Giữ nguyên)
+// Component Placeholder: Bảng Ứng viên 
 const ApplicantsList = ({ applications, onApplicationAction }) => {
     
     const getStatusStyle = (status) => {
@@ -337,7 +322,6 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
                                 const statusInfo = getStatusStyle(app.status);
                                 return (
                                     <tr key={app.id}>
-                                        {/* Giả định API trả về student_user_id và có thể là student_name/opportunity_title */}
                                         <td>{app.student_name || `Ứng viên #${app.student_user_id}`}</td>
                                         <td>{app.opportunity_title || `Cơ hội #${app.opportunity_id}`}</td>
                                         <td>
@@ -355,7 +339,6 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
                                             </span>
                                         </td>
                                         <td style={{ display: 'flex', gap: '10px' }}>
-                                            {/* Nút Xem chi tiết CV (Giả định tài liệu có thể lấy qua app.documents[0].document_url) */}
                                             <a 
                                                 href={app.documents?.[0]?.document_url || '#'} 
                                                 target="_blank" 
@@ -366,7 +349,6 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
                                                 Xem CV
                                             </a>
                                             
-                                            {/* Chỉ hiển thị nút duyệt khi trạng thái là 'pending' hoặc 'submitted' */}
                                             {(app.status === 'pending' || app.status === 'submitted') ? (
                                                 <>
                                                     <button 
@@ -490,7 +472,7 @@ const ProviderDashboard = () => {
                 alert('Đã thêm cơ hội thành công!');
 
             } else if (action === 'saveUpdate') {
-                // 'id' là opp.id, 'payload' là { title, description, type } từ modal
+
                 await api.updateOpportunity(id, payload);
                 alert('Đã cập nhật cơ hội thành công!');
 
@@ -499,7 +481,6 @@ const ProviderDashboard = () => {
                 alert('Đã xóa cơ hội thành công!');
             }
 
-            // Dọn dẹp và tải lại dữ liệu sau khi (saveNew, saveUpdate, delete)
             setIsCreateModalOpen(false);
             setEditingOpportunity(null);
             fetchData(); 

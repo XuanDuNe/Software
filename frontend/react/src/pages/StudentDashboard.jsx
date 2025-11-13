@@ -158,11 +158,9 @@ function StudentDashboard() {
       
       {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
-      {/* Phần Tóm tắt Hồ sơ đã nộp */}
       <h3 style={{ marginTop: 24, marginBottom: 10 }}>Hồ sơ của bạn</h3>
       <MyApplicationsSummary applications={applications} opportunities={opportunities} />
 
-      {/* Phần Nộp hồ sơ */}
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
       
       <div className="card" style={{ padding: 15, marginBottom: 20, maxWidth: 600 }}>
@@ -170,9 +168,9 @@ function StudentDashboard() {
         <input 
           type="file" 
           accept=".pdf" 
-          onChange={e => setCvFile(e.target.files[0])} // Lấy tệp đầu tiên
+          onChange={e => setCvFile(e.target.files[0])} 
           className="input"
-          style={{ padding: '8px' }} // Điều chỉnh padding cho input file
+          style={{ padding: '8px' }} 
         />
         <small style={{ color: '#64748b', display: 'block', marginTop: 8 }}>
             Tệp CV hiện tại: <strong>{cvFile ? cvFile.name : 'Chưa chọn tệp'}</strong>
@@ -187,7 +185,6 @@ function StudentDashboard() {
                     <div className="opportunity-title">{opp.title}</div>
                     <div className="opportunity-description">{opp.description}</div>
                     <button
-                        // Thêm disabled nếu chưa chọn file
                         disabled={submitting || applied || !cvFile} 
                         onClick={() => submitApplication(opp.id)}
                         className={`btn ${applied || !cvFile ? 'btn-disabled' : 'btn-secondary'}`}
