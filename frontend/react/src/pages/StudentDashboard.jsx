@@ -1,6 +1,107 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react'; // THAY ĐỔI: Thêm useRef
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+
+// --- NEW HELPER COMPONENT: StudentMessageModal ---
+const StudentMessageModal = ({
+    isOpen,
+    loading,
+    error,
+    messages,
+    input,
+    onInputChange,
+    onSend,
+    onClose,
+    sending,
+    currentUserId,
+    opportunityTitle
+}) => {
+    if (!isOpen) return null;
+    const messagesEndRef = useRef(null); 
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+    
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: 600 }}>
+                <div className="modal-header">
+                    {/* Hiển thị tên cơ hội để biết đang chat về hồ sơ nào */}
+                    <h3>Trò chuyện về {opportunityTitle}</h3>
+                    <button onClick={onClose} className="modal-close-btn">&times;</button>
+                </div>
+                {loading ? (
+                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải tin nhắn...</div>
+                ) : (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                        {error && <div className="alert-error">{error}</div>}
+                        <div style={{ 
+                            maxHeight: 320, 
+                            overflowY: 'auto', 
+                            border: '1px solid #e2e8f0', 
+                            borderRadius: 8, 
+                            padding: 12, 
+                            display: 'grid', 
+                            gap: 10,
+                            alignContent: 'end'
+                        }}>
+                            {messages && messages.length ? messages.map(msg => (
+                                <div
+                                    key={msg.id}
+                                    style={{
+                                        alignSelf: msg.sender_user_id === currentUserId ? 'end' : 'start',
+                                        background: msg.sender_user_id === currentUserId ? '#2563eb' : '#f1f5f9',
+                                        color: msg.sender_user_id === currentUserId ? '#fff' : '#1f2937',
+                                        padding: '8px 12px',
+                                        borderRadius: 12,
+                                        maxWidth: '70%',
+                                        minWidth: '100px',
+                                        marginLeft: msg.sender_user_id === currentUserId ? 'auto' : 'unset',
+                                        marginRight: msg.sender_user_id === currentUserId ? 'unset' : 'auto',
+                                    }}
+                                >
+                                    <div style={{ fontSize: 13, wordBreak: 'break-word' }}>{msg.content}</div>
+                                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
+                                </div>
+                            )) : (
+                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Bắt đầu cuộc trò chuyện.</div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                onSend();
+                            }}
+                            style={{ display: 'flex', gap: 10 }}
+                        >
+                            <input
+                                className="input"
+                                value={input}
+                                onChange={(e) => onInputChange(e.target.value)}
+                                placeholder="Nhập tin nhắn..."
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                type="submit"
+                                className="btn btn-secondary"
+                                disabled={sending || !input.trim()}
+                            >
+                                {sending ? 'Đang gửi...' : 'Gửi'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+// --- END StudentMessageModal ---
+
 
 const OpportunityDetailModal = ({
   isOpen,
@@ -79,8 +180,8 @@ const OpportunityDetailModal = ({
   );
 };
 
-// Component con để hiển thị tóm tắt các hồ sơ đã nộp (Giữ nguyên)
-const MyApplicationsSummary = ({ applications, opportunities }) => {
+// Component con để hiển thị tóm tắt các hồ sơ đã nộp (Sửa đổi để thêm onClick)
+const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => { // THAY ĐỔI: Thêm onOpenChat
     if (!applications || applications.length === 0) {
         return (
             <div className="card" style={{ padding: '15px', textAlign: 'center', color: '#64748b', marginTop: '15px' }}>
@@ -91,7 +192,11 @@ const MyApplicationsSummary = ({ applications, opportunities }) => {
 
     const getOpportunityTitle = (opportunityId) => {
         const opp = opportunities.find(o => o.id === opportunityId);
-        return opp ? opp.title : `[Cơ hội #${opportunityId}]`;
+        // THAY ĐỔI: Lấy opp.title nếu có, nếu không trả về giá trị từ ApplicationReadDetail (lấy từ routes_application.py)
+        if (opp) return opp.title;
+        // Nếu API trả về app có trường opportunity:
+        const appWithOpp = applications.find(app => app.opportunity?.id === opportunityId);
+        return appWithOpp?.opportunity?.title || `[Cơ hội #${opportunityId}]`;
     };
 
     const getStatusStyle = (status) => {
@@ -126,13 +231,44 @@ const MyApplicationsSummary = ({ applications, opportunities }) => {
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
                 {applications.map((app) => {
                     const statusInfo = getStatusStyle(app.status);
+                    const oppTitle = getOpportunityTitle(app.opportunity_id);
+                    // Chỉ cho phép chat khi hồ sơ đã được chấp nhận
+                    const isChatEnabled = app.status === 'accepted'; 
+                    // THAY ĐỔI: Placeholder cho chỉ báo tin nhắn chưa đọc (chấm đỏ)
+                    // Giả định backend trả về trường `has_unread_messages: boolean` trong ApplicationReadDetail
+                    const hasUnread = app.has_unread_messages; 
+                    
                     return (
-                        <div key={app.id} className="card" style={{ borderLeft: `5px solid ${statusInfo.color}`, padding: '15px' }}>
+                        <div 
+                            key={app.id} 
+                            className="card" 
+                            style={{ 
+                                borderLeft: `5px solid ${statusInfo.color}`, 
+                                padding: '15px', 
+                                cursor: isChatEnabled ? 'pointer' : 'default', 
+                                position: 'relative' 
+                            }}
+                            // THAY ĐỔI: Thêm onClick để mở chat
+                            onClick={() => isChatEnabled && onOpenChat(app, oppTitle)}
+                        >
+                            {/* THAY ĐỔI: Chỉ báo tin nhắn chưa đọc (chấm đỏ) */}
+                            {isChatEnabled && hasUnread && (
+                                <span style={{
+                                    position: 'absolute',
+                                    top: '10px',
+                                    right: '10px',
+                                    width: '10px',
+                                    height: '10px',
+                                    backgroundColor: '#ef4444',
+                                    borderRadius: '50%',
+                                    zIndex: 10
+                                }}></span>
+                            )}
                             <div style={{ fontWeight: 600, marginBottom: '5px' }}>
-                                {getOpportunityTitle(app.opportunity_id)}
+                                {oppTitle}
                             </div>
                             <div style={{ fontSize: 13, color: '#64748b', marginBottom: '10px' }}>
-                                Nộp ngày: {new Date(app.created_at).toLocaleDateString()}
+                                Nộp ngày: {new Date(app.submitted_at).toLocaleDateString()}
                             </div>
                             <span 
                                 style={{ 
@@ -146,6 +282,11 @@ const MyApplicationsSummary = ({ applications, opportunities }) => {
                             >
                                 Trạng thái: {getStatusText(app.status)}
                             </span>
+                            {isChatEnabled && (
+                                <div style={{ marginTop: 10, fontSize: 12, color: '#3b82f6', fontWeight: 600 }}>
+                                    (Click để nhắn tin với Provider)
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -167,6 +308,20 @@ function StudentDashboard() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
 
+  // THAY ĐỔI: State mới cho Chat Modal
+  const [messageModalState, setMessageModalState] = useState({ 
+    isOpen: false, 
+    loading: false, 
+    error: '', 
+    conversation: null, 
+    messages: [], 
+    input: '', 
+    sending: false, 
+    application: null,
+    opportunityTitle: ''
+  });
+
+
   const user = getStoredUser();
   const studentUserId = user?.id;
 
@@ -177,7 +332,9 @@ function StudentDashboard() {
             api.listMyApplications(studentUserId),
             api.listOpportunities()
         ]);
+        // listMyApplications trả về ApplicationReadDetail, đã có thông tin opp
         setApplications(apps || []);
+        // opps là list OpportunityReadWithCriteria, dùng để hiển thị danh sách cơ hội và getOpportunityDetail
         setOpportunities(opps || []);
     } catch (err) {
         setError(err.message || 'Lỗi tải dữ liệu');
@@ -257,6 +414,101 @@ function StudentDashboard() {
     }
   }
 
+  // THAY ĐỔI: Chức năng Chat cho Student
+  const openMessageModal = async (application, opportunityTitle) => {
+    if (application.status !== 'accepted') {
+        alert('Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.');
+        return;
+    }
+    
+    // Provider's user ID is stored in the application object
+    const providerUserId = application.provider_user_id;
+
+    setMessageModalState({ 
+        isOpen: true, 
+        loading: true, 
+        error: '', 
+        conversation: null, 
+        messages: [], 
+        input: '', 
+        sending: false, 
+        application,
+        opportunityTitle
+    });
+    
+    try {
+        // GỌI API TẠO CONVERSATION MỚI (có kèm application.id)
+        const conversation = await api.createConversation(
+            studentUserId, 
+            providerUserId,
+            application.id // <--- Pass Application ID
+        );
+        const msgs = await api.listMessages(conversation.id);
+        setMessageModalState(prev => ({ 
+            ...prev, 
+            loading: false, 
+            conversation, 
+            messages: msgs || [],
+            error: ''
+        }));
+    } catch (err) {
+        setMessageModalState(prev => ({ 
+            ...prev, 
+            loading: false, 
+            error: err.message || 'Không thể tải hội thoại' 
+        }));
+    }
+  };
+
+  const closeMessageModal = () => {
+    setMessageModalState({ 
+        isOpen: false, 
+        loading: false, 
+        error: '', 
+        conversation: null, 
+        messages: [], 
+        input: '', 
+        sending: false, 
+        application: null,
+        opportunityTitle: ''
+    });
+  };
+
+  const handleMessageInputChange = (value) => {
+    setMessageModalState(prev => ({ ...prev, input: value }));
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageModalState.conversation || !messageModalState.input.trim()) {
+        return;
+    }
+    
+    // Đảm bảo studentUserId là người gửi
+    const providerUserId = messageModalState.application.provider_user_id;
+
+    setMessageModalState(prev => ({ ...prev, sending: true, error: '' }));
+    try {
+        const msg = await api.sendMessage({
+            conversation_id: messageModalState.conversation.id,
+            sender_user_id: studentUserId, // Student gửi
+            receiver_user_id: providerUserId, // Provider nhận
+            content: messageModalState.input.trim()
+        });
+        
+        // Cập nhật messages
+        setMessageModalState(prev => ({
+            ...prev,
+            sending: false,
+            input: '',
+            messages: [...prev.messages, msg]
+        }));
+
+    } catch (err) {
+        setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || 'Không thể gửi tin nhắn' }));
+    }
+  };
+
+
   return (
     <div className="container p-6">
       <h2>Trang sinh viên</h2>
@@ -264,7 +516,11 @@ function StudentDashboard() {
       {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       <h3 style={{ marginTop: 24, marginBottom: 10 }}>Hồ sơ của bạn</h3>
-      <MyApplicationsSummary applications={applications} opportunities={opportunities} />
+      <MyApplicationsSummary 
+        applications={applications} 
+        opportunities={opportunities} 
+        onOpenChat={openMessageModal} // THAY ĐỔI: Truyền hàm chat vào
+      />
 
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
       
@@ -320,6 +576,21 @@ function StudentDashboard() {
         hasApplied={selectedOpportunityId ? hasApplied(selectedOpportunityId) : false}
         submitting={submitting}
         hasCvFile={Boolean(cvFile)}
+      />
+      
+      {/* THAY ĐỔI: Render Chat Modal */}
+      <StudentMessageModal 
+          isOpen={messageModalState.isOpen} 
+          loading={messageModalState.loading} 
+          error={messageModalState.error} 
+          messages={messageModalState.messages} 
+          input={messageModalState.input} 
+          onInputChange={handleMessageInputChange} 
+          onSend={handleSendMessage} 
+          onClose={closeMessageModal} 
+          sending={messageModalState.sending} 
+          currentUserId={studentUserId}
+          opportunityTitle={messageModalState.opportunityTitle}
       />
     </div>
   );

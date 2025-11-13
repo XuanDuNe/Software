@@ -755,7 +755,7 @@ const ProviderDashboard = () => {
         }
         setMessageModalState({ isOpen: true, loading: true, error: '', conversation: null, messages: [], input: '', sending: false, application });
         try {
-            const conversation = await api.createConversation(providerUserId, application.student_user_id);
+            const conversation = await api.createConversation(providerUserId, application.student_user_id,application.id);// THAY ĐỔI: Truyền thêm application.id
             const msgs = await api.listMessages(conversation.id);
             setMessageModalState(prev => ({ ...prev, loading: false, conversation, messages: msgs || [] }));
         } catch (err) {

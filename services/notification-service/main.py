@@ -3,6 +3,7 @@ from database import engine, get_session
 from routes import router as api_router
 from websocket_manager import manager
 from sqlmodel import SQLModel 
+from sqlalchemy import text
 
 async def get_user_from_token(token: str):
     if token == "invalid-token":
@@ -18,6 +19,19 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup():
     try:
+        with engine.begin() as conn:
+            # 1. Thực thi ALTER TABLE để thêm cột application_id (nếu chưa có)
+            try:
+                conn.execute(text("ALTER TABLE conversation ADD COLUMN application_id INTEGER"))
+                conn.execute(text("CREATE INDEX ix_conversation_application_id ON conversation (application_id)"))
+                print("Migration: Added application_id column to conversation table.")
+            except Exception as e:
+                # Bỏ qua lỗi nếu cột đã tồn tại (lỗi thường gặp khi service restart)
+                if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                     print("Migration: application_id column already exists. Skipping.")
+                else:
+                     # In ra các lỗi khác
+                     print(f"Migration Error: {e}")
         SQLModel.metadata.create_all(bind=engine)
     except Exception as e:
         print(f"DB init error: {e}")

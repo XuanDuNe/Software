@@ -7,6 +7,7 @@ class ConversationRead(SQLModel):
     id: int
     participant1_user_id: int
     participant2_user_id: int
+    application_id: Optional[int] # THAY ĐỔI: Thêm application_id
     created_at: datetime
 
 class MessageRead(SQLModel):
@@ -30,6 +31,7 @@ class NotificationRead(SQLModel):
 class ConversationCreate(BaseModel):
     participant1_user_id: int
     participant2_user_id: int
+    application_id: Optional[int] = None # THAY ĐỔI: Thêm application_id
 
 class MessageCreate(BaseModel):
     conversation_id: int

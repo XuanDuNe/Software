@@ -104,11 +104,12 @@ export const api = {
   }),
 
   // Conversations & messaging
-  createConversation: (participant1UserId, participant2UserId) => request('/notification/conversations', {
+  createConversation: (participant1UserId, participant2UserId, applicationId) => request('/notification/conversations', { // THAY ĐỔI: Thêm applicationId
     method: 'POST',
     body: JSON.stringify({
       participant1_user_id: participant1UserId,
-      participant2_user_id: participant2UserId
+      participant2_user_id: participant2UserId,
+      application_id: applicationId
     })
   }),
   listMessages: (conversationId) => request(`/notification/messages/${conversationId}`),

@@ -20,6 +20,7 @@ def create_conversation(
         select(models.Conversation)
         .where(models.Conversation.participant1_user_id == convo_in.participant1_user_id)
         .where(models.Conversation.participant2_user_id == convo_in.participant2_user_id)
+        .where(models.Conversation.application_id == convo_in.application_id) # THAY ĐỔI: Kiểm tra application_id
     ).first()
     if existing:
         return existing
@@ -28,6 +29,7 @@ def create_conversation(
         select(models.Conversation)
         .where(models.Conversation.participant1_user_id == convo_in.participant2_user_id)
         .where(models.Conversation.participant2_user_id == convo_in.participant1_user_id)
+        .where(models.Conversation.application_id == convo_in.application_id) # THAY ĐỔI: Kiểm tra application_id
     ).first()
     if existing_reverse:
         return existing_reverse

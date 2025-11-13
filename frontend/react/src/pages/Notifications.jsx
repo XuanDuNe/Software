@@ -6,7 +6,6 @@ function Notifications() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
 
-  // Hàm helper để đảm bảo dữ liệu luôn là một mảng
   const setSafeItems = (list) => {
     setItems(Array.isArray(list) ? list : []);
   };
@@ -18,7 +17,7 @@ function Notifications() {
         const user = getStoredUser();
         if (!user?.id) return;
         const list = await api.listNotifications(user.id);
-        if (mounted) setSafeItems(list); // ĐÃ SỬA: Dùng setSafeItems
+        if (mounted) setSafeItems(list); 
       } catch (err) {
         if (mounted) setError(err.message || 'Lỗi tải thông báo');
       }
@@ -31,7 +30,7 @@ function Notifications() {
       await api.markNotificationRead(id);
       const user = getStoredUser();
       const list = await api.listNotifications(user.id);
-      setSafeItems(list); // ĐÃ SỬA: Dùng setSafeItems
+      setSafeItems(list); 
     } catch (err) {
       setError(err.message || 'Lỗi cập nhật');
     }
@@ -42,7 +41,6 @@ function Notifications() {
       <h2>Thông báo</h2>
       {error && <div className="alert-error">{error}</div>}
       <div className="grid gap-4">
-        {/* ĐÃ SỬA: Đảm bảo items là mảng trước khi gọi .map */}
         {(Array.isArray(items) ? items : []).map(n => ( 
           <div key={n.id} className="notification-item">
             <div>{n.content}</div>

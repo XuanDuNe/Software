@@ -1,16 +1,22 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime
+from sqlalchemy import UniqueConstraint
 
 class Conversation(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     
     participant1_user_id: int = Field(index=True)
     participant2_user_id: int = Field(index=True)
-    
+    application_id: Optional[int] = Field(default=None, index=True) # THAY ĐỔI
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     messages: list["Message"] = Relationship(back_populates="conversation")
+    # THAY ĐỔI: Đảm bảo chỉ có 1 cuộc trò chuyện giữa 2 người dùng cho 1 hồ sơ
+    __table_args__ = (
+        UniqueConstraint("participant1_user_id", "participant2_user_id", "application_id", name="unique_conversation_per_app"),
+    )
 
 class Message(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -27,7 +33,7 @@ class Message(SQLModel, table=True):
 
 class Notification(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(index=True) # Người nhận
+    user_id: int = Field(index=True) 
     
     content: str
     read_status: bool = Field(default=False)
