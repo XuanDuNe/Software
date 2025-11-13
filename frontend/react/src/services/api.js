@@ -66,6 +66,7 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(payload)
   }),
+  getStudentProfileById: (userId) => request(`/user/student/profile/${userId}`),
 
   // Student/application flows
   listMyApplications: (userId) => request(`/application/student/${userId}`),
@@ -100,6 +101,20 @@ export const api = {
   updateApplicationStatus: (appId, status) => request(`/provider_app/${appId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status })
+  }),
+
+  // Conversations & messaging
+  createConversation: (participant1UserId, participant2UserId) => request('/notification/conversations', {
+    method: 'POST',
+    body: JSON.stringify({
+      participant1_user_id: participant1UserId,
+      participant2_user_id: participant2UserId
+    })
+  }),
+  listMessages: (conversationId) => request(`/notification/messages/${conversationId}`),
+  sendMessage: (payload) => request('/notification/messages', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   }),
 
   // Notifications service

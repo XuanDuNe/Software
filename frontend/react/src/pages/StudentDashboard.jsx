@@ -2,6 +2,83 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 
+const OpportunityDetailModal = ({
+  isOpen,
+  detail,
+  loading,
+  error,
+  onClose,
+  onApply,
+  hasApplied,
+  submitting,
+  hasCvFile
+}) => {
+  if (!isOpen) return null;
+
+  const renderCriteriaList = (label, items) => (
+    <div style={{ fontSize: 14 }}>
+      <strong>{label}:</strong> {items && items.length ? items.join(', ') : 'Không yêu cầu cụ thể'}
+    </div>
+  );
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: 720 }}>
+        <div className="modal-header">
+          <h3>Thông tin cơ hội</h3>
+          <button className="modal-close-btn" onClick={onClose}>&times;</button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 16, textAlign: 'center' }}>Đang tải dữ liệu...</div>
+        ) : error ? (
+          <div className="alert-error">{error}</div>
+        ) : detail ? (
+          <div style={{ display: 'grid', gap: 16 }}>
+            <div>
+              <h2 style={{ margin: '0 0 8px 0' }}>{detail.title}</h2>
+              <span style={{ background: '#e0ecff', padding: '4px 8px', borderRadius: 6, fontSize: 12, color: '#1d4ed8' }}>
+                {detail.type}
+              </span>
+            </div>
+            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12 }}>
+              <strong>Mô tả</strong>
+              <p style={{ marginTop: 8, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{detail.description}</p>
+            </div>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+              <div><strong>ID cơ hội:</strong> {detail.id}</div>
+              <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
+            </div>
+            {detail.criteria && (
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 16 }}>
+                <h4 style={{ margin: '0 0 12px 0' }}>Tiêu chí tuyển chọn</h4>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <div><strong>GPA tối thiểu:</strong> {detail.criteria.gpa_min ?? 'Không yêu cầu'}</div>
+                  {detail.criteria.deadline && (
+                    <div><strong>Hạn nộp:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
+                  )}
+                  {renderCriteriaList('Kỹ năng', detail.criteria.skills)}
+                  {renderCriteriaList('Tài liệu yêu cầu', detail.criteria.required_documents)}
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
+              <button
+                className={`btn ${hasApplied || !hasCvFile ? 'btn-disabled' : 'btn-secondary'}`}
+                onClick={onApply}
+                disabled={submitting || hasApplied || !hasCvFile}
+              >
+                {hasApplied ? 'Bạn đã nộp hồ sơ' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
+              </button>
+              {!hasCvFile && <span style={{ fontSize: 13, color: '#ef4444' }}>Vui lòng tải CV trước khi nộp.</span>}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
 // Component con để hiển thị tóm tắt các hồ sơ đã nộp (Giữ nguyên)
 const MyApplicationsSummary = ({ applications, opportunities }) => {
     if (!applications || applications.length === 0) {
@@ -85,6 +162,10 @@ function StudentDashboard() {
   // Thay thế cvUrl bằng cvFile
   const [cvFile, setCvFile] = useState(null); 
   const [submitting, setSubmitting] = useState(false);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
+  const [selectedOpportunityDetail, setSelectedOpportunityDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState('');
 
   const user = getStoredUser();
   const studentUserId = user?.id;
@@ -113,6 +194,27 @@ function StudentDashboard() {
   const hasApplied = (opportunityId) => {
     return applications.some(app => app.opportunity_id === opportunityId);
   };
+
+  async function openOpportunityDetail(opportunityId) {
+    setSelectedOpportunityId(opportunityId);
+    setDetailLoading(true);
+    setDetailError('');
+    setSelectedOpportunityDetail(null);
+    try {
+      const detail = await api.getOpportunity(opportunityId);
+      setSelectedOpportunityDetail(detail);
+    } catch (err) {
+      setDetailError(err.message || 'Không thể tải thông tin cơ hội');
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
+  function closeOpportunityDetail() {
+    setSelectedOpportunityId(null);
+    setSelectedOpportunityDetail(null);
+    setDetailError('');
+  }
 
   async function submitApplication(opportunityId) {
     if (!studentUserId) return;
@@ -145,6 +247,9 @@ function StudentDashboard() {
       
       await fetchAllData(); 
       alert('Nộp hồ sơ thành công!');
+      if (selectedOpportunityId === opportunityId) {
+        closeOpportunityDetail();
+      }
     } catch (err) {
       setError(err.message || 'Nộp hồ sơ thất bại');
     } finally {
@@ -181,12 +286,20 @@ function StudentDashboard() {
         {(opportunities || []).map((opp) => {
             const applied = hasApplied(opp.id);
             return (
-                <div key={opp.id} className="opportunity-card">
+                <div
+                  key={opp.id}
+                  className="opportunity-card"
+                  onClick={() => openOpportunityDetail(opp.id)}
+                  style={{ cursor: 'pointer' }}
+                >
                     <div className="opportunity-title">{opp.title}</div>
                     <div className="opportunity-description">{opp.description}</div>
                     <button
                         disabled={submitting || applied || !cvFile} 
-                        onClick={() => submitApplication(opp.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          submitApplication(opp.id);
+                        }}
                         className={`btn ${applied || !cvFile ? 'btn-disabled' : 'btn-secondary'}`}
                         style={{ marginTop: 8 }}
                     >
@@ -196,6 +309,18 @@ function StudentDashboard() {
             );
         })}
       </div>
+
+      <OpportunityDetailModal
+        isOpen={selectedOpportunityId !== null}
+        detail={selectedOpportunityDetail}
+        loading={detailLoading}
+        error={detailError}
+        onClose={closeOpportunityDetail}
+        onApply={() => submitApplication(selectedOpportunityId)}
+        hasApplied={selectedOpportunityId ? hasApplied(selectedOpportunityId) : false}
+        submitting={submitting}
+        hasCvFile={Boolean(cvFile)}
+      />
     </div>
   );
 }

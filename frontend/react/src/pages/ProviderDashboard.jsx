@@ -281,6 +281,157 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
     );
 };
 
+const StudentProfileModal = ({ isOpen, loading, error, profile, application, onClose }) => {
+    if (!isOpen) return null;
+    const docs = application?.documents || [];
+    const cvDoc = docs.find(doc => (doc.document_type || '').toLowerCase() === 'cv') || docs[0];
+    const cvUrl = cvDoc?.document_url ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`) : null;
+    const skills = profile?.skills ? profile.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: 640 }}>
+                <div className="modal-header">
+                    <h3>Hồ sơ ứng viên</h3>
+                    <button onClick={onClose} className="modal-close-btn">&times;</button>
+                </div>
+                {loading ? (
+                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải hồ sơ...</div>
+                ) : error ? (
+                    <div className="alert-error">{error}</div>
+                ) : profile ? (
+                    <div style={{ display: 'grid', gap: 16 }}>
+                        <div>
+                            <h2 style={{ margin: '0 0 8px 0' }}>{profile.full_name || `Ứng viên #${application?.student_user_id}`}</h2>
+                            <div style={{ fontSize: 14, color: '#64748b' }}>{profile.email || 'Chưa cập nhật email'}</div>
+                            {profile.phone && <div style={{ fontSize: 14, color: '#64748b' }}>Điện thoại: {profile.phone}</div>}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                            <div><strong>GPA:</strong> {profile.gpa ?? 'Chưa cập nhật'}</div>
+                            <div><strong>Trình độ:</strong> {profile.education_level || 'Chưa cập nhật'}</div>
+                            <div><strong>Chuyên ngành:</strong> {profile.major || 'Chưa cập nhật'}</div>
+                        </div>
+                        <div>
+                            <strong>Kỹ năng:</strong>
+                            <div style={{ marginTop: 8 }}>
+                                {skills.length ? skills.map((skill, idx) => (
+                                    <span key={idx} style={{ background: '#e0ecff', color: '#1d4ed8', padding: '4px 8px', borderRadius: 6, marginRight: 6, fontSize: 12 }}>{skill}</span>
+                                )) : 'Chưa cập nhật'}
+                            </div>
+                        </div>
+                        {profile.achievements && (
+                            <div>
+                                <strong>Thành tích</strong>
+                                <p style={{ marginTop: 6, background: '#f8fafc', padding: 12, borderRadius: 10 }}>{profile.achievements}</p>
+                            </div>
+                        )}
+                        {profile.research_interests && (
+                            <div>
+                                <strong>Quan tâm nghiên cứu</strong>
+                                <p style={{ marginTop: 6 }}>{profile.research_interests}</p>
+                            </div>
+                        )}
+                        {profile.thesis_topic && (
+                            <div>
+                                <strong>Đề tài luận văn</strong>
+                                <p style={{ marginTop: 6 }}>{profile.thesis_topic}</p>
+                            </div>
+                        )}
+                        <div>
+                            <strong>Tài liệu đã nộp</strong>
+                            <div style={{ marginTop: 8 }}>
+                                {cvUrl ? (
+                                    <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">
+                                        Xem CV
+                                    </a>
+                                ) : (
+                                    <span style={{ fontSize: 13, color: '#94a3b8' }}>Chưa có CV được tải lên</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>Không tìm thấy dữ liệu hồ sơ.</div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const MessageModal = ({
+    isOpen,
+    loading,
+    error,
+    messages,
+    input,
+    onInputChange,
+    onSend,
+    onClose,
+    sending,
+    partnerName,
+    currentUserId
+}) => {
+    if (!isOpen) return null;
+    return (
+        <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: 600 }}>
+                <div className="modal-header">
+                    <h3>Nhắn tin với {partnerName}</h3>
+                    <button onClick={onClose} className="modal-close-btn">&times;</button>
+                </div>
+                {loading ? (
+                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải tin nhắn...</div>
+                ) : (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                        {error && <div className="alert-error">{error}</div>}
+                        <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, display: 'grid', gap: 10 }}>
+                            {messages && messages.length ? messages.map(msg => (
+                                <div
+                                    key={msg.id}
+                                    style={{
+                                        alignSelf: msg.sender_user_id === currentUserId ? 'end' : 'start',
+                                        background: msg.sender_user_id === currentUserId ? '#2563eb' : '#f1f5f9',
+                                        color: msg.sender_user_id === currentUserId ? '#fff' : '#1f2937',
+                                        padding: '8px 12px',
+                                        borderRadius: 12,
+                                        maxWidth: '70%'
+                                    }}
+                                >
+                                    <div style={{ fontSize: 13 }}>{msg.content}</div>
+                                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
+                                </div>
+                            )) : (
+                                <div style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có tin nhắn nào.</div>
+                            )}
+                        </div>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                onSend();
+                            }}
+                            style={{ display: 'flex', gap: 10 }}
+                        >
+                            <input
+                                className="input"
+                                value={input}
+                                onChange={(e) => onInputChange(e.target.value)}
+                                placeholder="Nhập tin nhắn..."
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                type="submit"
+                                className="btn btn-secondary"
+                                disabled={sending || !input.trim()}
+                            >
+                                {sending ? 'Đang gửi...' : 'Gửi'}
+                            </button>
+                        </form>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 
 const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
     
@@ -372,7 +523,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
 };
 
 // Component Placeholder: Bảng Ứng viên 
-const ApplicantsList = ({ applications, opportunities, onApplicationAction }) => {
+const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {}, onMessage = () => {}, onApplicationAction }) => {
     
     const getStatusStyle = (status) => {
         switch (status) {
@@ -471,27 +622,42 @@ const ApplicantsList = ({ applications, opportunities, onApplicationAction }) =>
                                             ) : (
                                                 <span style={{ fontSize: 12, color: '#94a3b8', alignSelf: 'center' }}>Chưa có CV</span>
                                             )}
-                                            
-                                            {(app.status === 'pending' || app.status === 'submitted') ? (
-                                                <>
-                                                    <button 
-                                                        onClick={() => handleAction(app.id, 'accepted')} 
-                                                        className="btn btn-sm"
-                                                        style={{ backgroundColor: '#10b981', color: 'white' }}
-                                                    >
-                                                        Chấp nhận
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => handleAction(app.id, 'rejected')} 
-                                                        className="btn btn-sm btn-disabled"
-                                                        style={{ backgroundColor: '#ef4444', color: 'white' }}
-                                                    >
-                                                        Từ chối
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <span style={{ color: '#64748b', fontSize: '12px', alignSelf: 'center' }}>Đã xử lý</span>
-                                            )}
+                                            <button
+                                                onClick={() => onViewProfile(app)}
+                                                className="btn btn-sm"
+                                                style={{ backgroundColor: '#475569', color: '#fff' }}
+                                            >
+                                                Xem hồ sơ
+                                            </button>
+                                            <button
+                                                onClick={() => onMessage(app)}
+                                                className="btn btn-sm"
+                                                style={{ backgroundColor: '#3b82f6', color: '#fff' }}
+                                                disabled={app.status !== 'accepted'}
+                                            >
+                                                Nhắn tin
+                                            </button>
+                                             
+                                             {(app.status === 'pending' || app.status === 'submitted') ? (
+                                                 <>
+                                                     <button 
+                                                         onClick={() => handleAction(app.id, 'accepted')} 
+                                                         className="btn btn-sm"
+                                                         style={{ backgroundColor: '#10b981', color: 'white' }}
+                                                     >
+                                                         Chấp nhận
+                                                     </button>
+                                                     <button 
+                                                         onClick={() => handleAction(app.id, 'rejected')} 
+                                                         className="btn btn-sm btn-disabled"
+                                                         style={{ backgroundColor: '#ef4444', color: 'white' }}
+                                                     >
+                                                         Từ chối
+                                                     </button>
+                                                 </>
+                                             ) : (
+                                                 <span style={{ color: '#64748b', fontSize: '12px', alignSelf: 'center' }}>Đã xử lý</span>
+                                             )}
                                         </td>
                                     </tr>
                                 );
@@ -516,6 +682,8 @@ const ProviderDashboard = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingOpportunity, setEditingOpportunity] = useState(null);
     const [selectedOpportunityId, setSelectedOpportunityId] = useState(null); 
+    const [profileModalState, setProfileModalState] = useState({ isOpen: false, loading: false, error: '', profile: null, application: null });
+    const [messageModalState, setMessageModalState] = useState({ isOpen: false, loading: false, error: '', conversation: null, messages: [], input: '', sending: false, application: null });
     
     const user = getStoredUser();
     const providerUserId = user?.id;
@@ -557,10 +725,72 @@ const ProviderDashboard = () => {
         try {
             await api.updateApplicationStatus(appId, status);
             alert(`Đã cập nhật trạng thái hồ sơ #${appId} thành ${status}.`);
-            // Tải lại dữ liệu sau khi duyệt thành công
             fetchData();
         } catch (err) {
             setError(err.message || `Lỗi khi cập nhật trạng thái hồ sơ.`);
+        }
+    };
+
+    const openProfileModal = async (application) => {
+        setProfileModalState({ isOpen: true, loading: true, error: '', profile: null, application });
+        try {
+            let profile = application.student_profile;
+            if (!profile) {
+                profile = await api.getStudentProfileById(application.student_user_id);
+            }
+            setProfileModalState(prev => ({ ...prev, loading: false, profile }));
+        } catch (err) {
+            setProfileModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hồ sơ' }));
+        }
+    };
+
+    const closeProfileModal = () => {
+        setProfileModalState({ isOpen: false, loading: false, error: '', profile: null, application: null });
+    };
+
+    const openMessageModal = async (application) => {
+        if (application.status !== 'accepted') {
+            alert('Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.');
+            return;
+        }
+        setMessageModalState({ isOpen: true, loading: true, error: '', conversation: null, messages: [], input: '', sending: false, application });
+        try {
+            const conversation = await api.createConversation(providerUserId, application.student_user_id);
+            const msgs = await api.listMessages(conversation.id);
+            setMessageModalState(prev => ({ ...prev, loading: false, conversation, messages: msgs || [] }));
+        } catch (err) {
+            setMessageModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hội thoại' }));
+        }
+    };
+
+    const closeMessageModal = () => {
+        setMessageModalState({ isOpen: false, loading: false, error: '', conversation: null, messages: [], input: '', sending: false, application: null });
+    };
+
+    const handleMessageInputChange = (value) => {
+        setMessageModalState(prev => ({ ...prev, input: value }));
+    };
+
+    const handleSendMessage = async () => {
+        if (!messageModalState.conversation || !messageModalState.input.trim()) {
+            return;
+        }
+        setMessageModalState(prev => ({ ...prev, sending: true, error: '' }));
+        try {
+            const msg = await api.sendMessage({
+                conversation_id: messageModalState.conversation.id,
+                sender_user_id: providerUserId,
+                receiver_user_id: messageModalState.application.student_user_id,
+                content: messageModalState.input.trim()
+            });
+            setMessageModalState(prev => ({
+                ...prev,
+                sending: false,
+                input: '',
+                messages: [...prev.messages, msg]
+            }));
+        } catch (err) {
+            setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || 'Không thể gửi tin nhắn' }));
         }
     };
 
@@ -671,6 +901,8 @@ const ProviderDashboard = () => {
                     <ApplicantsList 
                         applications={applications} 
                         opportunities={opportunities}
+                        onViewProfile={openProfileModal}
+                        onMessage={openMessageModal}
                         onApplicationAction={handleApplicationAction}
                     />
                 );
@@ -707,6 +939,29 @@ const ProviderDashboard = () => {
             <OpportunityDetailModal 
                 opportunityId={selectedOpportunityId} 
                 onClose={() => setSelectedOpportunityId(null)} 
+            />
+
+            <StudentProfileModal 
+                isOpen={profileModalState.isOpen} 
+                loading={profileModalState.loading} 
+                error={profileModalState.error} 
+                profile={profileModalState.profile} 
+                application={profileModalState.application} 
+                onClose={closeProfileModal} 
+            />
+
+            <MessageModal 
+                isOpen={messageModalState.isOpen} 
+                loading={messageModalState.loading} 
+                error={messageModalState.error} 
+                messages={messageModalState.messages} 
+                input={messageModalState.input} 
+                onInputChange={handleMessageInputChange} 
+                onSend={handleSendMessage} 
+                onClose={closeMessageModal} 
+                sending={messageModalState.sending} 
+                partnerName={messageModalState.application?.student_profile?.full_name || `Ứng viên #${messageModalState.application?.student_user_id ?? ''}`} 
+                currentUserId={providerUserId} 
             />
         </div>
     );
