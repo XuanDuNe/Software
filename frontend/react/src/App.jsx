@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { getStoredUser } from './utils/auth.js';
 import Notifications from './pages/Notifications.jsx';
 import Matching from './pages/Matching.jsx';
+import Profile from './pages/Profile.jsx';
 import NavBar from './components/NavBar.jsx';
 
 function App() {
@@ -17,6 +18,15 @@ function App() {
     <NavBar />
     <Routes>
       <Route path="/login" element={<Login />} />
+
+      <Route
+        path="/student/profile"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/student/dashboard"

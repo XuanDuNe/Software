@@ -12,6 +12,7 @@ services:
       - notification-service
       - matching-service
       - provider-service
+      - user-service
 
   # Frontend (React, served by NGINX)
   frontend:
@@ -103,12 +104,15 @@ services:
       - DATABASE_URL=postgresql://provider_user:provider_pass@postgres-provider:5432/provider_db
       - APPLICATION_SERVICE_URL=http://application-service:8004
       - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+      - USER_SERVICE_URL=http://user-service:8002
     depends_on:
       postgres-provider:            
         condition: service_healthy
       application-service:
         condition: service_started 
       notification-service:
+        condition: service_started 
+      user-service:
         condition: service_started 
 
   postgres-provider:
@@ -133,3 +137,25 @@ services:
     depends_on:
       provider-service:
         condition: service_started
+
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://user:pass@postgres-user:5432/user_db
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+
+  postgres-user:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d user_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -18,6 +18,7 @@ function NavBar() {
         {user?.role === 'student' && (
           <>
             <Link to="/student/dashboard" className="navbar-link">Student</Link>
+            <Link to="/student/profile" className="navbar-link">Hồ sơ</Link>
             <Link to="/notifications" className="navbar-link">Thông báo</Link>
             <Link to="/matching" className="navbar-link">Gợi ý</Link>
           </>

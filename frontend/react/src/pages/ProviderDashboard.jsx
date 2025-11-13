@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../services/api.js';
+import { api, BASE_URL } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 
 // --- HELPER COMPONENTS ---
@@ -50,6 +50,10 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('program');
+    const [gpaMin, setGpaMin] = useState('');
+    const [skills, setSkills] = useState('');
+    const [requiredDocs, setRequiredDocs] = useState('');
+    const [deadline, setDeadline] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -58,16 +62,22 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
             if (existingData) {
                 setTitle(existingData.title);
                 setDescription(existingData.description);
-                const validType = ['scholarship', 'research_lab', 'program'].includes(existingData.type) 
-                    ? existingData.type 
-                    : 'program';
-                setType(validType);
+                setType(existingData.type || 'program');
+                const crit = existingData.criteria || {};
+                setGpaMin(crit.gpa_min ?? '');
+                setSkills((crit.skills || []).join(', '));
+                setRequiredDocs((crit.required_documents || []).join(', '));
+                setDeadline(crit.deadline ? new Date(crit.deadline).toISOString().slice(0, 10) : '');
             } else {
                 setTitle('');
                 setDescription('');
                 setType('program');
+                setGpaMin('');
+                setSkills('');
+                setRequiredDocs('');
+                setDeadline('');
             }
-            setError(''); 
+            setError('');
         }
     }, [isOpen, existingData]);
 
@@ -78,11 +88,18 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
         setLoading(true);
         setError('');
         try {
-            await onSave({ title, description, type });
+            const criteriaPayload = {
+                gpa_min: gpaMin === '' ? null : Number(gpaMin),
+                skills: skills ? skills.split(',').map((s) => s.trim()).filter(Boolean) : [],
+                required_documents: requiredDocs ? requiredDocs.split(',').map((s) => s.trim()).filter(Boolean) : [],
+                deadline: deadline ? new Date(deadline).toISOString() : null,
+            };
+
+            await onSave({
+                opportunity: { title, description, type },
+                criteria: criteriaPayload,
+            });
             onClose();
-            setTitle('');
-            setDescription('');
-            setType('program');
         } catch (err) {
             setError(err.message || 'Lỗi khi lưu cơ hội.');
         } finally {
@@ -94,13 +111,13 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
         <div className="modal-overlay">
             <div className="modal-content">
                 <div className="modal-header">
-                    <h3>Thêm Cơ hội Mới</h3>
+                    <h3>{existingData ? 'Chỉnh sửa cơ hội' : 'Thêm cơ hội mới'}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {error && <div className="alert-error">{error}</div>}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="form-grid">
                     <div className="form-group">
-                        <label className="label">Tên Cơ hội</label>
+                        <label className="label">Tên cơ hội</label>
                         <input
                             type="text"
                             className="input"
@@ -110,9 +127,9 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                         />
                     </div>
                     <div className="form-group">
-                        <label className="label">Loại Cơ hội</label>
+                        <label className="label">Loại cơ hội</label>
                         <select
-                            className="input" 
+                            className="input"
                             value={type}
                             onChange={(e) => setType(e.target.value)}
                             required
@@ -132,8 +149,54 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                             rows="4"
                         />
                     </div>
+
+                    <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                        <div className="form-group">
+                            <label className="label">GPA tối thiểu</label>
+                            <input
+                                type="number"
+                                className="input"
+                                min="0"
+                                max="4"
+                                step="0.01"
+                                value={gpaMin}
+                                onChange={(e) => setGpaMin(e.target.value)}
+                                placeholder="Ví dụ: 3.0"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="label">Hạn nộp</label>
+                            <input
+                                type="date"
+                                className="input"
+                                value={deadline}
+                                onChange={(e) => setDeadline(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="label">Kỹ năng yêu cầu (phân tách bằng dấu phẩy)</label>
+                        <input
+                            className="input"
+                            value={skills}
+                            onChange={(e) => setSkills(e.target.value)}
+                            placeholder="Python, Machine Learning, ..."
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="label">Tài liệu yêu cầu (phân tách bằng dấu phẩy)</label>
+                        <input
+                            className="input"
+                            value={requiredDocs}
+                            onChange={(e) => setRequiredDocs(e.target.value)}
+                            placeholder="CV, Cover Letter,..."
+                        />
+                    </div>
+
                     <button type="submit" className="btn btn-secondary" disabled={loading}>
-                        {loading ? 'Đang lưu...' : 'Lưu Cơ hội'}
+                        {loading ? 'Đang lưu...' : 'Lưu'}
                     </button>
                 </form>
             </div>
@@ -185,11 +248,31 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                             <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0 0 0' }}>{detail.description}</p>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '14px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', fontSize: '14px' }}>
                             <div><strong>ID Cơ hội:</strong> {detail.id}</div>
-                            <div><strong>Người tạo:</strong> User #{detail.created_by_user_id || 'N/A'}</div>
+                            <div><strong>Loại:</strong> {detail.type}</div>
                             <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
                         </div>
+
+                        {detail.criteria && (
+                            <div style={{ marginTop: '20px', background: '#f8fafc', padding: '15px', borderRadius: '8px' }}>
+                                <h5 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Tiêu chí tuyển chọn</h5>
+                                <div style={{ display: 'grid', gap: '8px', fontSize: '14px' }}>
+                                    {detail.criteria.gpa_min !== null && (
+                                        <div><strong>GPA tối thiểu:</strong> {detail.criteria.gpa_min}</div>
+                                    )}
+                                    {detail.criteria.deadline && (
+                                        <div><strong>Hạn nộp:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
+                                    )}
+                                    <div>
+                                        <strong>Kỹ năng yêu cầu:</strong> {detail.criteria.skills?.length ? detail.criteria.skills.join(', ') : 'Không yêu cầu cụ thể'}
+                                    </div>
+                                    <div>
+                                        <strong>Tài liệu cần nộp:</strong> {detail.criteria.required_documents?.length ? detail.criteria.required_documents.join(', ') : 'CV'}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                     </div>
                 )}
@@ -229,45 +312,57 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                     <table>
                         <thead>
                             <tr>
-                                <th style={{ width: '40%' }}>Tên Cơ hội</th>
-                                <th style={{ width: '15%' }}>Ứng viên</th>
+                                <th style={{ width: '30%' }}>Tên Cơ hội</th>
+                                <th style={{ width: '25%' }}>Tiêu chí</th>
+                                <th style={{ width: '10%' }}>Ứng viên</th>
                                 <th style={{ width: '20%' }}>Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {opportunities.map(opp => (
-                                <tr key={opp.id}>
-                                    <td>{opp.title}</td>
-                                    <td>{opp.applications_count || 0}</td> 
-                                    <td style={{ display: 'flex', gap: '8px' }}>
-                                        <button 
-                                            onClick={() => handleViewDetail(opp.id)} 
-                                            className="action-link"
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-primary)' }}
-                                        >
-                                            Xem
-                                        </button> 
-                                        
-                                        |
-                                        <button 
-                                            onClick={() => onOpportunityAction('edit', opp.id, opp)} 
-                                            className="action-link"
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#f59e0b' }} 
-                                        >
-                                            Sửa
-                                        </button>
-
-                                        |
-                                        <button 
-                                            onClick={() => handleDelete(opp.id, opp.title)} 
-                                            className="action-link delete" 
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                                        >
-                                            Xóa
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {opportunities.map(opp => {
+                                const criteria = opp.criteria || {};
+                                return (
+                                    <tr key={opp.id}>
+                                        <td>
+                                            <div style={{ fontWeight: 600 }}>{opp.title}</div>
+                                            <div style={{ fontSize: 12, color: '#64748b' }}>{opp.type}</div>
+                                        </td>
+                                        <td style={{ fontSize: 13, color: '#475569' }}>
+                                            {criteria.gpa_min ? <div>GPA ≥ {criteria.gpa_min}</div> : <div>Không yêu cầu GPA</div>}
+                                            <div>Kỹ năng: {criteria.skills?.length ? criteria.skills.join(', ') : 'Không yêu cầu cụ thể'}</div>
+                                            {criteria.deadline && (
+                                                <div>Hạn: {new Date(criteria.deadline).toLocaleDateString()}</div>
+                                            )}
+                                        </td>
+                                        <td>{opp.applications_count || 0}</td> 
+                                        <td style={{ display: 'flex', gap: '8px' }}>
+                                            <button 
+                                                onClick={() => handleViewDetail(opp.id)} 
+                                                className="action-link"
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-primary)' }}
+                                            >
+                                                Xem
+                                            </button> 
+                                            |
+                                            <button 
+                                                onClick={() => onOpportunityAction('edit', opp.id, opp)} 
+                                                className="action-link"
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#f59e0b' }} 
+                                            >
+                                                Sửa
+                                            </button>
+                                            |
+                                            <button 
+                                                onClick={() => handleDelete(opp.id, opp.title)} 
+                                                className="action-link delete" 
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                            >
+                                                Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 )}
@@ -277,7 +372,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
 };
 
 // Component Placeholder: Bảng Ứng viên 
-const ApplicantsList = ({ applications, onApplicationAction }) => {
+const ApplicantsList = ({ applications, opportunities, onApplicationAction }) => {
     
     const getStatusStyle = (status) => {
         switch (status) {
@@ -301,6 +396,11 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
         }
     };
 
+    const getOpportunityTitle = (opportunityId) => {
+        const opp = opportunities.find(o => o.id === opportunityId);
+        return opp ? opp.title : `Cơ hội #${opportunityId}`;
+    };
+ 
     return (
         <div style={{ marginTop: '30px' }}>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>Danh sách Ứng viên</h2>
@@ -320,10 +420,30 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
                         <tbody>
                             {applications.map(app => {
                                 const statusInfo = getStatusStyle(app.status);
+                                const profile = app.student_profile || {};
+                                const fullName = profile.full_name && profile.full_name.trim().length > 0
+                                    ? profile.full_name
+                                    : `Ứng viên #${app.student_user_id}`;
+                                const cvDoc = (app.documents || []).find(doc => (doc.document_type || '').toLowerCase() === 'cv') || (app.documents || [])[0];
+                                const cvUrl = cvDoc?.document_url
+                                    ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`)
+                                    : null;
                                 return (
                                     <tr key={app.id}>
-                                        <td>{app.student_name || `Ứng viên #${app.student_user_id}`}</td>
-                                        <td>{app.opportunity_title || `Cơ hội #${app.opportunity_id}`}</td>
+                                        <td>
+                                            <div style={{ fontWeight: 600 }}>{fullName}</div>
+                                            <div style={{ fontSize: 12, color: '#64748b' }}>{profile.email || 'Chưa cập nhật email'}</div>
+                                            {profile.gpa !== null && profile.gpa !== undefined && (
+                                                <div style={{ fontSize: 12, color: '#475569' }}>GPA: {profile.gpa}</div>
+                                            )}
+                                            {profile.skills && (
+                                                <div style={{ fontSize: 12, color: '#475569' }}>Kỹ năng: {profile.skills}</div>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div style={{ fontWeight: 600 }}>{getOpportunityTitle(app.opportunity_id)}</div>
+                                            <div style={{ fontSize: 12, color: '#64748b' }}>Mã hồ sơ: {app.id}</div>
+                                        </td>
                                         <td>
                                             <span 
                                                 style={{ 
@@ -339,15 +459,18 @@ const ApplicantsList = ({ applications, onApplicationAction }) => {
                                             </span>
                                         </td>
                                         <td style={{ display: 'flex', gap: '10px' }}>
-                                            <a 
-                                                href={app.documents?.[0]?.document_url || '#'} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="btn btn-sm btn-primary"
-                                                disabled={!app.documents?.[0]?.document_url}
-                                            >
-                                                Xem CV
-                                            </a>
+                                            {cvUrl ? (
+                                                <a 
+                                                    href={cvUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    className="btn btn-sm btn-primary"
+                                                >
+                                                    Xem CV
+                                                </a>
+                                            ) : (
+                                                <span style={{ fontSize: 12, color: '#94a3b8', alignSelf: 'center' }}>Chưa có CV</span>
+                                            )}
                                             
                                             {(app.status === 'pending' || app.status === 'submitted') ? (
                                                 <>
@@ -407,7 +530,7 @@ const ProviderDashboard = () => {
         setError('');
         try {
             const oppsPromise = api.listOpportunities(); 
-            const appsPromise = api.listProviderApplications(providerUserId);
+            const appsPromise = api.listProviderApplicationsEnriched(providerUserId);
 
             const [opps, apps] = await Promise.all([oppsPromise, appsPromise]);
             
@@ -464,16 +587,22 @@ const ProviderDashboard = () => {
 
 
             if (action === 'saveNew') {
-                const newPayload = {
-                    ...payload,
+                const { opportunity, criteria } = payload;
+                const createPayload = {
+                    ...opportunity,
                     provider_user_id: providerUserId,
+                    criteria,
                 };
-                await api.createOpportunity(newPayload); 
+                await api.createOpportunity(createPayload); 
                 alert('Đã thêm cơ hội thành công!');
 
             } else if (action === 'saveUpdate') {
-
-                await api.updateOpportunity(id, payload);
+                const { opportunity, criteria } = payload;
+                const updatePayload = {
+                    ...opportunity,
+                    criteria,
+                };
+                await api.updateOpportunity(id, updatePayload);
                 alert('Đã cập nhật cơ hội thành công!');
 
             } else if (action === 'delete') {
@@ -541,7 +670,8 @@ const ProviderDashboard = () => {
                 return (
                     <ApplicantsList 
                         applications={applications} 
-                        onApplicationAction={handleApplicationAction} // Truyền hàm xử lý duyệt hồ sơ
+                        opportunities={opportunities}
+                        onApplicationAction={handleApplicationAction}
                     />
                 );
             case 'settings':

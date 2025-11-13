@@ -24,13 +24,18 @@ class OpportunityBase(SQLModel):
     description: str
     type: OpportunityType
 
-class OpportunityCreate(OpportunityBase): pass
+class OpportunityCreate(OpportunityBase):
+    criteria: Optional["CriteriaCreate"] = None
+
+
 class OpportunityRead(OpportunityBase):
     id: int
     created_at: datetime
 class OpportunityUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    type: Optional[OpportunityType] = None
+    criteria: Optional["CriteriaCreate"] = None
     type: Optional[OpportunityType] = None
 
 class CriteriaBase(SQLModel):
@@ -47,6 +52,11 @@ class CriteriaUpdate(CriteriaBase): pass
 
 class OpportunityReadWithCriteria(OpportunityRead):
     criteria: Optional[CriteriaRead] = None
+
+
+OpportunityCreate.update_forward_refs()
+OpportunityUpdate.update_forward_refs()
+OpportunityReadWithCriteria.update_forward_refs()
 
 # --- Application Schemas (chuyển các phần Provider cần) ---
 # Đây là các schema mà service này cần để giao tiếp với application-service

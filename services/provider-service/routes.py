@@ -6,11 +6,13 @@ from typing import List, Optional
 from datetime import datetime
 from database import get_session
 import models, schemas
-import httpx 
+import httpx
+import os
 
 # URL của các service khác
-APPLICATION_SERVICE_URL = "http://application-service:8004"
-NOTIFICATION_SERVICE_URL = "http://notification-service:8005"
+APPLICATION_SERVICE_URL = os.getenv("APPLICATION_SERVICE_URL", "http://application-service:8004")
+NOTIFICATION_SERVICE_URL = os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8005")
+USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8002")
 
 router = APIRouter(prefix="/api", tags=["Provider Service"])
 
@@ -23,28 +25,70 @@ def parse_str_to_list(s: Optional[str]) -> List[str]:
 
 # === OPPORTUNITY ROUTES (Chuyển từ routes_opportunity.py) ===
 
-@router.post("/opportunities/", response_model=schemas.OpportunityRead)
+def _upsert_criteria(session: Session, opportunity_id: int, criteria_in: Optional[schemas.CriteriaCreate]):
+    if not criteria_in:
+        return None
+
+    db_criteria = session.exec(
+        select(models.Criteria).where(models.Criteria.opportunity_id == opportunity_id)
+    ).first()
+
+    skills_str = parse_list_to_str(criteria_in.skills)
+    docs_str = parse_list_to_str(criteria_in.required_documents)
+
+    if db_criteria:
+        db_criteria.gpa_min = criteria_in.gpa_min
+        db_criteria.skills = skills_str
+        db_criteria.deadline = criteria_in.deadline
+        db_criteria.required_documents = docs_str
+    else:
+        db_criteria = models.Criteria(
+            opportunity_id=opportunity_id,
+            gpa_min=criteria_in.gpa_min,
+            skills=skills_str,
+            deadline=criteria_in.deadline,
+            required_documents=docs_str
+        )
+    session.add(db_criteria)
+    session.commit()
+    session.refresh(db_criteria)
+
+    return schemas.CriteriaRead(
+        id=db_criteria.id,
+        opportunity_id=db_criteria.opportunity_id,
+        gpa_min=db_criteria.gpa_min,
+        skills=parse_str_to_list(db_criteria.skills),
+        deadline=db_criteria.deadline,
+        required_documents=parse_str_to_list(db_criteria.required_documents)
+    )
+
+
+@router.post("/opportunities/", response_model=schemas.OpportunityReadWithCriteria)
 def create_opportunity(
-    opp_in: schemas.OpportunityCreate, 
+    opp_in: schemas.OpportunityCreate,
     session: Session = Depends(get_session)
 ):
     try:
-        payload = opp_in.dict()
-        # Coerce type if necessary
-        if isinstance(payload.get("type"), str):
+        base_payload = opp_in.dict(exclude={"criteria"})
+        if isinstance(base_payload.get("type"), str):
             try:
-                payload["type"] = models.OpportunityType(payload["type"])
+                base_payload["type"] = models.OpportunityType(base_payload["type"])
             except Exception:
                 raise HTTPException(status_code=400, detail="Invalid opportunity type")
-        if not payload.get("title") or not payload.get("description"):
+        if not base_payload.get("title") or not base_payload.get("description"):
             raise HTTPException(status_code=400, detail="Title and description are required")
-        if not isinstance(payload.get("provider_user_id"), int):
+        if not isinstance(base_payload.get("provider_user_id"), int):
             raise HTTPException(status_code=400, detail="provider_user_id must be an integer")
-        db_opp = models.Opportunity(**payload)
+
+        db_opp = models.Opportunity(**base_payload)
         session.add(db_opp)
         session.commit()
         session.refresh(db_opp)
-        return db_opp
+
+        criteria_read = _upsert_criteria(session, db_opp.id, opp_in.criteria)
+
+        opp_read = schemas.OpportunityRead.from_orm(db_opp)
+        return schemas.OpportunityReadWithCriteria(**opp_read.dict(), criteria=criteria_read)
     except HTTPException:
         raise
     except Exception as e:
@@ -84,7 +128,7 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
     opp = session.get(models.Opportunity, opp_id)
     if not opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
-    
+
     criteria = session.exec(
         select(models.Criteria).where(models.Criteria.opportunity_id == opp_id)
     ).first()
@@ -99,7 +143,7 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
             deadline=criteria.deadline,
             required_documents=parse_str_to_list(criteria.required_documents)
         )
-    
+
     # Xây thủ công để tránh from_orm auto-map quan hệ criteria (string) gây lỗi list
     opp_read = schemas.OpportunityRead.from_orm(opp)
     return schemas.OpportunityReadWithCriteria(
@@ -107,7 +151,7 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
         criteria=criteria_read
     )
 
-@router.put("/opportunities/{opp_id}", response_model=schemas.OpportunityRead)
+@router.put("/opportunities/{opp_id}", response_model=schemas.OpportunityReadWithCriteria)
 def update_opportunity(
     opp_id: int,
     opp_in: schemas.OpportunityUpdate,
@@ -116,13 +160,18 @@ def update_opportunity(
     db_opp = session.get(models.Opportunity, opp_id)
     if not db_opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
-    opp_data = opp_in.dict(exclude_unset=True)
+    opp_data = opp_in.dict(exclude_unset=True, exclude={"criteria"})
+    if "type" in opp_data and isinstance(opp_data["type"], str):
+        opp_data["type"] = models.OpportunityType(opp_data["type"])
     for key, value in opp_data.items():
         setattr(db_opp, key, value)
     session.add(db_opp)
     session.commit()
     session.refresh(db_opp)
-    return db_opp
+
+    criteria_read = _upsert_criteria(session, db_opp.id, opp_in.criteria)
+    opp_read = schemas.OpportunityRead.from_orm(db_opp)
+    return schemas.OpportunityReadWithCriteria(**opp_read.dict(), criteria=criteria_read)
 
 @router.delete("/opportunities/{opp_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_opportunity(opp_id: int, session: Session = Depends(get_session)):
@@ -138,16 +187,16 @@ def delete_opportunity(opp_id: int, session: Session = Depends(get_session)):
     except Exception as e:
         session.rollback()
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Không thể xóa cơ hội vì có dữ liệu liên quan: {str(e)}"
         )
-    
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @router.post("/opportunities/{opp_id}/criteria", response_model=schemas.CriteriaRead)
 def create_or_update_criteria(
-    opp_id: int, 
-    criteria_in: schemas.CriteriaCreate, 
+    opp_id: int,
+    criteria_in: schemas.CriteriaCreate,
     session: Session = Depends(get_session)
 ):
     opp = session.get(models.Opportunity, opp_id)
@@ -157,7 +206,7 @@ def create_or_update_criteria(
     db_criteria = session.exec(
         select(models.Criteria).where(models.Criteria.opportunity_id == opp_id)
     ).first()
-    
+
     skills_str = parse_list_to_str(criteria_in.skills)
     docs_str = parse_list_to_str(criteria_in.required_documents)
 
@@ -174,11 +223,11 @@ def create_or_update_criteria(
             deadline=criteria_in.deadline,
             required_documents=docs_str
         )
-    
+
     session.add(db_criteria)
     session.commit()
     session.refresh(db_criteria)
-    
+
     return schemas.CriteriaRead(
         id=db_criteria.id,
         opportunity_id=db_criteria.opportunity_id,
@@ -214,10 +263,42 @@ async def get_applications_by_provider(user_id: int):
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{APPLICATION_SERVICE_URL}/api/applications/provider/{user_id}")
-            response.raise_for_status() # Ném lỗi nếu status code là 4xx hoặc 5xx
+            response.raise_for_status()
             return response.json()
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Error calling Application Service: {e}")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.json())
+
+
+@router.get("/applications/provider/{user_id}/enriched")
+async def get_applications_by_provider_enriched(user_id: int):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{APPLICATION_SERVICE_URL}/api/applications/provider/{user_id}")
+            response.raise_for_status()
+            applications = response.json() or []
+
+            enriched = []
+            for app in applications:
+                student_id = app.get("student_user_id")
+                profile = None
+                if student_id is not None:
+                    try:
+                        prof_resp = await client.get(f"{USER_SERVICE_URL}/api/student/profile/{student_id}")
+                        if prof_resp.status_code == 200:
+                            profile = prof_resp.json()
+                    except Exception:
+                        profile = None
+
+                enriched.append({
+                    **app,
+                    "student_profile": profile,
+                })
+
+            return enriched
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Error calling downstream services: {e}")
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.json())
 
@@ -241,10 +322,10 @@ async def update_application_status(
             )
             response.raise_for_status()
             updated_app = response.json()
-            
+
             # 2. Lấy thông tin Opportunity (từ DB của service này) để gửi thông báo
             db_opp = session.get(models.Opportunity, updated_app.get("opportunity_id"))
-            
+
             # 3. Gửi thông báo cho sinh viên
             if db_opp:
                 background_tasks.add_task(
@@ -253,9 +334,9 @@ async def update_application_status(
                     content=f"Trạng thái hồ sơ của bạn cho '{db_opp.title}' đã được cập nhật: {status_in.status.value}",
                     link_url=f"/student/application/{app_id}"
                 )
-            
+
             return updated_app
-            
+
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Error calling Application Service: {e}")
     except httpx.HTTPStatusError as e:
