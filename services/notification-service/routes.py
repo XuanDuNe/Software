@@ -167,3 +167,54 @@ async def queue_email_send(
     )
     
     return {"message": "Email queued for sending", "log_id": db_log.id}
+
+# --- NEW ENDPOINTS FOR UNREAD MESSAGES ---
+
+@router.post("/conversations/{conversation_id}/read/{user_id}", response_model=List[schemas.MessageRead]) # FIX: Thêm {user_id} vào đường dẫn
+def mark_conversation_as_read(
+    conversation_id: int, 
+    user_id: int, # Là tham số Path
+    session: Session = Depends(get_session)
+):
+    """Đánh dấu tất cả tin nhắn chưa đọc trong một cuộc trò chuyện là đã đọc cho user_id."""
+    
+    # Lấy các tin nhắn chưa được đọc (read_at IS NULL)
+    # và được gửi bởi người KHÁC (sender_user_id != user_id)
+    unread_messages = session.exec(
+        select(models.Message)
+        .where(models.Message.conversation_id == conversation_id)
+        .where(models.Message.read_at == None) # Tin nhắn chưa đọc
+        .where(models.Message.sender_user_id != user_id) # Được gửi bởi người khác
+    ).all()
+    
+    now = datetime.utcnow()
+    updated_messages = []
+    
+    for msg in unread_messages:
+        msg.read_at = now
+        session.add(msg)
+        updated_messages.append(msg)
+        
+    session.commit()
+    
+    # Refresh để lấy thông tin mới nhất
+    for msg in updated_messages:
+        session.refresh(msg)
+        
+    return updated_messages
+
+
+@router.get("/conversations/{conversation_id}/unread_count/{user_id}")
+def get_unread_count(conversation_id: int, user_id: int, session: Session = Depends(get_session)):
+    """Trả về số lượng tin nhắn chưa đọc trong cuộc trò chuyện cho user_id."""
+    
+    # Lấy số lượng tin nhắn chưa được đọc (read_at IS NULL)
+    # và được gửi bởi người KHÁC (sender_user_id != user_id)
+    unread_count_query = session.exec(
+        select(models.Message)
+        .where(models.Message.conversation_id == conversation_id)
+        .where(models.Message.read_at == None)
+        .where(models.Message.sender_user_id != user_id)
+    ).all()
+    
+    return {"conversation_id": conversation_id, "user_id": user_id, "count": len(unread_count_query)}

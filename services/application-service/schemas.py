@@ -39,4 +39,5 @@ class OpportunityRead(SQLModel):
     description: str
     
 class ApplicationReadDetail(ApplicationRead):
-    opportunity: Optional[OpportunityRead] = None # Sẽ call API để lấy
+    opportunity: Optional[OpportunityRead] = None 
+    has_unread_messages: bool = False 

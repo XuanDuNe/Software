@@ -234,8 +234,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                     const oppTitle = getOpportunityTitle(app.opportunity_id);
                     // Chỉ cho phép chat khi hồ sơ đã được chấp nhận
                     const isChatEnabled = app.status === 'accepted'; 
-                    // THAY ĐỔI: Placeholder cho chỉ báo tin nhắn chưa đọc (chấm đỏ)
-                    // Giả định backend trả về trường `has_unread_messages: boolean` trong ApplicationReadDetail
+                    // SỬ DỤNG TRƯỜNG HAS_UNREAD_MESSAGES MỚI
                     const hasUnread = app.has_unread_messages; 
                     
                     return (
@@ -444,6 +443,15 @@ function StudentDashboard() {
             application.id // <--- Pass Application ID
         );
         const msgs = await api.listMessages(conversation.id);
+        
+        // NEW: Mark messages as read after loading them
+        if (application.has_unread_messages && msgs.length > 0) {
+            // Chỉ mark read những tin nhắn gửi đến Student
+            await api.markConversationAsRead(conversation.id, studentUserId); 
+            // Sau khi mark read, cần fetch lại list apps để update unread dot
+            fetchAllData(); 
+        }
+        
         setMessageModalState(prev => ({ 
             ...prev, 
             loading: false, 

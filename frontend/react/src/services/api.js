@@ -5,6 +5,7 @@ import { getToken, clearAuth } from '../utils/auth.js';
 const BASE_URL = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:8000';
 
 async function request(path, options = {}) {
+// ... (Nội dung giữ nguyên)
   const token = getToken();
   const headers = new Headers(options.headers || {});
   const isFormData = options.body instanceof FormData;
@@ -51,6 +52,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+// ... (Nội dung giữ nguyên)
   login: (payload) => request('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload)
@@ -121,7 +123,14 @@ export const api = {
   // Notifications service
   listNotifications: (userId) => request(`/notification/notifications/${userId}`),
   markNotificationRead: (notifId) => request(`/notification/notifications/${notifId}/read`, { method: 'POST' }),
-
+  
+  // NEW: Mark messages as read (SỬ DỤNG PATH PARAMETER)
+  markConversationAsRead: (conversationId, userId) => request(`/notification/conversations/${conversationId}/read/${userId}`, {
+    method: 'POST'
+  }),
+  // NEW: Check unread count (Chỉ để tham khảo)
+  getUnreadCount: (conversationId, userId) => request(`/notification/conversations/${conversationId}/unread_count/${userId}`),
+  
   // Matching service
   matchOpportunities: (studentUserId, studentProfile) => request('/matching/match', {
     method: 'POST',

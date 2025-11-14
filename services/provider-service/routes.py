@@ -8,6 +8,7 @@ from database import get_session
 import models, schemas
 import httpx
 import os
+import asyncio
 
 # URL của các service khác
 APPLICATION_SERVICE_URL = os.getenv("APPLICATION_SERVICE_URL", "http://application-service:8004")
@@ -62,6 +63,41 @@ def _upsert_criteria(session: Session, opportunity_id: int, criteria_in: Optiona
         required_documents=parse_str_to_list(db_criteria.required_documents)
     )
 
+async def get_unread_status_for_app(student_user_id: int, provider_user_id: int, application_id: int, user_to_check: int) -> bool:
+    """
+    Tạo conversation (nếu chưa có) và kiểm tra số lượng tin nhắn chưa đọc.
+    Trả về True nếu có tin nhắn chưa đọc cho user_to_check.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            # 1. Tạo hoặc lấy Conversation
+            convo_resp = await client.post(
+                f"{NOTIFICATION_SERVICE_URL}/api/conversations",
+                json={
+                    "participant1_user_id": student_user_id,
+                    "participant2_user_id": provider_user_id,
+                    "application_id": application_id
+                }
+            )
+            convo_resp.raise_for_status()
+            conversation = convo_resp.json()
+            conversation_id = conversation.get("id")
+
+            if not conversation_id:
+                return False
+
+            # 2. Lấy số lượng tin nhắn chưa đọc
+            unread_resp = await client.get(
+                f"{NOTIFICATION_SERVICE_URL}/api/conversations/{conversation_id}/unread_count/{user_to_check}"
+            )
+            unread_resp.raise_for_status()
+            unread_data = unread_resp.json()
+
+            return unread_data.get("count", 0) > 0
+
+    except Exception as e:
+        print(f"Error checking unread status for app {application_id} (user {user_to_check}): {e}")
+        return False
 
 @router.post("/opportunities/", response_model=schemas.OpportunityReadWithCriteria)
 def create_opportunity(
@@ -279,27 +315,54 @@ async def get_applications_by_provider_enriched(user_id: int):
             response.raise_for_status()
             applications = response.json() or []
 
-            enriched = []
+            tasks = []
             for app in applications:
                 student_id = app.get("student_user_id")
-                profile = None
+                
                 if student_id is not None:
-                    try:
-                        prof_resp = await client.get(f"{USER_SERVICE_URL}/api/student/profile/{student_id}")
-                        if prof_resp.status_code == 200:
-                            profile = prof_resp.json()
-                    except Exception:
-                        profile = None
+                    # Task 1: Fetch profile
+                    profile_coro = client.get(f"{USER_SERVICE_URL}/api/student/profile/{student_id}")
+                    
+                    # Task 2: Get unread status cho Provider (user_id)
+                    unread_coro_provider = get_unread_status_for_app(
+                        student_user_id=student_id,
+                        provider_user_id=user_id,
+                        application_id=app.get("id"),
+                        user_to_check=user_id # Kiểm tra tin nhắn chưa đọc cho Provider
+                    )
+                    
+                    tasks.append((app, profile_coro, unread_coro_provider))
+            
+            
+            results = await asyncio.gather(*[
+                asyncio.gather(task[1], task[2], return_exceptions=True) 
+                for task in tasks
+            ])
+            
+            enriched = []
+            for i, result in enumerate(results):
+                app = tasks[i][0]
+                profile_resp, has_unread_messages = result
+                
+                profile = None
+                if not isinstance(profile_resp, Exception) and profile_resp.status_code == 200:
+                    profile = profile_resp.json()
+                
+                if isinstance(has_unread_messages, Exception):
+                    has_unread_messages = False
 
                 enriched.append({
                     **app,
                     "student_profile": profile,
+                    "has_unread_messages": has_unread_messages, # NEW FIELD
                 })
 
             return enriched
     except httpx.RequestError as e:
         raise HTTPException(status_code=503, detail=f"Error calling downstream services: {e}")
     except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+             return []
         raise HTTPException(status_code=e.response.status_code, detail=e.response.json())
 
 

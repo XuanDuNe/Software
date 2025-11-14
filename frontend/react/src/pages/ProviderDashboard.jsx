@@ -1,6 +1,6 @@
 // src/pages/ProviderDashboard.jsx (Sửa đổi toàn bộ)
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react'; // NEW: Thêm useRef
 import { Link } from 'react-router-dom';
 import { api, BASE_URL } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
@@ -357,6 +357,7 @@ const StudentProfileModal = ({ isOpen, loading, error, profile, application, onC
     );
 };
 
+// NEW: Message Modal Refactored with useRef for scrolling
 const MessageModal = ({
     isOpen,
     loading,
@@ -371,6 +372,15 @@ const MessageModal = ({
     currentUserId
 }) => {
     if (!isOpen) return null;
+    const messagesEndRef = useRef(null); 
+
+    // Scroll to bottom when messages change
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
@@ -383,7 +393,16 @@ const MessageModal = ({
                 ) : (
                     <div style={{ display: 'grid', gap: 12 }}>
                         {error && <div className="alert-error">{error}</div>}
-                        <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 8, padding: 12, display: 'grid', gap: 10 }}>
+                        <div style={{ 
+                            maxHeight: 320, 
+                            overflowY: 'auto', 
+                            border: '1px solid #e2e8f0', 
+                            borderRadius: 8, 
+                            padding: 12, 
+                            display: 'grid', 
+                            gap: 10,
+                            alignContent: 'end' // NEW
+                        }}>
                             {messages && messages.length ? messages.map(msg => (
                                 <div
                                     key={msg.id}
@@ -393,15 +412,19 @@ const MessageModal = ({
                                         color: msg.sender_user_id === currentUserId ? '#fff' : '#1f2937',
                                         padding: '8px 12px',
                                         borderRadius: 12,
-                                        maxWidth: '70%'
+                                        maxWidth: '70%',
+                                        minWidth: '100px',
+                                        marginLeft: msg.sender_user_id === currentUserId ? 'auto' : 'unset',
+                                        marginRight: msg.sender_user_id === currentUserId ? 'unset' : 'auto',
                                     }}
                                 >
-                                    <div style={{ fontSize: 13 }}>{msg.content}</div>
+                                    <div style={{ fontSize: 13, wordBreak: 'break-word' }}>{msg.content}</div>
                                     <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', color: '#94a3b8' }}>Chưa có tin nhắn nào.</div>
+                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Chưa có tin nhắn nào.</div> // NEW
                             )}
+                            <div ref={messagesEndRef} />
                         </div>
                         <form
                             onSubmit={(e) => {
@@ -579,6 +602,10 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                 const cvUrl = cvDoc?.document_url
                                     ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`)
                                     : null;
+                                    
+                                // NEW FIELD
+                                const hasUnread = app.has_unread_messages; 
+                                
                                 return (
                                     <tr key={app.id}>
                                         <td>
@@ -632,10 +659,23 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                             <button
                                                 onClick={() => onMessage(app)}
                                                 className="btn btn-sm"
-                                                style={{ backgroundColor: '#3b82f6', color: '#fff' }}
+                                                style={{ backgroundColor: '#3b82f6', color: '#fff', position: 'relative' }} // NEW: position: 'relative'
                                                 disabled={app.status !== 'accepted'}
                                             >
                                                 Nhắn tin
+                                                {/* CHẤM ĐỎ CHO PROVIDER */}
+                                                {app.status === 'accepted' && hasUnread && (
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '-4px',
+                                                        right: '-4px',
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        backgroundColor: '#ef4444',
+                                                        borderRadius: '50%',
+                                                        zIndex: 10
+                                                    }}></span>
+                                                )}
                                             </button>
                                              
                                              {(app.status === 'pending' || app.status === 'submitted') ? (
@@ -757,6 +797,15 @@ const ProviderDashboard = () => {
         try {
             const conversation = await api.createConversation(providerUserId, application.student_user_id,application.id);// THAY ĐỔI: Truyền thêm application.id
             const msgs = await api.listMessages(conversation.id);
+            
+            // NEW: Mark messages as read after loading them (for the Provider)
+            if (application.has_unread_messages && msgs.length > 0) {
+                // Chỉ mark read những tin nhắn gửi đến Provider
+                await api.markConversationAsRead(conversation.id, providerUserId); 
+                // Sau khi mark read, cần fetch lại list apps để update unread dot
+                fetchData(); 
+            }
+
             setMessageModalState(prev => ({ ...prev, loading: false, conversation, messages: msgs || [] }));
         } catch (err) {
             setMessageModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hội thoại' }));
