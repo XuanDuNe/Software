@@ -111,8 +111,7 @@ const OpportunityDetailModal = ({
   onClose,
   onApply,
   hasApplied,
-  submitting,
-  hasCvFile
+  submitting
 }) => {
   if (!isOpen) return null;
 
@@ -165,13 +164,12 @@ const OpportunityDetailModal = ({
             )}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
               <button
-                className={`btn ${hasApplied || !hasCvFile ? 'btn-disabled' : 'btn-secondary'}`}
+                className={`btn ${hasApplied ? 'btn-disabled' : 'btn-secondary'}`}
                 onClick={onApply}
-                disabled={submitting || hasApplied || !hasCvFile}
+                disabled={submitting || hasApplied}
               >
                 {hasApplied ? 'Bạn đã nộp hồ sơ' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
               </button>
-              {!hasCvFile && <span style={{ fontSize: 13, color: '#ef4444' }}>Vui lòng tải CV trước khi nộp.</span>}
             </div>
           </div>
         ) : null}
@@ -299,8 +297,6 @@ function StudentDashboard() {
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [error, setError] = useState('');
-  // Thay thế cvUrl bằng cvFile
-  const [cvFile, setCvFile] = useState(null); 
   const [submitting, setSubmitting] = useState(false);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
   const [selectedOpportunityDetail, setSelectedOpportunityDetail] = useState(null);
@@ -383,23 +379,14 @@ function StudentDashboard() {
         return;
     }
 
-    // Kiểm tra file CV
-    if (!cvFile) {
-        setError('Vui lòng chọn tệp CV trước khi nộp hồ sơ.');
-        setSubmitting(false);
-        return;
-    }
-
     try {
-      // Tạo FormData để upload file
-      const formData = new FormData();
-      // Các trường dữ liệu khác
-      formData.append('opportunity_id', opportunityId.toString());
-      formData.append('student_user_id', studentUserId.toString());
-      // Tệp CV
-      formData.append('cv_file', cvFile); 
+      // Gửi application không cần CV (CV đã được lưu trong profile)
+      const payload = {
+        opportunity_id: opportunityId,
+        student_user_id: studentUserId
+      };
       
-      await api.submitApplication(formData);
+      await api.submitApplication(payload);
       
       await fetchAllData(); 
       alert('Nộp hồ sơ thành công!');
@@ -532,20 +519,6 @@ function StudentDashboard() {
 
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
       
-      <div className="card" style={{ padding: 15, marginBottom: 20, maxWidth: 600 }}>
-        <p className="label" style={{ marginBottom: 8 }}>Tệp CV (PDF)</p>
-        <input 
-          type="file" 
-          accept=".pdf" 
-          onChange={e => setCvFile(e.target.files[0])} 
-          className="input"
-          style={{ padding: '8px' }} 
-        />
-        <small style={{ color: '#64748b', display: 'block', marginTop: 8 }}>
-            Tệp CV hiện tại: <strong>{cvFile ? cvFile.name : 'Chưa chọn tệp'}</strong>
-        </small>
-      </div>
-
       <div className="opportunity-list">
         {(opportunities || []).map((opp) => {
             const applied = hasApplied(opp.id);
@@ -559,12 +532,12 @@ function StudentDashboard() {
                     <div className="opportunity-title">{opp.title}</div>
                     <div className="opportunity-description">{opp.description}</div>
                     <button
-                        disabled={submitting || applied || !cvFile} 
+                        disabled={submitting || applied} 
                         onClick={(e) => {
                           e.stopPropagation();
                           submitApplication(opp.id);
                         }}
-                        className={`btn ${applied || !cvFile ? 'btn-disabled' : 'btn-secondary'}`}
+                        className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`}
                         style={{ marginTop: 8 }}
                     >
                         {applied ? 'Đã Nộp' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
@@ -583,7 +556,6 @@ function StudentDashboard() {
         onApply={() => submitApplication(selectedOpportunityId)}
         hasApplied={selectedOpportunityId ? hasApplied(selectedOpportunityId) : false}
         submitting={submitting}
-        hasCvFile={Boolean(cvFile)}
       />
       
       {/* THAY ĐỔI: Render Chat Modal */}

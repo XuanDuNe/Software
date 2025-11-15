@@ -74,7 +74,7 @@ export const api = {
   listMyApplications: (userId) => request(`/application/student/${userId}`),
   submitApplication: (data) => request('/application/', {
     method: 'POST',
-    body: data
+    body: JSON.stringify(data)
   }),
 
   // Opportunities (from provider service)

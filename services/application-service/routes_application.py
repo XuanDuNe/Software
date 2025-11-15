@@ -1,19 +1,16 @@
 # services/application-service/routes_application.py
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, File, UploadFile, Form, Request 
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
 from database import get_session
 import models, schemas
 import httpx 
-import os
-import shutil
 import asyncio
 
 # URL của các service khác
 PROVIDER_SERVICE_URL = "http://provider-service:8006" # Port 8006 mới
 NOTIFICATION_SERVICE_URL = "http://notification-service:8005"
-UPLOAD_DIR = "static_files/cvs"
 
 router = APIRouter(prefix="/api/applications", tags=["Applications"])
 
@@ -37,59 +34,23 @@ async def notify_user(user_id: int, content: str, link_url: Optional[str] = None
 
 @router.post("/", response_model=schemas.ApplicationRead)
 async def submit_application(
-    request: Request, # <--- CHỈ GIỮ LẠI Request để đọc toàn bộ body
+    app_in: schemas.ApplicationCreate,
     background_tasks: BackgroundTasks, 
     session: Session = Depends(get_session), 
 ):
     """
-    Sinh viên nộp hồ sơ. Endpoint này nhận dữ liệu qua multipart/form-data.
-    Đọc tất cả dữ liệu từ request.form() để tránh lỗi parsing.
+    Sinh viên nộp hồ sơ. Endpoint này nhận dữ liệu qua JSON.
+    CV không bắt buộc vì đã được lưu trong profile (cv_file_id).
     """
     
-    # 1. Truy cập Form data thô (Đọc hết mọi thứ từ form_data)
-    try:
-        form_data = await request.form()
-        opportunity_id_str = form_data.get("opportunity_id")
-        student_user_id_str = form_data.get("student_user_id")
-        cv_file: UploadFile = form_data.get("cv_file") # <--- Lấy file trực tiếp từ form_data
-        
-        # Kiểm tra sự tồn tại (bao gồm cả file)
-        if not opportunity_id_str or not student_user_id_str or not cv_file:
-             # Trả về lỗi 422 chi tiết hơn
-             missing_fields = []
-             if not opportunity_id_str: missing_fields.append("opportunity_id")
-             if not student_user_id_str: missing_fields.append("student_user_id")
-             if not cv_file: missing_fields.append("cv_file")
-             
-             raise HTTPException(
-                status_code=422, 
-                detail=f"Các trường sau là bắt buộc: {', '.join(missing_fields)}"
-            )
-        
-        # Chuyển đổi từ string về int thủ công
-        opportunity_id = int(opportunity_id_str)
-        student_user_id = int(student_user_id_str)
-        
-    except ValueError:
-        raise HTTPException(
-            status_code=400, 
-            detail="opportunity_id and student_user_id must be valid integers."
-        )
-    except Exception as e:
-         raise HTTPException(status_code=500, detail=f"Error reading form data: {str(e)}")
+    opportunity_id = app_in.opportunity_id
+    student_user_id = app_in.student_user_id
 
-
-    # 2. Tạo app_base
-    app_base = schemas.ApplicationBase(
-        opportunity_id=opportunity_id,
-        student_user_id=student_user_id
-    )
-    
     # Lấy thông tin Opportunity từ provider-service
     opp_data = None
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{PROVIDER_SERVICE_URL}/api/opportunities/{app_base.opportunity_id}")
+            response = await client.get(f"{PROVIDER_SERVICE_URL}/api/opportunities/{opportunity_id}")
             response.raise_for_status()
             opp_data = response.json()
     except (httpx.RequestError, httpx.HTTPStatusError):
@@ -98,20 +59,20 @@ async def submit_application(
     provider_user_id = opp_data.get("provider_user_id")
     opp_title = opp_data.get("title", "Không rõ")
 
-    # 3. Kiểm tra hồ sơ đã tồn tại
+    # Kiểm tra hồ sơ đã tồn tại
     existing = session.exec(
         select(models.Application)
-        .where(models.Application.student_user_id == app_base.student_user_id)
-        .where(models.Application.opportunity_id == app_base.opportunity_id)
+        .where(models.Application.student_user_id == student_user_id)
+        .where(models.Application.opportunity_id == opportunity_id)
     ).first()
     
     if existing:
         raise HTTPException(status_code=400, detail="Application already submitted")
     
-    # 4. Tạo Application
+    # Tạo Application
     db_app = models.Application(
-        opportunity_id=app_base.opportunity_id,
-        student_user_id=app_base.student_user_id,
+        opportunity_id=opportunity_id,
+        student_user_id=student_user_id,
         provider_user_id=provider_user_id, # Lấy từ provider-service
         status=models.ApplicationStatus.PENDING
     )
@@ -120,43 +81,23 @@ async def submit_application(
     session.commit()
     session.refresh(db_app)
     
-    db_docs = []
+    # Xử lý documents nếu có (từ app_in.documents)
+    if app_in.documents:
+        for doc_create in app_in.documents:
+            db_doc = models.ApplicationDocument(
+                application_id=db_app.id,
+                document_type=doc_create.document_type,
+                document_url=doc_create.document_url
+            )
+            session.add(db_doc)
     
-    # Lưu file CV
-    if cv_file and isinstance(cv_file, UploadFile):
-        
-        file_extension = os.path.splitext(cv_file.filename)[1]
-        saved_filename = f"app_{db_app.id}_user_{student_user_id}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, saved_filename)
-
-        # Lưu file từ stream
-        try:
-            # Tạo thư mục nếu chưa có
-            os.makedirs(os.path.dirname(file_path), exist_ok=True) 
-            with open(file_path, "wb") as buffer:
-                # Dùng cv_file.file để truy cập stream của UploadFile
-                shutil.copyfileobj(cv_file.file, buffer) 
-        finally:
-            await cv_file.close() # Đóng file
-        
-        # URL thật sự
-        document_url = f"/static/cvs/{saved_filename}" 
-        
-        db_doc = models.ApplicationDocument(
-            application_id=db_app.id,
-            document_type="CV", 
-            document_url=document_url
-        )
-        session.add(db_doc)
-        db_docs.append(db_doc)
-        
     session.commit()
     
-    # 5. Gửi thông báo cho Provider
+    # Gửi thông báo cho Provider
     background_tasks.add_task(
         notify_user,
         user_id=provider_user_id,
-        content=f"Bạn có hồ sơ ứng tuyển mới (kèm CV) cho cơ hội '{opp_title}'.",
+        content=f"Bạn có hồ sơ ứng tuyển mới cho cơ hội '{opp_title}'.",
         link_url=f"/provider/application/{db_app.id}"
     )
     
