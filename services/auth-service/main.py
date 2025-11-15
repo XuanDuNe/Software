@@ -37,9 +37,14 @@ def on_startup():
 
 @app.post("/auth/register", response_model=schemas.Token)
 def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    # Validation mật khẩu phải trên 8 ký tự
+    if len(user.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+    
     # bcrypt giới hạn 72 bytes
     if len(user.password.encode("utf-8")) > 72:
         raise HTTPException(status_code=400, detail="Password too long (max 72 bytes)")
+    
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
