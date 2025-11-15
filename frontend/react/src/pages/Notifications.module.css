@@ -1,0 +1,17 @@
+/* src/pages/Notifications.module.css */
+.item {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 12px;
+    background-color: var(--color-surface);
+}
+
+.date {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+}
+
+.action {
+    margin-top: 8px;
+}

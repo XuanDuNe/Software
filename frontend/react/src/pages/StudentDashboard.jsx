@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react'; // THAY ĐỔI: Thêm useRef
+import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+import styles from './StudentDashboard.module.css'; 
 
-// --- NEW HELPER COMPONENT: StudentMessageModal ---
 const StudentMessageModal = ({
     isOpen,
     loading,
@@ -19,7 +19,6 @@ const StudentMessageModal = ({
     if (!isOpen) return null;
     const messagesEndRef = useRef(null); 
 
-    // Scroll to bottom when messages change
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -30,7 +29,6 @@ const StudentMessageModal = ({
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
                 <div className="modal-header">
-                    {/* Hiển thị tên cơ hội để biết đang chat về hồ sơ nào */}
                     <h3>Trò chuyện về {opportunityTitle}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
@@ -100,7 +98,6 @@ const StudentMessageModal = ({
         </div>
     );
 };
-// --- END StudentMessageModal ---
 
 
 const OpportunityDetailModal = ({
@@ -178,8 +175,7 @@ const OpportunityDetailModal = ({
   );
 };
 
-// Component con để hiển thị tóm tắt các hồ sơ đã nộp (Sửa đổi để thêm onClick)
-const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => { // THAY ĐỔI: Thêm onOpenChat
+const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
     if (!applications || applications.length === 0) {
         return (
             <div className="card" style={{ padding: '15px', textAlign: 'center', color: '#64748b', marginTop: '15px' }}>
@@ -190,9 +186,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
 
     const getOpportunityTitle = (opportunityId) => {
         const opp = opportunities.find(o => o.id === opportunityId);
-        // THAY ĐỔI: Lấy opp.title nếu có, nếu không trả về giá trị từ ApplicationReadDetail (lấy từ routes_application.py)
         if (opp) return opp.title;
-        // Nếu API trả về app có trường opportunity:
         const appWithOpp = applications.find(app => app.opportunity?.id === opportunityId);
         return appWithOpp?.opportunity?.title || `[Cơ hội #${opportunityId}]`;
     };
@@ -245,10 +239,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                                 cursor: isChatEnabled ? 'pointer' : 'default', 
                                 position: 'relative' 
                             }}
-                            // THAY ĐỔI: Thêm onClick để mở chat
-                            onClick={() => isChatEnabled && onOpenChat(app, oppTitle)}
-                        >
-                            {/* THAY ĐỔI: Chỉ báo tin nhắn chưa đọc (chấm đỏ) */}
+                            onClick={() => isChatEnabled && onOpenChat(app, oppTitle)}   >
                             {isChatEnabled && hasUnread && (
                                 <span style={{
                                     position: 'absolute',
@@ -292,7 +283,6 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
     );
 };
 
-// Component chính StudentDashboard
 function StudentDashboard() {
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
@@ -303,7 +293,6 @@ function StudentDashboard() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState('');
 
-  // THAY ĐỔI: State mới cho Chat Modal
   const [messageModalState, setMessageModalState] = useState({ 
     isOpen: false, 
     loading: false, 
@@ -327,9 +316,7 @@ function StudentDashboard() {
             api.listMyApplications(studentUserId),
             api.listOpportunities()
         ]);
-        // listMyApplications trả về ApplicationReadDetail, đã có thông tin opp
         setApplications(apps || []);
-        // opps là list OpportunityReadWithCriteria, dùng để hiển thị danh sách cơ hội và getOpportunityDetail
         setOpportunities(opps || []);
     } catch (err) {
         setError(err.message || 'Lỗi tải dữ liệu');
@@ -342,7 +329,6 @@ function StudentDashboard() {
     return () => { mounted = false; };
   }, [studentUserId]);
 
-  // Kiểm tra xem sinh viên đã nộp hồ sơ cho cơ hội này chưa
   const hasApplied = (opportunityId) => {
     return applications.some(app => app.opportunity_id === opportunityId);
   };
@@ -380,7 +366,6 @@ function StudentDashboard() {
     }
 
     try {
-      // Gửi application không cần CV (CV đã được lưu trong profile)
       const payload = {
         opportunity_id: opportunityId,
         student_user_id: studentUserId
@@ -400,14 +385,12 @@ function StudentDashboard() {
     }
   }
 
-  // THAY ĐỔI: Chức năng Chat cho Student
   const openMessageModal = async (application, opportunityTitle) => {
     if (application.status !== 'accepted') {
         alert('Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.');
         return;
     }
     
-    // Provider's user ID is stored in the application object
     const providerUserId = application.provider_user_id;
 
     setMessageModalState({ 
@@ -423,19 +406,15 @@ function StudentDashboard() {
     });
     
     try {
-        // GỌI API TẠO CONVERSATION MỚI (có kèm application.id)
         const conversation = await api.createConversation(
             studentUserId, 
             providerUserId,
-            application.id // <--- Pass Application ID
+            application.id 
         );
         const msgs = await api.listMessages(conversation.id);
         
-        // NEW: Mark messages as read after loading them
         if (application.has_unread_messages && msgs.length > 0) {
-            // Chỉ mark read những tin nhắn gửi đến Student
             await api.markConversationAsRead(conversation.id, studentUserId); 
-            // Sau khi mark read, cần fetch lại list apps để update unread dot
             fetchAllData(); 
         }
         
@@ -478,19 +457,17 @@ function StudentDashboard() {
         return;
     }
     
-    // Đảm bảo studentUserId là người gửi
     const providerUserId = messageModalState.application.provider_user_id;
 
     setMessageModalState(prev => ({ ...prev, sending: true, error: '' }));
     try {
         const msg = await api.sendMessage({
             conversation_id: messageModalState.conversation.id,
-            sender_user_id: studentUserId, // Student gửi
-            receiver_user_id: providerUserId, // Provider nhận
+            sender_user_id: studentUserId, 
+            receiver_user_id: providerUserId, 
             content: messageModalState.input.trim()
         });
         
-        // Cập nhật messages
         setMessageModalState(prev => ({
             ...prev,
             sending: false,
@@ -505,39 +482,39 @@ function StudentDashboard() {
 
 
   return (
-    <div className="container p-6">
+    <div className="container p-6"> {}
       <h2>Trang sinh viên</h2>
       
-      {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>} 
 
       <h3 style={{ marginTop: 24, marginBottom: 10 }}>Hồ sơ của bạn</h3>
       <MyApplicationsSummary 
         applications={applications} 
         opportunities={opportunities} 
-        onOpenChat={openMessageModal} // THAY ĐỔI: Truyền hàm chat vào
+        onOpenChat={openMessageModal} 
       />
 
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
       
-      <div className="opportunity-list">
+      <div className={styles.list}> 
         {(opportunities || []).map((opp) => {
             const applied = hasApplied(opp.id);
             return (
                 <div
                   key={opp.id}
-                  className="opportunity-card"
+                  className={styles.card} 
                   onClick={() => openOpportunityDetail(opp.id)}
                   style={{ cursor: 'pointer' }}
                 >
-                    <div className="opportunity-title">{opp.title}</div>
-                    <div className="opportunity-description">{opp.description}</div>
+                    <div className={styles.title}>{opp.title}</div> 
+                    <div className={styles.description}>{opp.description}</div> 
                     <button
                         disabled={submitting || applied} 
                         onClick={(e) => {
                           e.stopPropagation();
                           submitApplication(opp.id);
                         }}
-                        className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`}
+                        className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`} 
                         style={{ marginTop: 8 }}
                     >
                         {applied ? 'Đã Nộp' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
@@ -558,7 +535,7 @@ function StudentDashboard() {
         submitting={submitting}
       />
       
-      {/* THAY ĐỔI: Render Chat Modal */}
+      
       <StudentMessageModal 
           isOpen={messageModalState.isOpen} 
           loading={messageModalState.loading} 

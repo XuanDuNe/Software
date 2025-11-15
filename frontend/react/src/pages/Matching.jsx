@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+import styles from './Matching.module.css'; 
 
 function Matching() {
   const user = getStoredUser();
@@ -44,35 +45,28 @@ function Matching() {
     }
   }
 
+  const getScoreClass = (score) => {
+    if (score >= 0.7) return styles.scoreHigh;
+    if (score >= 0.5) return styles.scoreMedium;
+    return styles.scoreLow;
+  };
+
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+    <div className={styles.pageContainer}> 
       <h2>Gợi ý Cơ hội phù hợp</h2>
-      <p style={{ color: '#666', marginBottom: 24 }}>
+      <p className={styles.description}> 
         Nhập thông tin hồ sơ của bạn để nhận gợi ý các khóa học, học bổng, và chương trình phù hợp nhất.
       </p>
 
       {error && (
-        <div style={{ 
-          color: '#c0392b', 
-          background: '#ffeaea', 
-          padding: 12, 
-          borderRadius: 8, 
-          marginBottom: 16 
-        }}>
+        <div className={styles.alert}> 
           {error}
         </div>
       )}
 
-      <div style={{ 
-        display: 'grid', 
-        gap: 16, 
-        marginBottom: 24,
-        background: '#f8fafc',
-        padding: 24,
-        borderRadius: 8
-      }}>
+      <div className={styles.inputSection}> 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+          <label className={styles.label}> 
             GPA (Điểm trung bình)
           </label>
           <input
@@ -83,12 +77,12 @@ function Matching() {
             placeholder="Ví dụ: 3.5"
             value={profile.gpa}
             onChange={e => setProfile({ ...profile, gpa: e.target.value })}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+            className={styles.input} 
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+          <label className={styles.label}> 
             Kỹ năng (phân cách bởi dấu phẩy)
           </label>
           <input
@@ -96,12 +90,12 @@ function Matching() {
             placeholder="Ví dụ: Python, Machine Learning, Data Analysis"
             value={profile.skills}
             onChange={e => setProfile({ ...profile, skills: e.target.value })}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+            className={styles.input} 
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+          <label className={styles.label}> 
             Mục tiêu (phân cách bởi dấu phẩy)
           </label>
           <input
@@ -109,15 +103,15 @@ function Matching() {
             placeholder="Ví dụ: research, academic, industry"
             value={profile.goals}
             onChange={e => setProfile({ ...profile, goals: e.target.value })}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+            className={styles.input} 
           />
-          <small style={{ color: '#666', display: 'block', marginTop: 4 }}>
+          <small className={styles.smallText}> 
             Các mục tiêu: research, academic, industry, job, career
           </small>
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+          <label className={styles.label}> 
             Điểm mạnh (phân cách bởi dấu phẩy)
           </label>
           <input
@@ -125,12 +119,12 @@ function Matching() {
             placeholder="Ví dụ: analytical, programming, leadership"
             value={profile.strengths}
             onChange={e => setProfile({ ...profile, strengths: e.target.value })}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+            className={styles.input} 
           />
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
+          <label className={styles.label}> 
             Sở thích / Lĩnh vực quan tâm (phân cách bởi dấu phẩy)
           </label>
           <input
@@ -138,23 +132,14 @@ function Matching() {
             placeholder="Ví dụ: AI, Data Science, Robotics"
             value={profile.interests}
             onChange={e => setProfile({ ...profile, interests: e.target.value })}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ddd' }}
+            className={styles.input} 
           />
         </div>
 
         <button
           onClick={runMatch}
           disabled={loading}
-          style={{
-            padding: '12px 24px',
-            background: loading ? '#ccc' : '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: 16,
-            fontWeight: 600
-          }}
+          className={styles.button} 
         >
           {loading ? 'Đang xử lý...' : 'Tìm kiếm cơ hội phù hợp'}
         </button>
@@ -167,59 +152,38 @@ function Matching() {
           </h3>
           
           {results.results && results.results.length > 0 ? (
-            <div style={{ display: 'grid', gap: 16 }}>
+            <div className={styles.resultsContainer}> 
               {results.results.map((result, index) => (
                 <div
                   key={result.opportunity_id}
-                  style={{
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 8,
-                    padding: 16,
-                    background: 'white'
-                  }}
+                  className={styles.result} 
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 8 }}>
+                  <div className={styles.resultHeader}> 
                     <div>
-                      <h4 style={{ margin: 0, marginBottom: 4 }}>
+                      <h4 className={styles.resultTitle}> 
                         #{index + 1} {result.title}
                       </h4>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '4px 8px',
-                        background: '#e3f2fd',
-                        color: '#1976d2',
-                        borderRadius: 4,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: 'uppercase'
-                      }}>
+                      <span className={styles.typeBadge}> 
                         {result.type}
                       </span>
                     </div>
-                    <div style={{
-                      padding: '8px 12px',
-                      background: result.score >= 0.7 ? '#4caf50' : result.score >= 0.5 ? '#ff9800' : '#f44336',
-                      color: 'white',
-                      borderRadius: 8,
-                      fontWeight: 600,
-                      fontSize: 14
-                    }}>
+                    <div className={`${styles.scoreBadge} ${getScoreClass(result.score)}`}> 
                       {Math.round(result.score * 100)}% phù hợp
                     </div>
                   </div>
                   
-                  <p style={{ color: '#666', marginBottom: 12, fontSize: 14 }}>
+                  <p className={styles.resultDescription}> 
                     {result.description || 'Không có mô tả'}
                   </p>
                   
                   {result.match_reasons && result.match_reasons.length > 0 && (
-                    <div style={{ marginTop: 12 }}>
-                      <strong style={{ fontSize: 14, display: 'block', marginBottom: 8 }}>
+                    <div className={styles.reasonsContainer}> 
+                      <strong className={styles.reasonsTitle}> 
                         Lý do phù hợp:
                       </strong>
-                      <ul style={{ margin: 0, paddingLeft: 20, color: '#555' }}>
+                      <ul className={styles.reasonsList}> 
                         {result.match_reasons.map((reason, idx) => (
-                          <li key={idx} style={{ marginBottom: 4, fontSize: 13 }}>
+                          <li key={idx} className={styles.reasonItem}> 
                             {reason}
                           </li>
                         ))}
@@ -230,13 +194,7 @@ function Matching() {
               ))}
             </div>
           ) : (
-            <div style={{
-              padding: 24,
-              textAlign: 'center',
-              color: '#666',
-              background: '#f8fafc',
-              borderRadius: 8
-            }}>
+            <div className={styles.noResults}> 
               Không tìm thấy cơ hội phù hợp. Vui lòng thử lại với thông tin khác.
             </div>
           )}

@@ -1,11 +1,11 @@
-// src/services/api.js
+
 
 import { getToken, clearAuth } from '../utils/auth.js';
 
 const BASE_URL = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:8000';
 
 async function request(path, options = {}) {
-// ... (Nội dung giữ nguyên)
+
   const token = getToken();
   const headers = new Headers(options.headers || {});
   const isFormData = options.body instanceof FormData;

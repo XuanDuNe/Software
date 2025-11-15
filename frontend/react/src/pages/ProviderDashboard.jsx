@@ -1,19 +1,20 @@
-// src/pages/ProviderDashboard.jsx (Sửa đổi toàn bộ)
+// src/pages/ProviderDashboard.jsx (Đã sửa lỗi cú pháp)
 
-import React, { useState, useEffect, useMemo, useRef } from 'react'; // NEW: Thêm useRef
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api, BASE_URL } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+import styles from './ProviderDashboard.module.css'; // Import CSS Module
 
 // --- HELPER COMPONENTS ---
 
 const StatCard = ({ title, value, icon, color }) => (
-    <div className="stat-card" data-color={color || '#3b82f6'}>
+    <div className={styles.statCard} data-color={color || '#3b82f6'} style={{ borderLeftColor: color || '#3b82f6' }}>
         <div>
-            <h3 className="stat-title">{title}</h3>
-            <p className="stat-value">{value}</p>
+            <h3 className={styles.statTitle}>{title}</h3>
+            <p className={styles.statValue}>{value}</p>
         </div>
-        <div className="stat-icon" style={{ color: color || '#3b82f6' }}>
+        <div className={styles.statIcon} style={{ color: color || '#3b82f6' }}>
             {icon}
         </div>
     </div>
@@ -28,14 +29,14 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
     ];
 
     return (
-        <div className="sidebar">
-            <h2 className="sidebar-title">Provider Hub</h2>
+        <div className={styles.sidebar}>
+            <h2 className={styles.sidebarTitle}>Provider Hub</h2>
             <nav>
                 {navItems.map(item => (
                     <div
                         key={item.id}
                         onClick={() => onSelectTab(item.id)}
-                        className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+                        className={`${styles.sidebarItem} ${activeTab === item.id ? styles.active : ''}`}
                     >
                         <span>{item.icon}</span>
                         {item.name}
@@ -46,6 +47,8 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
     );
 };
 
+// ... Các component Modal (OpportunityModal, OpportunityDetailModal, StudentProfileModal, MessageModal)
+// Giữ nguyên các component modal này ...
 const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -265,7 +268,7 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                                         <div><strong>Hạn nộp:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
                                     )}
                                     <div>
-                                        <strong>Kỹ năng yêu cầu:</strong> {detail.criteria.skills?.length ? detail.criteria.skills.join(', ') : 'Không yêu cầu cụ thể'}
+                                        <strong>Kỹ năng yêu cầu:</strong> {detail.criteria.skills?.length ? detail.criteria.skills.join(', ') : 'Không yêuêu cầu cụ thể'}
                                     </div>
                                     <div>
                                         <strong>Tài liệu cần nộp:</strong> {detail.criteria.required_documents?.length ? detail.criteria.required_documents.join(', ') : 'CV'}
@@ -483,7 +486,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                 </button>
             </div>
             
-            <div className="table-management">
+            <div className={styles.tableManagement}>
                 {opportunities.length === 0 ? (
                     <p>Chưa có cơ hội nào được đăng tải.</p>
                 ) : (
@@ -516,24 +519,23 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                         <td style={{ display: 'flex', gap: '8px' }}>
                                             <button 
                                                 onClick={() => handleViewDetail(opp.id)} 
-                                                className="action-link"
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--color-primary)' }}
+                                                className={styles.actionLink}
                                             >
                                                 Xem
                                             </button> 
                                             |
                                             <button 
                                                 onClick={() => onOpportunityAction('edit', opp.id, opp)} 
-                                                className="action-link"
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#f59e0b' }} 
+                                                className={styles.actionLink}
+                                                data-color="edit"
+                                                style={{color: '#f59e0b'}}
                                             >
                                                 Sửa
                                             </button>
                                             |
                                             <button 
                                                 onClick={() => handleDelete(opp.id, opp.title)} 
-                                                className="action-link delete" 
-                                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                                className={`${styles.actionLink} ${styles.delete}`}
                                             >
                                                 Xóa
                                             </button>
@@ -552,6 +554,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
 // Component Placeholder: Bảng Ứng viên 
 const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {}, onMessage = () => {}, onApplicationAction }) => {
     
+    // ... (Giữ nguyên các hàm helper getStatusStyle, handleAction, getOpportunityTitle)
     const getStatusStyle = (status) => {
         switch (status) {
             case 'pending':
@@ -582,7 +585,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
     return (
         <div style={{ marginTop: '30px' }}>
             <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>Danh sách Ứng viên</h2>
-            <div className="table-management">
+            <div className={styles.tableManagement}>
                 {applications.length === 0 ? (
                     <p>Chưa có ứng viên nào.</p>
                 ) : (
@@ -644,7 +647,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                 {statusInfo.text}
                                             </span>
                                         </td>
-                                        <td style={{ display: 'flex', gap: '10px' }}>
+                                        <td style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}> {/* Thêm flexWrap */}
                                             {cvUrl ? (
                                                 <a 
                                                     href={cvUrl} 
@@ -697,7 +700,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                      </button>
                                                      <button 
                                                          onClick={() => handleAction(app.id, 'rejected')} 
-                                                         className="btn btn-sm btn-disabled"
+                                                         className="btn btn-sm"
                                                          style={{ backgroundColor: '#ef4444', color: 'white' }}
                                                      >
                                                          Từ chối
@@ -722,6 +725,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
 // --- MAIN DASHBOARD COMPONENT ---
 
 const ProviderDashboard = () => {
+    // ... (Giữ nguyên state, hooks, và các hàm logic)
     const [activeTab, setActiveTab] = useState('overview');
     const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -815,7 +819,7 @@ const ProviderDashboard = () => {
             }
 
             setMessageModalState(prev => ({ ...prev, loading: false, conversation, messages: msgs || [] }));
-        } catch (err) {
+        } catch (err) { // SỬA LỖI Ở ĐÂY
             setMessageModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hội thoại' }));
         }
     };
@@ -935,7 +939,7 @@ const ProviderDashboard = () => {
                 return (
                     <>
                         <h1 style={{ fontSize: '28px', color: '#1f2937' }}>Tổng quan Dashboard</h1>
-                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginTop: '20px' }}>
+                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', marginTop: '20px' }}> {/* Sửa grid */}
                             {stats.map((stat, index) => (
                                 <StatCard key={index} {...stat} />
                             ))}
@@ -971,14 +975,14 @@ const ProviderDashboard = () => {
     };
 
     return (
-        <div className="flex">
+        <div className="flex"> {/* Global class */}
             <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-            <div className="dashboard-content">
+            <div className={styles.dashboardContent}> {/* THAY ĐỔI */}
                 {renderContent()}
             </div>
 
-
+            {/* Modals không thay đổi */}
             <OpportunityModal 
                 isOpen={isCreateModalOpen} 
                 onClose={() => {

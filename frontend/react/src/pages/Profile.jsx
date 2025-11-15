@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+import styles from './Profile.module.css'; 
 
 function Profile() {
   const user = getStoredUser();
@@ -46,7 +47,6 @@ function Profile() {
           setCvFileId(data.cv_file_id || null);
         }
       } catch (_) {
-        // no profile yet -> keep defaults
       }
     })();
     return () => { mounted = false; };
@@ -72,7 +72,6 @@ function Profile() {
       const fileId = uploadResult.file_id;
       setCvFileId(fileId);
       
-      // Cập nhật profile với cv_file_id
       const payload = {
         ...form,
         gpa: form.gpa === '' ? null : Number(form.gpa),
@@ -80,7 +79,7 @@ function Profile() {
       };
       await api.updateStudentProfile(payload);
       setMessage('Upload CV thành công!');
-      setCvFile(null); // Reset file input
+      setCvFile(null); 
     } catch (err) {
       setError(err.message || 'Lỗi upload CV');
     } finally {
@@ -97,7 +96,7 @@ function Profile() {
       const payload = {
         ...form,
         gpa: form.gpa === '' ? null : Number(form.gpa),
-        cv_file_id: cvFileId // Giữ nguyên cv_file_id nếu đã có
+        cv_file_id: cvFileId 
       };
       const saved = await api.updateStudentProfile(payload);
       setMessage('Cập nhật thành công');
@@ -122,97 +121,91 @@ function Profile() {
     }
   }
 
-  const inputStyle = {
-    padding: '10px 12px',
-    borderRadius: 8,
-    border: '1px solid #e2e8f0'
-  };
-
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 28, marginBottom: 8 }}>Hồ sơ sinh viên</h1>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
+    <div className={styles.container}> 
+      <h1 className={styles.title}>Hồ sơ sinh viên</h1> 
+      <p className={styles.subtitle}> 
         Cập nhật thông tin cá nhân để nhà tuyển dụng hiểu rõ hơn về bạn và để hệ thống gợi ý cơ hội phù hợp.
       </p>
 
-      {error && <div style={{ color: '#c0392b', marginBottom: 12 }}>{error}</div>}
-      {message && <div style={{ color: '#16a34a', marginBottom: 12 }}>{message}</div>}
+      {error && <div className={styles.error}>{error}</div>} 
+      {message && <div className={styles.message}>{message}</div>} 
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 16 }}>
-        <section style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <div style={{ display: 'grid', gap: 6 }}>
+      <form onSubmit={handleSubmit} className={styles.form}> 
+        <section className={styles.section}> 
+          <div className={styles.field}> 
             <label>Họ và tên</label>
-            <input style={inputStyle} value={form.full_name} onChange={handleChange('full_name')} placeholder="Nguyễn Văn A" />
+            <input className={styles.input} value={form.full_name} onChange={handleChange('full_name')} placeholder="Nguyễn Văn A" />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div className={styles.field}> 
             <label>Email</label>
-            <input style={inputStyle} type="email" value={form.email} onChange={handleChange('email')} placeholder="a.nguyen@example.com" />
+            <input className={styles.input} type="email" value={form.email} onChange={handleChange('email')} placeholder="a.nguyen@example.com" />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div className={styles.field}> 
             <label>Số điện thoại</label>
-            <input style={inputStyle} value={form.phone} onChange={handleChange('phone')} placeholder="0123456789" />
+            <input className={styles.input} value={form.phone} onChange={handleChange('phone')} placeholder="0123456789" />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div className={styles.field}> 
             <label>Ảnh đại diện (URL)</label>
-            <input style={inputStyle} value={form.avatar_url} onChange={handleChange('avatar_url')} placeholder="https://..." />
+            <input className={styles.input} value={form.avatar_url} onChange={handleChange('avatar_url')} placeholder="https://..." />
           </div>
         </section>
 
-        <section style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          <div style={{ display: 'grid', gap: 6 }}>
+        <section className={styles.section}> 
+          <div className={styles.field}> 
             <label>GPA</label>
-            <input style={inputStyle} type="number" step="0.01" min="0" max="4" value={form.gpa} onChange={handleChange('gpa')} placeholder="3.8" />
+            <input className={styles.input} type="number" step="0.01" min="0" max="4" value={form.gpa} onChange={handleChange('gpa')} placeholder="3.8" />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div className={styles.field}> 
             <label>Trình độ</label>
-            <input style={inputStyle} value={form.education_level} onChange={handleChange('education_level')} placeholder="Bachelor" />
+            <input className={styles.input} value={form.education_level} onChange={handleChange('education_level')} placeholder="Bachelor" />
           </div>
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div className={styles.field}> 
             <label>Chuyên ngành</label>
-            <input style={inputStyle} value={form.major} onChange={handleChange('major')} placeholder="Computer Science" />
+            <input className={styles.input} value={form.major} onChange={handleChange('major')} placeholder="Computer Science" />
           </div>
         </section>
 
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div className={styles.field}> 
           <label>Kỹ năng (phân tách bởi dấu phẩy)</label>
-          <input style={inputStyle} value={form.skills} onChange={handleChange('skills')} placeholder="Python, Java, Data Analysis" />
+          <input className={styles.input} value={form.skills} onChange={handleChange('skills')} placeholder="Python, Java, Data Analysis" />
         </div>
 
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div className={styles.field}> 
           <label>Thành tích</label>
           <textarea
-            style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
+            className={styles.textarea} 
             value={form.achievements}
             onChange={handleChange('achievements')}
             placeholder="Giải Nhất Cuộc thi Lập trình Quốc gia 2024"
           />
         </div>
 
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div className={styles.field}> 
           <label>Quan tâm nghiên cứu</label>
-          <input style={inputStyle} value={form.research_interests} onChange={handleChange('research_interests')} placeholder="Machine Learning, NLP" />
+          <input className={styles.input} value={form.research_interests} onChange={handleChange('research_interests')} placeholder="Machine Learning, NLP" />
         </div>
 
-        <div style={{ display: 'grid', gap: 6 }}>
+        <div className={styles.field}> 
           <label>Đề tài luận văn</label>
-          <input style={inputStyle} value={form.thesis_topic} onChange={handleChange('thesis_topic')} placeholder="Ứng dụng NLP trong phân tích dữ liệu học thuật" />
+          <input className={styles.input} value={form.thesis_topic} onChange={handleChange('thesis_topic')} placeholder="Ứng dụng NLP trong phân tích dữ liệu học thuật" />
         </div>
 
-        <div style={{ display: 'grid', gap: 6, padding: '16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-          <label style={{ fontWeight: 600 }}>CV / Hồ sơ (PDF)</label>
+        <div className={styles.cvSection}> 
+          <label className={styles.cvLabel}>CV / Hồ sơ (PDF)</label> 
           <input 
             type="file" 
             accept=".pdf,.doc,.docx" 
             onChange={(e) => setCvFile(e.target.files[0])} 
-            style={inputStyle}
+            className={styles.input} 
           />
           {cvFile && (
-            <div style={{ fontSize: 14, color: '#475569' }}>
+            <div className={styles.cvFileSelected}> 
               File đã chọn: <strong>{cvFile.name}</strong>
             </div>
           )}
           {cvFileId && (
-            <div style={{ fontSize: 14, color: '#16a34a' }}>
+            <div className={styles.cvFileSaved}> 
               ✓ CV đã được lưu (ID: {cvFileId.substring(0, 8)}...)
             </div>
           )}
@@ -220,14 +213,7 @@ function Profile() {
             type="button"
             onClick={handleUploadCv}
             disabled={uploadingCv || !cvFile}
-            style={{ 
-              padding: '10px 16px', 
-              background: uploadingCv || !cvFile ? '#94a3b8' : '#10b981', 
-              color: '#fff', 
-              border: 'none', 
-              borderRadius: 8,
-              cursor: uploadingCv || !cvFile ? 'not-allowed' : 'pointer'
-            }}
+            className={styles.uploadButton} 
           >
             {uploadingCv ? 'Đang upload...' : 'Upload CV'}
           </button>
@@ -237,14 +223,14 @@ function Profile() {
           <button
             type="submit"
             disabled={loading}
-            style={{ padding: '12px 20px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8 }}
+            className={styles.submitButton} 
           >
             {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
           </button>
         </div>
       </form>
 
-      <div style={{ marginTop: 32, background: '#f1f5f9', padding: 16, borderRadius: 12 }}>
+      <div className={styles.note}> 
         <strong>Lưu ý:</strong> Hồ sơ sẽ được chia sẻ với các nhà cung cấp khi bạn nộp hồ sơ ứng tuyển, giúp họ dễ dàng đánh giá năng lực của bạn.
       </div>
     </div>
@@ -252,5 +238,3 @@ function Profile() {
 }
 
 export default Profile;
-
-

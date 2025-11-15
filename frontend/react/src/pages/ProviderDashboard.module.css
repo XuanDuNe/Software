@@ -1,0 +1,120 @@
+
+.sidebar {
+    width: 250px;
+    background: var(--sidebar-bg);
+    color: var(--color-surface);
+    height: calc(100vh - var(--navbar-height));
+    padding: 20px 0;
+    position: fixed;
+    left: 0;
+    top: var(--navbar-height); 
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 900;
+}
+
+.sidebarTitle {
+    padding: 0 20px;
+    margin-bottom: 30px;
+    color: var(--color-secondary);
+}
+
+.sidebarItem {
+    padding: 12px 20px;
+    cursor: pointer;
+    color: #d1d5db;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebarItem:hover {
+    background-color: #2d3748;
+}
+
+.sidebarItem.active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--color-surface);
+    font-weight: bold;
+}
+
+.sidebarItem span {
+    margin-right: 10px;
+}
+
+
+.dashboardContent {
+    margin-left: 250px;
+    padding: 30px;
+
+    flex-grow: 1;
+    background-color: var(--color-background);
+    min-height: 100vh;
+}
+
+
+.statCard {
+    background: var(--color-surface);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid;
+}
+.statTitle {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+.statValue {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1f2937;
+}
+.statIcon {
+    font-size: 30px;
+}
+
+
+.tableManagement {
+    background: #fff; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+    padding: 20px;
+    overflow-x: auto; 
+}
+.tableManagement table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px; 
+}
+.tableManagement th, .tableManagement td {
+    padding: 12px;
+    text-align: left;
+}
+.tableManagement thead tr {
+    background: #f3f4f6;
+}
+.tableManagement th {
+    border-bottom: 1px solid var(--color-border);
+}
+.tableManagement tbody tr:not(:last-child) td {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.actionLink {
+    color: var(--color-primary);
+    text-decoration: none;
+    margin-right: 8px;
+    
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+.actionLink.delete {
+    color: var(--color-danger);
+}
+.actionLink[data-color="edit"] {
+    color: #f59e0b;
+}

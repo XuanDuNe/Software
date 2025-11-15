@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
+import styles from './Notifications.module.css'; 
 
 function Notifications() {
   const [items, setItems] = useState([]);
@@ -37,16 +38,23 @@ function Notifications() {
   }
 
   return (
-    <div className="container p-6">
+    <div className="container p-6"> {}
       <h2>Thông báo</h2>
-      {error && <div className="alert-error">{error}</div>}
-      <div className="grid gap-4">
+      {error && <div className="alert-error">{error}</div>} 
+      <div className="grid gap-4"> {}
         {(Array.isArray(items) ? items : []).map(n => ( 
-          <div key={n.id} className="notification-item">
+          <div key={n.id} className={styles.item}> 
             <div>{n.content}</div>
-            <div className="notification-date">{new Date(n.created_at).toLocaleString()}</div>
-            <div className="notification-action">
-              {!n.read_status && <button onClick={() => markRead(n.id)} className="btn btn-primary btn-sm">Đánh dấu đã đọc</button>}
+            <div className={styles.date}>{new Date(n.created_at).toLocaleString()}</div> 
+            <div className={styles.action}> 
+              {!n.read_status && (
+                <button 
+                  onClick={() => markRead(n.id)} 
+                  className="btn btn-primary btn-sm" 
+                >
+                  Đánh dấu đã đọc
+                </button>
+              )}
             </div>
           </div>
         ))}

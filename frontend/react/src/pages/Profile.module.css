@@ -1,0 +1,120 @@
+/* src/pages/Profile.module.css */
+.container {
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.title {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.error {
+    color: #c0392b;
+    margin-bottom: 12px;
+}
+
+.message {
+    color: #16a34a;
+    margin-bottom: 12px;
+}
+
+.form {
+    display: grid;
+    gap: 16px;
+}
+
+.section {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field {
+    display: grid;
+    gap: 6px;
+}
+
+.input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    /* Dùng global .input nếu muốn, nhưng để đây cho rõ ràng */
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.textarea {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    min-height: 80px;
+    resize: vertical;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.cvSection {
+    display: grid;
+    gap: 6px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.cvLabel {
+    font-weight: 600;
+}
+
+.cvFileSelected {
+    font-size: 14px;
+    color: #475569;
+}
+
+.cvFileSaved {
+    font-size: 14px;
+    color: #16a34a;
+}
+
+.uploadButton {
+    padding: 10px 16px;
+    background: #10b981;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.uploadButton:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.submitButton {
+    padding: 12px 20px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.submitButton:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+
+.note {
+    margin-top: 32px;
+    background: #f1f5f9;
+    padding: 16px;
+    border-radius: 12px;
+}
