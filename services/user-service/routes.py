@@ -25,6 +25,7 @@ def to_read_model(profile: StudentProfile) -> StudentProfileRead:
         achievements=profile.achievements,
         research_interests=profile.research_interests,
         thesis_topic=profile.thesis_topic,
+        cv_file_id=profile.cv_file_id,
     )
 
 

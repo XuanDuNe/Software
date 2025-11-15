@@ -131,6 +131,17 @@ export const api = {
   // NEW: Check unread count (Chỉ để tham khảo)
   getUnreadCount: (conversationId, userId) => request(`/notification/conversations/${conversationId}/unread_count/${userId}`),
   
+  // Storage service
+  uploadFile: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request('/storage/files/upload', {
+      method: 'POST',
+      body: formData
+    });
+  },
+  getFileUrl: (fileId) => `${BASE_URL}/storage/files/${fileId}`,
+
   // Matching service
   matchOpportunities: (studentUserId, studentProfile) => request('/matching/match', {
     method: 'POST',

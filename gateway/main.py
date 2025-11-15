@@ -22,7 +22,8 @@ SERVICES = {
     "notification": "http://notification-service:8005/api", 
     "opportunity": "http://provider-service:8006/api/opportunities",
     "provider_app": "http://provider-service:8006/api/applications",
-    "user": "http://user-service:8002/api"
+    "user": "http://user-service:8002/api",
+    "storage": "http://storage-service:8008/api"
 }
 
 # NEW: URL cơ sở của Application Service, dùng để truy cập file tĩnh

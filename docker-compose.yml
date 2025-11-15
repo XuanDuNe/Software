@@ -13,6 +13,7 @@ services:
       - matching-service
       - provider-service
       - user-service
+      - storage-service
 
   # Frontend (React, served by NGINX)
   frontend:
@@ -159,3 +160,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Storage Service
+  storage-service:
+    build: ./services/storage-service
+    ports:
+      - "8008:8008"
+    volumes:
+      - storage-data:/app/storage
+
+volumes:
+  storage-data:

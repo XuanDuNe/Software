@@ -17,6 +17,7 @@ class StudentProfile(SQLModel, table=True):
     achievements: Optional[str] = None
     research_interests: Optional[str] = None
     thesis_topic: Optional[str] = None
+    cv_file_id: Optional[str] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 

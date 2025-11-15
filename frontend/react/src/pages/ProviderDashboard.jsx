@@ -283,9 +283,13 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
 
 const StudentProfileModal = ({ isOpen, loading, error, profile, application, onClose }) => {
     if (!isOpen) return null;
-    const docs = application?.documents || [];
-    const cvDoc = docs.find(doc => (doc.document_type || '').toLowerCase() === 'cv') || docs[0];
-    const cvUrl = cvDoc?.document_url ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`) : null;
+    // Lấy CV từ profile.cv_file_id (mới) hoặc fallback về application.documents (cũ)
+    const cvFileId = profile?.cv_file_id;
+    const cvUrl = cvFileId ? api.getFileUrl(cvFileId) : (() => {
+        const docs = application?.documents || [];
+        const cvDoc = docs.find(doc => (doc.document_type || '').toLowerCase() === 'cv') || docs[0];
+        return cvDoc?.document_url ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`) : null;
+    })();
     const skills = profile?.skills ? profile.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
     return (
         <div className="modal-overlay">
@@ -598,10 +602,14 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                 const fullName = profile.full_name && profile.full_name.trim().length > 0
                                     ? profile.full_name
                                     : `Ứng viên #${app.student_user_id}`;
-                                const cvDoc = (app.documents || []).find(doc => (doc.document_type || '').toLowerCase() === 'cv') || (app.documents || [])[0];
-                                const cvUrl = cvDoc?.document_url
-                                    ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`)
-                                    : null;
+                                // Lấy CV từ profile.cv_file_id (mới) hoặc fallback về application.documents (cũ)
+                                const cvFileId = profile.cv_file_id;
+                                const cvUrl = cvFileId ? api.getFileUrl(cvFileId) : (() => {
+                                    const cvDoc = (app.documents || []).find(doc => (doc.document_type || '').toLowerCase() === 'cv') || (app.documents || [])[0];
+                                    return cvDoc?.document_url
+                                        ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`)
+                                        : null;
+                                })();
                                     
                                 // NEW FIELD
                                 const hasUnread = app.has_unread_messages; 

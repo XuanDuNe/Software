@@ -20,6 +20,9 @@ function Profile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [cvFile, setCvFile] = useState(null);
+  const [cvFileId, setCvFileId] = useState(null);
+  const [uploadingCv, setUploadingCv] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -40,6 +43,7 @@ function Profile() {
             research_interests: data.research_interests || '',
             thesis_topic: data.thesis_topic || ''
           });
+          setCvFileId(data.cv_file_id || null);
         }
       } catch (_) {
         // no profile yet -> keep defaults
@@ -54,6 +58,36 @@ function Profile() {
     };
   }
 
+  async function handleUploadCv() {
+    if (!cvFile) {
+      setError('Vui lòng chọn file CV trước khi upload');
+      return;
+    }
+
+    setUploadingCv(true);
+    setError('');
+    setMessage('');
+    try {
+      const uploadResult = await api.uploadFile(cvFile);
+      const fileId = uploadResult.file_id;
+      setCvFileId(fileId);
+      
+      // Cập nhật profile với cv_file_id
+      const payload = {
+        ...form,
+        gpa: form.gpa === '' ? null : Number(form.gpa),
+        cv_file_id: fileId
+      };
+      await api.updateStudentProfile(payload);
+      setMessage('Upload CV thành công!');
+      setCvFile(null); // Reset file input
+    } catch (err) {
+      setError(err.message || 'Lỗi upload CV');
+    } finally {
+      setUploadingCv(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -62,7 +96,8 @@ function Profile() {
     try {
       const payload = {
         ...form,
-        gpa: form.gpa === '' ? null : Number(form.gpa)
+        gpa: form.gpa === '' ? null : Number(form.gpa),
+        cv_file_id: cvFileId // Giữ nguyên cv_file_id nếu đã có
       };
       const saved = await api.updateStudentProfile(payload);
       setMessage('Cập nhật thành công');
@@ -79,6 +114,7 @@ function Profile() {
         research_interests: saved.research_interests || '',
         thesis_topic: saved.thesis_topic || ''
       });
+      setCvFileId(saved.cv_file_id || null);
     } catch (err) {
       setError(err.message || 'Lỗi cập nhật hồ sơ');
     } finally {
@@ -160,6 +196,41 @@ function Profile() {
         <div style={{ display: 'grid', gap: 6 }}>
           <label>Đề tài luận văn</label>
           <input style={inputStyle} value={form.thesis_topic} onChange={handleChange('thesis_topic')} placeholder="Ứng dụng NLP trong phân tích dữ liệu học thuật" />
+        </div>
+
+        <div style={{ display: 'grid', gap: 6, padding: '16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <label style={{ fontWeight: 600 }}>CV / Hồ sơ (PDF)</label>
+          <input 
+            type="file" 
+            accept=".pdf,.doc,.docx" 
+            onChange={(e) => setCvFile(e.target.files[0])} 
+            style={inputStyle}
+          />
+          {cvFile && (
+            <div style={{ fontSize: 14, color: '#475569' }}>
+              File đã chọn: <strong>{cvFile.name}</strong>
+            </div>
+          )}
+          {cvFileId && (
+            <div style={{ fontSize: 14, color: '#16a34a' }}>
+              ✓ CV đã được lưu (ID: {cvFileId.substring(0, 8)}...)
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleUploadCv}
+            disabled={uploadingCv || !cvFile}
+            style={{ 
+              padding: '10px 16px', 
+              background: uploadingCv || !cvFile ? '#94a3b8' : '#10b981', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: 8,
+              cursor: uploadingCv || !cvFile ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {uploadingCv ? 'Đang upload...' : 'Upload CV'}
+          </button>
         </div>
 
         <div>
