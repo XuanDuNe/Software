@@ -3,9 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api.js';
 import { storeAuth } from '../utils/auth.js';
 import styles from './Login.module.css'; 
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
+
 
 function Login() {
   const navigate = useNavigate();
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
+
   const [isRegister, setIsRegister] = useState(false);
   
   // Login state
@@ -28,7 +34,7 @@ function Login() {
     try {
       const data = await api.login({ email: username, password });
       const token = data?.access_token;
-      if (!token) throw new Error('Phản hồi không hợp lệ');
+      if (!token) throw new Error(t('loginPage.error_invalid_response'));
 
       const verified = await api.verifyToken(token);
       const user = {
@@ -42,7 +48,7 @@ function Login() {
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại');
+      setError(err.message || t('loginPage.error_login_failed'));
     } finally {
       setLoading(false);
     }
@@ -54,17 +60,17 @@ function Login() {
     
     // Validation
     if (regPassword.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự');
+      setError(t('loginPage.error_pw_length'));
       return;
     }
     
     if (regPassword !== regConfirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      setError(t('loginPage.error_pw_mismatch'));
       return;
     }
     
     if (!regRole) {
-      setError('Vui lòng chọn vai trò');
+      setError(t('loginPage.error_no_role'));
       return;
     }
     
@@ -77,7 +83,7 @@ function Login() {
       });
       
       const token = data?.access_token;
-      if (!token) throw new Error('Phản hồi không hợp lệ');
+      if (!token) throw new Error(t('loginPage.error_invalid_response'));
 
       const verified = await api.verifyToken(token);
       const user = {
@@ -91,7 +97,7 @@ function Login() {
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || 'Đăng ký thất bại');
+      setError(err.message || t('loginPage.error_register_failed'));
     } finally {
       setLoading(false);
     }
@@ -110,7 +116,8 @@ function Login() {
             }}
             className={`${styles.tabButton} ${!isRegister ? styles.tabButtonActive : ''}`} 
           >
-            Đăng nhập
+            {/* 3. Thay thế string */}
+            {t('common.login')}
           </button>
           <button
             type="button"
@@ -120,7 +127,8 @@ function Login() {
             }}
             className={`${styles.tabButton} ${isRegister ? styles.tabButtonActive : ''}`} 
           >
-            Đăng ký
+            {/* 3. Thay thế string */}
+            {t('common.register')}
           </button>
         </div>
 
@@ -128,25 +136,27 @@ function Login() {
           {!isRegister ? (
             // Login Form
             <form onSubmit={handleLogin}>
-              <h2 className={styles.title}>Đăng nhập</h2> 
-              <div className="form-group"> {}
-                <label className="label">Email</label> {}
+              <h2 className={styles.title}>{t('loginPage.loginTitle')}</h2> 
+              <div className="form-group">
+                <label className="label">{t('common.email')}</label>
+
                 <input
                   type="email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder={t('loginPage.emailPlaceholder')}
                   className="input" 
                   required
                 />
               </div>
-              <div className="form-group"> {}
-                <label className="label">Mật khẩu</label> {}
+
+              <div className="form-group">
+                <label className="label">{t('common.password')}</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('loginPage.passwordPlaceholder')}
                   className="input" 
                   required
                 />
@@ -159,77 +169,83 @@ function Login() {
                 disabled={loading}
                 className={`btn btn-primary ${styles.submitButton}`} 
               >
-                {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {loading ? t('loginPage.loginButtonLoading') : t('loginPage.loginButton')}
               </button>
             </form>
           ) : (
             // Register Form
             <form onSubmit={handleRegister}>
-              <h2 className={styles.title}>Đăng ký tài khoản</h2> 
-              
-              <div className="form-group"> {}
-                <label className="label">Email</label> {}
+              <h2 className={styles.title}>{t('loginPage.registerTitle')}</h2> 
+              <div className="form-group">
+                <label className="label">{t('common.email')}</label>
                 <input
                   type="email"
                   value={regEmail}
                   onChange={(e) => setRegEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder={t('loginPage.emailPlaceholder')}
                   className="input" 
                   required
                 />
               </div>
 
-              <div className="form-group"> {}
-                <label className="label">Mật khẩu (tối thiểu 8 ký tự)</label> {}
+              <div className="form-group">
+                <label className="label">{t('loginPage.passwordMinLength')}</label>
+
                 <input
                   type="password"
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('loginPage.passwordPlaceholder')}
                   className="input" 
                   required
                   minLength={8}
                 />
                 {regPassword && regPassword.length < 8 && (
                   <small className={styles.errorText}> 
-                    Mật khẩu phải có ít nhất 8 ký tự
+                    {t('loginPage.error_pw_length')}
+
                   </small>
                 )}
               </div>
 
-              <div className="form-group"> {}
-                <label className="label">Xác nhận mật khẩu</label> {}
+
+              <div className="form-group">
+                <label className="label">{t('loginPage.confirmPassword')}</label>
                 <input
                   type="password"
                   value={regConfirmPassword}
                   onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
+
+                  placeholder={t('loginPage.passwordPlaceholder')}
+
                   className="input" 
                   required
                 />
                 {regConfirmPassword && regPassword !== regConfirmPassword && (
                   <small className={styles.errorText}> 
-                    Mật khẩu xác nhận không khớp
+                    {t('loginPage.error_pw_mismatch')}
+
                   </small>
                 )}
               </div>
 
-              <div className="form-group"> {}
-                <label className="label">Vai trò</label> {}
+              <div className="form-group">
+                <label className="label">{t('loginPage.role')}</label>
+
                 <div className={styles.roleContainer}> 
                   <button
                     type="button"
                     onClick={() => setRegRole('student')}
                     className={`${styles.roleButton} ${regRole === 'student' ? styles.roleButtonActive : ''}`} 
                   >
-                    👨‍🎓 Sinh viên
+                    {t('loginPage.role_student')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setRegRole('provider')}
                     className={`${styles.roleButton} ${regRole === 'provider' ? styles.roleButtonActive : ''}`} 
                   >
-                    🏢 Nhà cung cấp
+                    {t('loginPage.role_provider')}
                   </button>
                 </div>
               </div>
@@ -247,7 +263,7 @@ function Login() {
                     : styles.submitButton
                 }`} 
               >
-                {loading ? 'Đang đăng ký...' : 'Đăng ký'}
+                {loading ? t('loginPage.registerButtonLoading') : t('loginPage.registerButton')}
               </button>
             </form>
           )}

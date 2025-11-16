@@ -1,10 +1,11 @@
-// src/pages/ProviderDashboard.jsx (Đã sửa lỗi cú pháp)
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api, BASE_URL } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
-import styles from './ProviderDashboard.module.css'; // Import CSS Module
+import styles from './ProviderDashboard.module.css';
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
+
 
 // --- HELPER COMPONENTS ---
 
@@ -21,16 +22,20 @@ const StatCard = ({ title, value, icon, color }) => (
 );
 
 const Sidebar = ({ activeTab, onSelectTab }) => {
+    // 2. Hook
+    const { t } = useTranslation();
+
     const navItems = [
-        { id: 'overview', name: 'Tổng quan', icon: '📊' },
-        { id: 'opportunities', name: 'Cơ hội (Listings)', icon: '📋' },
-        { id: 'applicants', name: 'Ứng viên (Applicants)', icon: '👥' },
-        { id: 'settings', name: 'Cài đặt', icon: '⚙️' },
+        { id: 'overview', name: t('providerDashboardPage.sidebar.overview'), icon: '📊' },
+        { id: 'opportunities', name: t('providerDashboardPage.sidebar.opportunities'), icon: '📋' },
+        { id: 'applicants', name: t('providerDashboardPage.sidebar.applicants'), icon: '👥' },
+        { id: 'settings', name: t('providerDashboardPage.sidebar.settings'), icon: '⚙️' },
     ];
 
     return (
         <div className={styles.sidebar}>
-            <h2 className={styles.sidebarTitle}>Provider Hub</h2>
+            <h2 className={styles.sidebarTitle}>{t('providerDashboardPage.sidebar.hubTitle')}</h2>
+
             <nav>
                 {navItems.map(item => (
                     <div
@@ -48,8 +53,11 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
 };
 
 // ... Các component Modal (OpportunityModal, OpportunityDetailModal, StudentProfileModal, MessageModal)
-// Giữ nguyên các component modal này ...
+
 const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
+    // 2. Hook
+    const { t } = useTranslation();
+
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('program');
@@ -104,23 +112,24 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
             });
             onClose();
         } catch (err) {
-            setError(err.message || 'Lỗi khi lưu cơ hội.');
+            setError(err.message || t('providerDashboardPage.modals.error_save'));
         } finally {
             setLoading(false);
         }
     };
 
+    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content">
                 <div className="modal-header">
-                    <h3>{existingData ? 'Chỉnh sửa cơ hội' : 'Thêm cơ hội mới'}</h3>
+                    <h3>{existingData ? t('providerDashboardPage.modals.opp_edit_title') : t('providerDashboardPage.modals.opp_add_title')}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {error && <div className="alert-error">{error}</div>}
                 <form onSubmit={handleSubmit} className="form-grid">
                     <div className="form-group">
-                        <label className="label">Tên cơ hội</label>
+                        <label className="label">{t('providerDashboardPage.modals.opp_name')}</label>
                         <input
                             type="text"
                             className="input"
@@ -130,20 +139,20 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                         />
                     </div>
                     <div className="form-group">
-                        <label className="label">Loại cơ hội</label>
+                        <label className="label">{t('providerDashboardPage.modals.opp_type')}</label>
                         <select
                             className="input"
                             value={type}
                             onChange={(e) => setType(e.target.value)}
                             required
                         >
-                            <option value="program">Chương trình (Program)</option>
-                            <option value="scholarship">Học bổng (Scholarship)</option>
-                            <option value="research_lab">Lab nghiên cứu (Research Lab)</option>
+                            <option value="program">{t('providerDashboardPage.modals.opp_type_program')}</option>
+                            <option value="scholarship">{t('providerDashboardPage.modals.opp_type_scholarship')}</option>
+                            <option value="research_lab">{t('providerDashboardPage.modals.opp_type_lab')}</option>
                         </select>
                     </div>
                     <div className="form-group">
-                        <label className="label">Mô tả</label>
+                        <label className="label">{t('providerDashboardPage.modals.opp_desc')}</label>
                         <textarea
                             className="input"
                             value={description}
@@ -155,7 +164,7 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
 
                     <div className="form-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                         <div className="form-group">
-                            <label className="label">GPA tối thiểu</label>
+                            <label className="label">{t('providerDashboardPage.modals.opp_gpa')}</label>
                             <input
                                 type="number"
                                 className="input"
@@ -164,11 +173,11 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                                 step="0.01"
                                 value={gpaMin}
                                 onChange={(e) => setGpaMin(e.target.value)}
-                                placeholder="Ví dụ: 3.0"
+                                placeholder={t('providerDashboardPage.modals.opp_gpa_placeholder')}
                             />
                         </div>
                         <div className="form-group">
-                            <label className="label">Hạn nộp</label>
+                            <label className="label">{t('providerDashboardPage.modals.opp_deadline')}</label>
                             <input
                                 type="date"
                                 className="input"
@@ -179,27 +188,27 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                     </div>
 
                     <div className="form-group">
-                        <label className="label">Kỹ năng yêu cầu (phân tách bằng dấu phẩy)</label>
+                        <label className="label">{t('providerDashboardPage.modals.opp_skills')}</label>
                         <input
                             className="input"
                             value={skills}
                             onChange={(e) => setSkills(e.target.value)}
-                            placeholder="Python, Machine Learning, ..."
+                            placeholder={t('providerDashboardPage.modals.opp_skills_placeholder')}
                         />
                     </div>
 
                     <div className="form-group">
-                        <label className="label">Tài liệu yêu cầu (phân tách bằng dấu phẩy)</label>
+                        <label className="label">{t('providerDashboardPage.modals.opp_docs')}</label>
                         <input
                             className="input"
                             value={requiredDocs}
                             onChange={(e) => setRequiredDocs(e.target.value)}
-                            placeholder="CV, Cover Letter,..."
+                            placeholder={t('providerDashboardPage.modals.opp_docs_placeholder')}
                         />
                     </div>
 
                     <button type="submit" className="btn btn-secondary" disabled={loading}>
-                        {loading ? 'Đang lưu...' : 'Lưu'}
+                        {loading ? t('common.saving') : t('common.save')}
                     </button>
                 </form>
             </div>
@@ -208,6 +217,8 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
 };
 
 const OpportunityDetailModal = ({ opportunityId, onClose }) => {
+    // 2. Hook
+    const { t } = useTranslation();
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -225,21 +236,22 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                 setLoading(false);
             })
             .catch(err => {
-                setError(err.message || 'Lỗi tải chi tiết cơ hội.');
+                setError(err.message || t('studentDashboardPage.modal_loadError')); // Reuse key
                 setLoading(false);
             });
-    }, [opportunityId]);
+    }, [opportunityId, t]);
 
     if (!opportunityId) return null;
 
+    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: '600px' }}>
                 <div className="modal-header">
-                    <h3>Chi tiết Cơ hội</h3>
+                    <h3>{t('studentDashboardPage.modal_opportunityDetails')}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
-                {loading && <div style={{ textAlign: 'center' }}>Đang tải dữ liệu...</div>}
+                {loading && <div style={{ textAlign: 'center' }}>{t('common.loading')}</div>}
                 {error && <div className="alert-error">{error}</div>}
                 
                 {detail && (
@@ -247,13 +259,13 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                         <h4 style={{ fontSize: '24px', marginBottom: '10px' }}>{detail.title}</h4>
 
                         <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-                            <strong className="label">Mô tả chi tiết:</strong>
+                            <strong className="label">{t('providerDashboardPage.modals.opp_desc')}:</strong>
                             <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0 0 0' }}>{detail.description}</p>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', fontSize: '14px' }}>
                             <div><strong>ID Cơ hội:</strong> {detail.id}</div>
-                            <div><strong>Loại:</strong> {detail.type}</div>
+                            <div><strong>{t('providerDashboardPage.modals.opp_type')}:</strong> {detail.type}</div>
                             <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
                         </div>
 
@@ -262,21 +274,22 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                                 <h5 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Tiêu chí tuyển chọn</h5>
                                 <div style={{ display: 'grid', gap: '8px', fontSize: '14px' }}>
                                     {detail.criteria.gpa_min !== null && (
-                                        <div><strong>GPA tối thiểu:</strong> {detail.criteria.gpa_min}</div>
+                                        <div><strong>{t('providerDashboardPage.modals.opp_gpa')}:</strong> {detail.criteria.gpa_min}</div>
                                     )}
                                     {detail.criteria.deadline && (
-                                        <div><strong>Hạn nộp:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
+                                        <div><strong>{t('providerDashboardPage.modals.opp_deadline')}:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
                                     )}
                                     <div>
-                                        <strong>Kỹ năng yêu cầu:</strong> {detail.criteria.skills?.length ? detail.criteria.skills.join(', ') : 'Không yêuêu cầu cụ thể'}
+
+                                        <strong>{t('providerDashboardPage.modals.opp_skills')}:</strong> {detail.criteria.skills?.length ? detail.criteria.skills.join(', ') : 'Không yêu cầu cụ thể'}
+
                                     </div>
                                     <div>
-                                        <strong>Tài liệu cần nộp:</strong> {detail.criteria.required_documents?.length ? detail.criteria.required_documents.join(', ') : 'CV'}
+                                        <strong>{t('providerDashboardPage.modals.opp_docs')}:</strong> {detail.criteria.required_documents?.length ? detail.criteria.required_documents.join(', ') : 'CV'}
                                     </div>
                                 </div>
                             </div>
                         )}
-
                     </div>
                 )}
             </div>
@@ -285,8 +298,10 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
 };
 
 const StudentProfileModal = ({ isOpen, loading, error, profile, application, onClose }) => {
+    // 2. Hook
+    const { t } = useTranslation();
     if (!isOpen) return null;
-    // Lấy CV từ profile.cv_file_id (mới) hoặc fallback về application.documents (cũ)
+    
     const cvFileId = profile?.cv_file_id;
     const cvUrl = cvFileId ? api.getFileUrl(cvFileId) : (() => {
         const docs = application?.documents || [];
@@ -294,77 +309,78 @@ const StudentProfileModal = ({ isOpen, loading, error, profile, application, onC
         return cvDoc?.document_url ? (cvDoc.document_url.startsWith('http') ? cvDoc.document_url : `${BASE_URL}${cvDoc.document_url}`) : null;
     })();
     const skills = profile?.skills ? profile.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 640 }}>
                 <div className="modal-header">
-                    <h3>Hồ sơ ứng viên</h3>
+                    <h3>{t('providerDashboardPage.modals.profile_title')}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải hồ sơ...</div>
+                    <div style={{ padding: 16, textAlign: 'center' }}>{t('providerDashboardPage.modals.profile_loading')}</div>
                 ) : error ? (
                     <div className="alert-error">{error}</div>
                 ) : profile ? (
                     <div style={{ display: 'grid', gap: 16 }}>
                         <div>
-                            <h2 style={{ margin: '0 0 8px 0' }}>{profile.full_name || `Ứng viên #${application?.student_user_id}`}</h2>
-                            <div style={{ fontSize: 14, color: '#64748b' }}>{profile.email || 'Chưa cập nhật email'}</div>
-                            {profile.phone && <div style={{ fontSize: 14, color: '#64748b' }}>Điện thoại: {profile.phone}</div>}
+                            <h2 style={{ margin: '0 0 8px 0' }}>{profile.full_name || t('providerDashboardPage.applicants.applicantName', {id: application?.student_user_id})}</h2>
+                            <div style={{ fontSize: 14, color: '#64748b' }}>{profile.email || t('providerDashboardPage.modals.profile_no_email')}</div>
+                            {profile.phone && <div style={{ fontSize: 14, color: '#64748b' }}>{t('providerDashboardPage.modals.profile_phone', {phone: profile.phone})}</div>}
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
-                            <div><strong>GPA:</strong> {profile.gpa ?? 'Chưa cập nhật'}</div>
-                            <div><strong>Trình độ:</strong> {profile.education_level || 'Chưa cập nhật'}</div>
-                            <div><strong>Chuyên ngành:</strong> {profile.major || 'Chưa cập nhật'}</div>
+                            <div><strong>{t('providerDashboardPage.modals.profile_gpa')}</strong> {profile.gpa ?? t('providerDashboardPage.modals.profile_no_update')}</div>
+                            <div><strong>{t('providerDashboardPage.modals.profile_level')}</strong> {profile.education_level || t('providerDashboardPage.modals.profile_no_update')}</div>
+                            <div><strong>{t('providerDashboardPage.modals.profile_major')}</strong> {profile.major || t('providerDashboardPage.modals.profile_no_update')}</div>
                         </div>
                         <div>
-                            <strong>Kỹ năng:</strong>
+                            <strong>{t('providerDashboardPage.modals.profile_skills')}</strong>
                             <div style={{ marginTop: 8 }}>
                                 {skills.length ? skills.map((skill, idx) => (
                                     <span key={idx} style={{ background: '#e0ecff', color: '#1d4ed8', padding: '4px 8px', borderRadius: 6, marginRight: 6, fontSize: 12 }}>{skill}</span>
-                                )) : 'Chưa cập nhật'}
+                                )) : t('providerDashboardPage.modals.profile_no_update')}
                             </div>
                         </div>
                         {profile.achievements && (
                             <div>
-                                <strong>Thành tích</strong>
+                                <strong>{t('providerDashboardPage.modals.profile_achievements')}</strong>
                                 <p style={{ marginTop: 6, background: '#f8fafc', padding: 12, borderRadius: 10 }}>{profile.achievements}</p>
                             </div>
                         )}
                         {profile.research_interests && (
                             <div>
-                                <strong>Quan tâm nghiên cứu</strong>
+                                <strong>{t('providerDashboardPage.modals.profile_interests')}</strong>
                                 <p style={{ marginTop: 6 }}>{profile.research_interests}</p>
                             </div>
                         )}
                         {profile.thesis_topic && (
                             <div>
-                                <strong>Đề tài luận văn</strong>
+                                <strong>{t('providerDashboardPage.modals.profile_thesis')}</strong>
                                 <p style={{ marginTop: 6 }}>{profile.thesis_topic}</p>
                             </div>
                         )}
                         <div>
-                            <strong>Tài liệu đã nộp</strong>
+                            <strong>{t('providerDashboardPage.modals.profile_documents')}</strong>
                             <div style={{ marginTop: 8 }}>
                                 {cvUrl ? (
                                     <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">
-                                        Xem CV
+                                        {t('providerDashboardPage.applicants.action_viewCV')}
                                     </a>
                                 ) : (
-                                    <span style={{ fontSize: 13, color: '#94a3b8' }}>Chưa có CV được tải lên</span>
+                                    <span style={{ fontSize: 13, color: '#94a3b8' }}>{t('providerDashboardPage.modals.profile_no_cv')}</span>
                                 )}
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>Không tìm thấy dữ liệu hồ sơ.</div>
+                    <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>{t('providerDashboardPage.modals.profile_no_data')}</div>
                 )}
             </div>
         </div>
     );
 };
 
-// NEW: Message Modal Refactored with useRef for scrolling
 const MessageModal = ({
     isOpen,
     loading,
@@ -378,25 +394,29 @@ const MessageModal = ({
     partnerName,
     currentUserId
 }) => {
-    if (!isOpen) return null;
+    // 2. Hook
+    const { t } = useTranslation();
     const messagesEndRef = useRef(null); 
+    
+    
 
-    // Scroll to bottom when messages change
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]);
 
+    if (!isOpen) return null;
+    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
                 <div className="modal-header">
-                    <h3>Nhắn tin với {partnerName}</h3>
+                    <h3>{t('providerDashboardPage.modals.chat_title', { name: partnerName })}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải tin nhắn...</div>
+                    <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>
                 ) : (
                     <div style={{ display: 'grid', gap: 12 }}>
                         {error && <div className="alert-error">{error}</div>}
@@ -408,7 +428,7 @@ const MessageModal = ({
                             padding: 12, 
                             display: 'grid', 
                             gap: 10,
-                            alignContent: 'end' // NEW
+                            alignContent: 'end'
                         }}>
                             {messages && messages.length ? messages.map(msg => (
                                 <div
@@ -429,7 +449,7 @@ const MessageModal = ({
                                     <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Chưa có tin nhắn nào.</div> // NEW
+                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>{t('providerDashboardPage.modals.chat_empty', 'Chưa có tin nhắn.')}</div>
                             )}
                             <div ref={messagesEndRef} />
                         </div>
@@ -444,7 +464,7 @@ const MessageModal = ({
                                 className="input"
                                 value={input}
                                 onChange={(e) => onInputChange(e.target.value)}
-                                placeholder="Nhập tin nhắn..."
+                                placeholder={t('providerDashboardPage.modals.chat_placeholder', 'Nhập tin nhắn...')}
                                 style={{ flex: 1 }}
                             />
                             <button
@@ -452,7 +472,7 @@ const MessageModal = ({
                                 className="btn btn-secondary"
                                 disabled={sending || !input.trim()}
                             >
-                                {sending ? 'Đang gửi...' : 'Gửi'}
+                                {sending ? t('common.sending', 'Đang gửi...') : t('common.send', 'Gửi')}
                             </button>
                         </form>
                     </div>
@@ -464,39 +484,40 @@ const MessageModal = ({
 
 
 const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
-    
-    // Hàm xử lý việc xóa cơ hội
+    // 2. Hook
+    const { t } = useTranslation();
+
     const handleDelete = (opportunityId, title) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa cơ hội: "${title}"?`)) {
+        if (window.confirm(t('providerDashboardPage.opportunities.confirmDelete', { title }))) {
             onOpportunityAction('delete', opportunityId);
         }
     };
     
-    // Hàm xử lý Xem Chi tiết
     const handleViewDetail = (opportunityId) => {
         onOpportunityAction('viewDetail', opportunityId);
     };
 
+    // 3. Thay thế strings
     return (
         <div style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '24px' }}>Danh sách Cơ hội</h2>
+                <h2 style={{ margin: 0, fontSize: '24px' }}>{t('providerDashboardPage.opportunities.title')}</h2>
                 <button className="btn btn-secondary" onClick={() => onOpportunityAction('create')}>
-                    + Thêm Cơ hội Mới
+                    {t('providerDashboardPage.opportunities.addNew')}
                 </button>
             </div>
             
             <div className={styles.tableManagement}>
                 {opportunities.length === 0 ? (
-                    <p>Chưa có cơ hội nào được đăng tải.</p>
+                    <p>{t('providerDashboardPage.opportunities.noOpportunities')}</p>
                 ) : (
                     <table>
                         <thead>
                             <tr>
-                                <th style={{ width: '30%' }}>Tên Cơ hội</th>
-                                <th style={{ width: '25%' }}>Tiêu chí</th>
-                                <th style={{ width: '10%' }}>Ứng viên</th>
-                                <th style={{ width: '20%' }}>Hành động</th>
+                                <th style={{ width: '30%' }}>{t('providerDashboardPage.opportunities.header_name')}</th>
+                                <th style={{ width: '25%' }}>{t('providerDashboardPage.opportunities.header_criteria')}</th>
+                                <th style={{ width: '10%' }}>{t('providerDashboardPage.opportunities.header_applicants')}</th>
+                                <th style={{ width: '20%' }}>{t('providerDashboardPage.opportunities.header_action')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -508,20 +529,38 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                             <div style={{ fontWeight: 600 }}>{opp.title}</div>
                                             <div style={{ fontSize: 12, color: '#64748b' }}>{opp.type}</div>
                                         </td>
+                                        
+                                        {/* === BẢN SỬA LỖI CHO PHẦN TIÊU CHÍ === */}
                                         <td style={{ fontSize: 13, color: '#475569' }}>
-                                            {criteria.gpa_min ? <div>GPA ≥ {criteria.gpa_min}</div> : <div>Không yêu cầu GPA</div>}
-                                            <div>Kỹ năng: {criteria.skills?.length ? criteria.skills.join(', ') : 'Không yêu cầu cụ thể'}</div>
+                                            {criteria.gpa_min 
+                                                ? <div>{t('providerDashboardPage.opportunities.criteria_gpa', { gpa: criteria.gpa_min })}</div> 
+                                                : <div>{t('providerDashboardPage.opportunities.criteria_no_gpa')}</div>
+                                            }
+                                            <div>
+                                                <strong>{t('providerDashboardPage.opportunities.criteria_skills_label')}</strong>
+                                                {' '}
+                                                {criteria.skills?.length 
+                                                    ? criteria.skills.join(', ') 
+                                                    : t('providerDashboardPage.opportunities.criteria_skills_none')
+                                                }
+                                            </div>
                                             {criteria.deadline && (
-                                                <div>Hạn: {new Date(criteria.deadline).toLocaleDateString()}</div>
+                                                <div>
+                                                    <strong>{t('providerDashboardPage.opportunities.criteria_deadline_label')}</strong>
+                                                    {' '}
+                                                    {new Date(criteria.deadline).toLocaleDateString()}
+                                                </div>
                                             )}
                                         </td>
+                                        {/* === KẾT THÚC BẢN SỬA === */}
+
                                         <td>{opp.applications_count || 0}</td> 
                                         <td style={{ display: 'flex', gap: '8px' }}>
                                             <button 
                                                 onClick={() => handleViewDetail(opp.id)} 
                                                 className={styles.actionLink}
                                             >
-                                                Xem
+                                                {t('providerDashboardPage.opportunities.action_view')}
                                             </button> 
                                             |
                                             <button 
@@ -530,14 +569,14 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                                 data-color="edit"
                                                 style={{color: '#f59e0b'}}
                                             >
-                                                Sửa
+                                                {t('providerDashboardPage.opportunities.action_edit')}
                                             </button>
                                             |
                                             <button 
                                                 onClick={() => handleDelete(opp.id, opp.title)} 
                                                 className={`${styles.actionLink} ${styles.delete}`}
                                             >
-                                                Xóa
+                                                {t('providerDashboardPage.opportunities.action_delete')}
                                             </button>
                                         </td>
                                     </tr>
@@ -553,49 +592,66 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
 
 // Component Placeholder: Bảng Ứng viên 
 const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {}, onMessage = () => {}, onApplicationAction }) => {
-    
-    // ... (Giữ nguyên các hàm helper getStatusStyle, handleAction, getOpportunityTitle)
+    // 2. Hook
+    const { t } = useTranslation();
+
+
     const getStatusStyle = (status) => {
+        // (Sử dụng lại logic, không cần dịch)
         switch (status) {
             case 'pending':
             case 'submitted':
-                return { color: '#f59e0b', background: '#fffbeb', text: 'Chờ duyệt' };
+                return { color: '#f59e0b', background: '#fffbeb' };
             case 'reviewed':
-                return { color: '#3b82f6', background: '#eff6ff', text: 'Đã xem xét' };
+            case 'viewed':
+                return { color: '#3b82f6', background: '#eff6ff' };
+            case 'interview':
+                return { color: '#8b5cf6', background: '#f5f3ff' };
             case 'accepted':
-                return { color: '#10b981', background: '#ecfdf5', text: 'Đã chấp nhận' };
+                return { color: '#10b981', background: '#ecfdf5' };
             case 'rejected':
-                return { color: '#ef4444', background: '#fef2f2', text: 'Đã từ chối' };
+                return { color: '#ef4444', background: '#fef2f2' };
             default:
-                return { color: '#64748b', background: '#f3f4f6', text: 'Không rõ' };
+                return { color: '#64748b', background: '#f3f4f6' };
         }
     };
+    
+    // 3. Thay thế strings
+    const getStatusText = (status) => {
+        const key = `studentDashboardPage.status_${status}`; // Dùng chung key với student
+        const defaultText = status || t('studentDashboardPage.status_unknown');
+        return t(key, defaultText);
+    };
+
 
     const handleAction = (appId, status) => {
-        if (window.confirm(`Bạn có chắc chắn muốn ${status === 'accepted' ? 'CHẤP NHẬN' : 'TỪ CHỐI'} hồ sơ này không?`)) {
+        const actionText = status === 'accepted' ? t('providerDashboardPage.applicants.action_accept_confirm') : t('providerDashboardPage.applicants.action_reject_confirm');
+        if (window.confirm(t('providerDashboardPage.applicants.confirmAction', { action: actionText }))) {
             onApplicationAction(appId, status);
         }
     };
 
     const getOpportunityTitle = (opportunityId) => {
         const opp = opportunities.find(o => o.id === opportunityId);
-        return opp ? opp.title : `Cơ hội #${opportunityId}`;
+        return opp ? opp.title : t('providerDashboardPage.applicants.opportunityTitle', {id: opportunityId});
     };
  
     return (
         <div style={{ marginTop: '30px' }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>Danh sách Ứng viên</h2>
+
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>{t('providerDashboardPage.applicants.title')}</h2>
+
             <div className={styles.tableManagement}>
                 {applications.length === 0 ? (
-                    <p>Chưa có ứng viên nào.</p>
+                    <p>{t('providerDashboardPage.applicants.noApplicants')}</p>
                 ) : (
                     <table>
                         <thead>
                             <tr>
-                                <th style={{ width: '25%' }}>ID Ứng viên</th>
-                                <th style={{ width: '30%' }}>Ứng tuyển Cơ hội</th>
-                                <th style={{ width: '15%' }}>Trạng thái</th>
-                                <th style={{ width: '30%' }}>Hành động</th>
+                                <th style={{ width: '25%' }}>{t('providerDashboardPage.applicants.header_id')}</th>
+                                <th style={{ width: '30%' }}>{t('providerDashboardPage.applicants.header_opportunity')}</th>
+                                <th style={{ width: '15%' }}>{t('providerDashboardPage.applicants.header_status')}</th>
+                                <th style={{ width: '30%' }}>{t('providerDashboardPage.applicants.header_action')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -604,8 +660,8 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                 const profile = app.student_profile || {};
                                 const fullName = profile.full_name && profile.full_name.trim().length > 0
                                     ? profile.full_name
-                                    : `Ứng viên #${app.student_user_id}`;
-                                // Lấy CV từ profile.cv_file_id (mới) hoặc fallback về application.documents (cũ)
+                                    : t('providerDashboardPage.applicants.applicantName', {id: app.student_user_id});
+                                
                                 const cvFileId = profile.cv_file_id;
                                 const cvUrl = cvFileId ? api.getFileUrl(cvFileId) : (() => {
                                     const cvDoc = (app.documents || []).find(doc => (doc.document_type || '').toLowerCase() === 'cv') || (app.documents || [])[0];
@@ -614,24 +670,23 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                         : null;
                                 })();
                                     
-                                // NEW FIELD
                                 const hasUnread = app.has_unread_messages; 
                                 
                                 return (
                                     <tr key={app.id}>
                                         <td>
                                             <div style={{ fontWeight: 600 }}>{fullName}</div>
-                                            <div style={{ fontSize: 12, color: '#64748b' }}>{profile.email || 'Chưa cập nhật email'}</div>
+                                            <div style={{ fontSize: 12, color: '#64748b' }}>{profile.email || t('providerDashboardPage.applicants.applicantEmail')}</div>
                                             {profile.gpa !== null && profile.gpa !== undefined && (
-                                                <div style={{ fontSize: 12, color: '#475569' }}>GPA: {profile.gpa}</div>
+                                                <div style={{ fontSize: 12, color: '#475569' }}>{t('providerDashboardPage.applicants.applicantGPA', {gpa: profile.gpa})}</div>
                                             )}
                                             {profile.skills && (
-                                                <div style={{ fontSize: 12, color: '#475569' }}>Kỹ năng: {profile.skills}</div>
+                                                <div style={{ fontSize: 12, color: '#475569' }}>{t('providerDashboardPage.applicants.applicantSkills', {skills: profile.skills})}</div>
                                             )}
                                         </td>
                                         <td>
                                             <div style={{ fontWeight: 600 }}>{getOpportunityTitle(app.opportunity_id)}</div>
-                                            <div style={{ fontSize: 12, color: '#64748b' }}>Mã hồ sơ: {app.id}</div>
+                                            <div style={{ fontSize: 12, color: '#64748b' }}>{t('providerDashboardPage.applicants.applicationId', {id: app.id})}</div>
                                         </td>
                                         <td>
                                             <span 
@@ -644,10 +699,11 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                     background: statusInfo.background
                                                 }}
                                             >
-                                                {statusInfo.text}
+                                                {getStatusText(app.status)}
                                             </span>
                                         </td>
-                                        <td style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}> {/* Thêm flexWrap */}
+                                        <td style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+
                                             {cvUrl ? (
                                                 <a 
                                                     href={cvUrl} 
@@ -655,26 +711,25 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                     rel="noopener noreferrer" 
                                                     className="btn btn-sm btn-primary"
                                                 >
-                                                    Xem CV
+                                                    {t('providerDashboardPage.applicants.action_viewCV')}
                                                 </a>
                                             ) : (
-                                                <span style={{ fontSize: 12, color: '#94a3b8', alignSelf: 'center' }}>Chưa có CV</span>
+                                                <span style={{ fontSize: 12, color: '#94a3b8', alignSelf: 'center' }}>{t('providerDashboardPage.applicants.noCV')}</span>
                                             )}
                                             <button
                                                 onClick={() => onViewProfile(app)}
                                                 className="btn btn-sm"
                                                 style={{ backgroundColor: '#475569', color: '#fff' }}
                                             >
-                                                Xem hồ sơ
+                                                {t('providerDashboardPage.applicants.action_viewProfile')}
                                             </button>
                                             <button
                                                 onClick={() => onMessage(app)}
                                                 className="btn btn-sm"
-                                                style={{ backgroundColor: '#3b82f6', color: '#fff', position: 'relative' }} // NEW: position: 'relative'
+                                                style={{ backgroundColor: '#3b82f6', color: '#fff', position: 'relative' }}
                                                 disabled={app.status !== 'accepted'}
                                             >
-                                                Nhắn tin
-                                                {/* CHẤM ĐỎ CHO PROVIDER */}
+                                                {t('providerDashboardPage.applicants.action_message')}
                                                 {app.status === 'accepted' && hasUnread && (
                                                     <span style={{
                                                         position: 'absolute',
@@ -696,18 +751,18 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                          className="btn btn-sm"
                                                          style={{ backgroundColor: '#10b981', color: 'white' }}
                                                      >
-                                                         Chấp nhận
+                                                         {t('providerDashboardPage.applicants.action_accept')}
                                                      </button>
                                                      <button 
                                                          onClick={() => handleAction(app.id, 'rejected')} 
                                                          className="btn btn-sm"
                                                          style={{ backgroundColor: '#ef4444', color: 'white' }}
                                                      >
-                                                         Từ chối
+                                                         {t('providerDashboardPage.applicants.action_reject')}
                                                      </button>
                                                  </>
                                              ) : (
-                                                 <span style={{ color: '#64748b', fontSize: '12px', alignSelf: 'center' }}>Đã xử lý</span>
+                                                 <span style={{ color: '#64748b', fontSize: '12px', alignSelf: 'center' }}>{t('providerDashboardPage.applicants.action_processed')}</span>
                                              )}
                                         </td>
                                     </tr>
@@ -725,7 +780,11 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
 // --- MAIN DASHBOARD COMPONENT ---
 
 const ProviderDashboard = () => {
-    // ... (Giữ nguyên state, hooks, và các hàm logic)
+
+    // 2. Hook
+    const { t } = useTranslation();
+
+
     const [activeTab, setActiveTab] = useState('overview');
     const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -742,7 +801,7 @@ const ProviderDashboard = () => {
 
     async function fetchData() {
         if (!providerUserId) {
-            setError('Không tìm thấy thông tin nhà cung cấp.');
+            setError(t('providerDashboardPage.applicants.error_noProvider'));
             setLoading(false);
             return;
         }
@@ -757,7 +816,7 @@ const ProviderDashboard = () => {
             setOpportunities(opps || []);
             setApplications(apps || []);
         } catch (err) {
-            setError(err.message || 'Lỗi tải dữ liệu dashboard.');
+            setError(err.message || t('common.error'));
         } finally {
             setLoading(false);
         }
@@ -769,17 +828,16 @@ const ProviderDashboard = () => {
             fetchData();
         }
         return () => { mounted = false; };
-    }, [providerUserId]);
+    }, [providerUserId, t]); // Thêm t
 
-    // NEW: Hàm xử lý duyệt hồ sơ ứng viên
     const handleApplicationAction = async (appId, status) => {
         setError('');
         try {
             await api.updateApplicationStatus(appId, status);
-            alert(`Đã cập nhật trạng thái hồ sơ #${appId} thành ${status}.`);
+            alert(t('providerDashboardPage.applicants.alert_statusUpdated', { appId, status }));
             fetchData();
         } catch (err) {
-            setError(err.message || `Lỗi khi cập nhật trạng thái hồ sơ.`);
+            setError(err.message || t('providerDashboardPage.applicants.error_statusUpdate'));
         }
     };
 
@@ -792,7 +850,7 @@ const ProviderDashboard = () => {
             }
             setProfileModalState(prev => ({ ...prev, loading: false, profile }));
         } catch (err) {
-            setProfileModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hồ sơ' }));
+            setProfileModalState(prev => ({ ...prev, loading: false, error: err.message || t('studentDashboardPage.modal_loadError') }));
         }
     };
 
@@ -802,25 +860,24 @@ const ProviderDashboard = () => {
 
     const openMessageModal = async (application) => {
         if (application.status !== 'accepted') {
-            alert('Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.');
+            alert(t('studentDashboardPage.modal_chat_only_accepted'));
             return;
         }
         setMessageModalState({ isOpen: true, loading: true, error: '', conversation: null, messages: [], input: '', sending: false, application });
         try {
-            const conversation = await api.createConversation(providerUserId, application.student_user_id,application.id);// THAY ĐỔI: Truyền thêm application.id
+            const conversation = await api.createConversation(providerUserId, application.student_user_id,application.id);
             const msgs = await api.listMessages(conversation.id);
             
-            // NEW: Mark messages as read after loading them (for the Provider)
             if (application.has_unread_messages && msgs.length > 0) {
-                // Chỉ mark read những tin nhắn gửi đến Provider
                 await api.markConversationAsRead(conversation.id, providerUserId); 
-                // Sau khi mark read, cần fetch lại list apps để update unread dot
                 fetchData(); 
             }
 
             setMessageModalState(prev => ({ ...prev, loading: false, conversation, messages: msgs || [] }));
-        } catch (err) { // SỬA LỖI Ở ĐÂY
-            setMessageModalState(prev => ({ ...prev, loading: false, error: err.message || 'Không thể tải hội thoại' }));
+
+        } catch (err) {
+            setMessageModalState(prev => ({ ...prev, loading: false, error: err.message || t('studentDashboardPage.modal_chat_load_error') }));
+
         }
     };
 
@@ -851,7 +908,7 @@ const ProviderDashboard = () => {
                 messages: [...prev.messages, msg]
             }));
         } catch (err) {
-            setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || 'Không thể gửi tin nhắn' }));
+            setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || t('studentDashboardPage.modal_chat_send_error') }));
         }
     };
 
@@ -885,7 +942,7 @@ const ProviderDashboard = () => {
                     criteria,
                 };
                 await api.createOpportunity(createPayload); 
-                alert('Đã thêm cơ hội thành công!');
+                alert(t('providerDashboardPage.opportunities.alert_added'));
 
             } else if (action === 'saveUpdate') {
                 const { opportunity, criteria } = payload;
@@ -894,11 +951,11 @@ const ProviderDashboard = () => {
                     criteria,
                 };
                 await api.updateOpportunity(id, updatePayload);
-                alert('Đã cập nhật cơ hội thành công!');
+                alert(t('providerDashboardPage.opportunities.alert_updated'));
 
             } else if (action === 'delete') {
                 await api.deleteOpportunity(id);
-                alert('Đã xóa cơ hội thành công!');
+                alert(t('providerDashboardPage.opportunities.alert_deleted'));
             }
 
             setIsCreateModalOpen(false);
@@ -906,7 +963,7 @@ const ProviderDashboard = () => {
             fetchData(); 
 
         } catch (err) {
-            setError(err.message || `Lỗi khi thực hiện hành động ${action}`);
+            setError(err.message || `${t('common.error')} ${action}`);
         }
     };
 
@@ -919,34 +976,36 @@ const ProviderDashboard = () => {
             app.status === 'pending' || app.status === 'submitted'
         ).length;
         return [
-            { title: 'Tổng số cơ hội', value: totalOpportunities, icon: '📝', color: '#3b82f6' },
-            { title: 'Tổng ứng viên', value: totalApplications, icon: '👥', color: '#f59e0b' },
-            { title: 'Ứng viên chờ duyệt', value: pendingApplications, icon: '⏳', color: '#ef4444' },
+            { title: t('providerDashboardPage.stats.totalOpportunities'), value: totalOpportunities, icon: '📝', color: '#3b82f6' },
+            { title: t('providerDashboardPage.stats.totalApplicants'), value: totalApplications, icon: '👥', color: '#f59e0b' },
+            { title: t('providerDashboardPage.stats.pendingApplicants'), value: pendingApplications, icon: '⏳', color: '#ef4444' },
         ];
-    }, [opportunities, applications]);
+    }, [opportunities, applications, t]); // Thêm t
 
     const renderContent = () => {
         if (loading) {
-            return <div style={{ textAlign: 'center', marginTop: '50px' }}>Đang tải dữ liệu...</div>;
+            return <div style={{ textAlign: 'center', marginTop: '50px' }}>{t('common.loading')}</div>;
         }
 
         if (error) {
-             return <div className="alert-error" style={{ marginTop: '20px' }}>Lỗi: {error}</div>;
+             return <div className="alert-error" style={{ marginTop: '20px' }}>{t('common.error')}: {error}</div>;
         }
         
         switch (activeTab) {
             case 'overview':
                 return (
                     <>
-                        <h1 style={{ fontSize: '28px', color: '#1f2937' }}>Tổng quan Dashboard</h1>
-                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', marginTop: '20px' }}> {/* Sửa grid */}
+
+                        <h1 style={{ fontSize: '28px', color: '#1f2937' }}>{t('providerDashboardPage.overview.title')}</h1>
+                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', marginTop: '20px' }}>
+
                             {stats.map((stat, index) => (
                                 <StatCard key={index} {...stat} />
                             ))}
                         </div>
                         <div className="card" style={{ marginTop: '40px' }}>
-                            <h2 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>Hoạt động gần đây</h2>
-                            <p>Đã tải thành công {applications.length} hồ sơ và {opportunities.length} cơ hội.</p>
+                            <h2 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>{t('providerDashboardPage.overview.recentActivity')}</h2>
+                            <p>{t('providerDashboardPage.overview.loadedSummary', { appCount: applications.length, oppCount: opportunities.length })}</p>
                         </div>
                     </>
                 );
@@ -968,7 +1027,12 @@ const ProviderDashboard = () => {
                     />
                 );
             case 'settings':
-                return <div><h1 style={{ fontSize: '28px', color: '#1f2937' }}>Cài đặt Tài khoản</h1><p style={{marginTop: '15px'}}>Quản lý thông tin công ty, hồ sơ nhà cung cấp và các thiết lập hệ thống.</p></div>;
+                return (
+                    <div>
+                        <h1 style={{ fontSize: '28px', color: '#1f2937' }}>{t('providerDashboardPage.settings.title')}</h1>
+                        <p style={{marginTop: '15px'}}>{t('providerDashboardPage.settings.subtitle')}</p>
+                    </div>
+                );
             default:
                 return <div>Chọn một tab để xem nội dung.</div>;
         }
@@ -978,11 +1042,12 @@ const ProviderDashboard = () => {
         <div className="flex"> {/* Global class */}
             <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-            <div className={styles.dashboardContent}> {/* THAY ĐỔI */}
+            <div className={styles.dashboardContent}>
                 {renderContent()}
             </div>
 
-            {/* Modals không thay đổi */}
+            {/* Modals */}
+
             <OpportunityModal 
                 isOpen={isCreateModalOpen} 
                 onClose={() => {
@@ -1021,7 +1086,7 @@ const ProviderDashboard = () => {
                 onSend={handleSendMessage} 
                 onClose={closeMessageModal} 
                 sending={messageModalState.sending} 
-                partnerName={messageModalState.application?.student_profile?.full_name || `Ứng viên #${messageModalState.application?.student_user_id ?? ''}`} 
+                partnerName={messageModalState.application?.student_profile?.full_name || t('providerDashboardPage.applicants.applicantName', { id: messageModalState.application?.student_user_id ?? '' })} 
                 currentUserId={providerUserId} 
             />
         </div>

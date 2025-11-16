@@ -2,8 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Notifications.module.css'; 
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
 
 function Notifications() {
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
+
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
 
@@ -20,11 +25,11 @@ function Notifications() {
         const list = await api.listNotifications(user.id);
         if (mounted) setSafeItems(list); 
       } catch (err) {
-        if (mounted) setError(err.message || 'Lỗi tải thông báo');
+        if (mounted) setError(err.message || t('notificationsPage.loadError'));
       }
     })();
     return () => { mounted = false; };
-  }, []);
+  }, [t]); // Thêm t vào dependency
 
   async function markRead(id) {
     try {
@@ -33,15 +38,17 @@ function Notifications() {
       const list = await api.listNotifications(user.id);
       setSafeItems(list); 
     } catch (err) {
-      setError(err.message || 'Lỗi cập nhật');
+      setError(err.message || t('notificationsPage.updateError'));
     }
   }
 
+  // 3. Thay thế strings
   return (
-    <div className="container p-6"> {}
-      <h2>Thông báo</h2>
+    <div className="container p-6">
+      <h2>{t('notificationsPage.title')}</h2>
       {error && <div className="alert-error">{error}</div>} 
-      <div className="grid gap-4"> {}
+      <div className="grid gap-4">
+
         {(Array.isArray(items) ? items : []).map(n => ( 
           <div key={n.id} className={styles.item}> 
             <div>{n.content}</div>
@@ -52,7 +59,8 @@ function Notifications() {
                   onClick={() => markRead(n.id)} 
                   className="btn btn-primary btn-sm" 
                 >
-                  Đánh dấu đã đọc
+                  {t('notificationsPage.markRead')}
+
                 </button>
               )}
             </div>

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './StudentDashboard.module.css'; 
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
 
 const StudentMessageModal = ({
     isOpen,
@@ -16,24 +18,26 @@ const StudentMessageModal = ({
     currentUserId,
     opportunityTitle
 }) => {
-    if (!isOpen) return null;
+    // 2. Khởi tạo hook trong component con
+    const { t } = useTranslation();
     const messagesEndRef = useRef(null); 
-
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]);
     
+    if (!isOpen) return null;
+    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
                 <div className="modal-header">
-                    <h3>Trò chuyện về {opportunityTitle}</h3>
+                    <h3>{t('studentDashboardPage.modal_chatTitle', { title: opportunityTitle })}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>Đang tải tin nhắn...</div>
+                    <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>
                 ) : (
                     <div style={{ display: 'grid', gap: 12 }}>
                         {error && <div className="alert-error">{error}</div>}
@@ -66,7 +70,7 @@ const StudentMessageModal = ({
                                     <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Bắt đầu cuộc trò chuyện.</div>
+                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>{t('studentDashboardPage.modal_chat_empty')}</div>
                             )}
                             <div ref={messagesEndRef} />
                         </div>
@@ -81,7 +85,7 @@ const StudentMessageModal = ({
                                 className="input"
                                 value={input}
                                 onChange={(e) => onInputChange(e.target.value)}
-                                placeholder="Nhập tin nhắn..."
+                                placeholder={t('studentDashboardPage.modal_chat_placeholder')}
                                 style={{ flex: 1 }}
                             />
                             <button
@@ -89,7 +93,7 @@ const StudentMessageModal = ({
                                 className="btn btn-secondary"
                                 disabled={sending || !input.trim()}
                             >
-                                {sending ? 'Đang gửi...' : 'Gửi'}
+                                {sending ? t('common.sending', 'Đang gửi...') : t('common.send', 'Gửi')}
                             </button>
                         </form>
                     </div>
@@ -100,6 +104,7 @@ const StudentMessageModal = ({
 };
 
 
+// --- COMPONENT CON 2: OPPORTUNITY DETAIL MODAL ---
 const OpportunityDetailModal = ({
   isOpen,
   detail,
@@ -110,6 +115,8 @@ const OpportunityDetailModal = ({
   hasApplied,
   submitting
 }) => {
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   const renderCriteriaList = (label, items) => (
@@ -118,16 +125,17 @@ const OpportunityDetailModal = ({
     </div>
   );
 
+  // 3. Thay thế strings
   return (
     <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 720 }}>
         <div className="modal-header">
-          <h3>Thông tin cơ hội</h3>
+          <h3>{t('studentDashboardPage.modal_opportunityDetails')}</h3>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
         </div>
 
         {loading ? (
-          <div style={{ padding: 16, textAlign: 'center' }}>Đang tải dữ liệu...</div>
+          <div style={{ padding: 16, textAlign: 'center' }}>{t('studentDashboardPage.modal_loading')}</div>
         ) : error ? (
           <div className="alert-error">{error}</div>
         ) : detail ? (
@@ -165,7 +173,7 @@ const OpportunityDetailModal = ({
                 onClick={onApply}
                 disabled={submitting || hasApplied}
               >
-                {hasApplied ? 'Bạn đã nộp hồ sơ' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
+                {hasApplied ? t('studentDashboardPage.modal_applied') : submitting ? t('studentDashboardPage.modal_applying') : t('studentDashboardPage.modal_apply')}
               </button>
             </div>
           </div>
@@ -175,11 +183,17 @@ const OpportunityDetailModal = ({
   );
 };
 
+
+// --- COMPONENT CON 3: MY APPLICATIONS SUMMARY ---
 const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
+    // 2. Khởi tạo hook
+    const { t } = useTranslation();
+
+
     if (!applications || applications.length === 0) {
         return (
             <div className="card" style={{ padding: '15px', textAlign: 'center', color: '#64748b', marginTop: '15px' }}>
-                Bạn chưa nộp bất kỳ hồ sơ nào.
+                {t('studentDashboardPage.noApplications')}
             </div>
         );
     }
@@ -197,7 +211,10 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
             case 'submitted':
                 return { color: '#f59e0b', background: '#fffbeb' };
             case 'reviewed':
+            case 'viewed': // Thêm
                 return { color: '#3b82f6', background: '#eff6ff' };
+            case 'interview': // Thêm
+                return { color: '#8b5cf6', background: '#f5f3ff' };
             case 'accepted':
                 return { color: '#10b981', background: '#ecfdf5' };
             case 'rejected':
@@ -207,15 +224,12 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
         }
     };
 
+    // 3. Thay thế strings
     const getStatusText = (status) => {
-        switch (status) {
-            case 'pending': return 'Chờ duyệt';
-            case 'submitted': return 'Đã nộp';
-            case 'reviewed': return 'Đã xem xét';
-            case 'accepted': return 'Được chấp nhận';
-            case 'rejected': return 'Bị từ chối';
-            default: return status;
-        }
+        // Dùng key-safe fallback
+        const key = `studentDashboardPage.status_${status}`;
+        const defaultText = status || t('studentDashboardPage.status_unknown');
+        return t(key, defaultText);
     };
 
     return (
@@ -224,9 +238,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                 {applications.map((app) => {
                     const statusInfo = getStatusStyle(app.status);
                     const oppTitle = getOpportunityTitle(app.opportunity_id);
-                    // Chỉ cho phép chat khi hồ sơ đã được chấp nhận
                     const isChatEnabled = app.status === 'accepted'; 
-                    // SỬ DỤNG TRƯỜNG HAS_UNREAD_MESSAGES MỚI
                     const hasUnread = app.has_unread_messages; 
                     
                     return (
@@ -256,7 +268,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                                 {oppTitle}
                             </div>
                             <div style={{ fontSize: 13, color: '#64748b', marginBottom: '10px' }}>
-                                Nộp ngày: {new Date(app.submitted_at).toLocaleDateString()}
+                                {t('studentDashboardPage.submittedOn', { date: new Date(app.submitted_at).toLocaleDateString() })}
                             </div>
                             <span 
                                 style={{ 
@@ -268,11 +280,11 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                                     background: statusInfo.background
                                 }}
                             >
-                                Trạng thái: {getStatusText(app.status)}
+                                {t('studentDashboardPage.status', { statusText: getStatusText(app.status) })}
                             </span>
                             {isChatEnabled && (
                                 <div style={{ marginTop: 10, fontSize: 12, color: '#3b82f6', fontWeight: 600 }}>
-                                    (Click để nhắn tin với Provider)
+                                    {t('studentDashboardPage.chatPrompt')}
                                 </div>
                             )}
                         </div>
@@ -283,7 +295,11 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
     );
 };
 
+
 function StudentDashboard() {
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
+
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [error, setError] = useState('');
@@ -319,7 +335,7 @@ function StudentDashboard() {
         setApplications(apps || []);
         setOpportunities(opps || []);
     } catch (err) {
-        setError(err.message || 'Lỗi tải dữ liệu');
+        setError(err.message || t('common.error'));
     }
   }
 
@@ -327,7 +343,7 @@ function StudentDashboard() {
     let mounted = true;
     if (mounted) fetchAllData();
     return () => { mounted = false; };
-  }, [studentUserId]);
+  }, [studentUserId, t]); // Thêm t vào dependency array
 
   const hasApplied = (opportunityId) => {
     return applications.some(app => app.opportunity_id === opportunityId);
@@ -342,7 +358,7 @@ function StudentDashboard() {
       const detail = await api.getOpportunity(opportunityId);
       setSelectedOpportunityDetail(detail);
     } catch (err) {
-      setDetailError(err.message || 'Không thể tải thông tin cơ hội');
+      setDetailError(err.message || t('studentDashboardPage.modal_loadError'));
     } finally {
       setDetailLoading(false);
     }
@@ -360,7 +376,7 @@ function StudentDashboard() {
     setError('');
     
     if (hasApplied(opportunityId)) {
-        setError('Bạn đã nộp hồ sơ cho cơ hội này rồi.');
+        setError(t('studentDashboardPage.error_already_applied'));
         setSubmitting(false);
         return;
     }
@@ -374,12 +390,12 @@ function StudentDashboard() {
       await api.submitApplication(payload);
       
       await fetchAllData(); 
-      alert('Nộp hồ sơ thành công!');
+      alert(t('studentDashboardPage.success_apply'));
       if (selectedOpportunityId === opportunityId) {
         closeOpportunityDetail();
       }
     } catch (err) {
-      setError(err.message || 'Nộp hồ sơ thất bại');
+      setError(err.message || t('studentDashboardPage.error_apply'));
     } finally {
       setSubmitting(false);
     }
@@ -387,7 +403,7 @@ function StudentDashboard() {
 
   const openMessageModal = async (application, opportunityTitle) => {
     if (application.status !== 'accepted') {
-        alert('Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.');
+        alert(t('studentDashboardPage.modal_chat_only_accepted'));
         return;
     }
     
@@ -429,7 +445,7 @@ function StudentDashboard() {
         setMessageModalState(prev => ({ 
             ...prev, 
             loading: false, 
-            error: err.message || 'Không thể tải hội thoại' 
+            error: err.message || t('studentDashboardPage.modal_chat_load_error')
         }));
     }
   };
@@ -476,25 +492,27 @@ function StudentDashboard() {
         }));
 
     } catch (err) {
-        setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || 'Không thể gửi tin nhắn' }));
+        setMessageModalState(prev => ({ ...prev, sending: false, error: err.message || t('studentDashboardPage.modal_chat_send_error') }));
     }
   };
 
-
+  // 3. Thay thế strings
   return (
-    <div className="container p-6"> {}
-      <h2>Trang sinh viên</h2>
+
+    <div className="container p-6">
+      <h2>{t('studentDashboardPage.title')}</h2>
+
       
       {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>} 
 
-      <h3 style={{ marginTop: 24, marginBottom: 10 }}>Hồ sơ của bạn</h3>
+      <h3 style={{ marginTop: 24, marginBottom: 10 }}>{t('studentDashboardPage.myApplicationsTitle')}</h3>
       <MyApplicationsSummary 
         applications={applications} 
         opportunities={opportunities} 
         onOpenChat={openMessageModal} 
       />
 
-      <h3 style={{ marginTop: 40, marginBottom: 15 }}>Danh sách cơ hội</h3>
+      <h3 style={{ marginTop: 40, marginBottom: 15 }}>{t('studentDashboardPage.opportunitiesTitle')}</h3>
       
       <div className={styles.list}> 
         {(opportunities || []).map((opp) => {
@@ -517,7 +535,7 @@ function StudentDashboard() {
                         className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`} 
                         style={{ marginTop: 8 }}
                     >
-                        {applied ? 'Đã Nộp' : submitting ? 'Đang nộp...' : 'Nộp hồ sơ'}
+                        {applied ? t('studentDashboardPage.appliedButton') : submitting ? t('studentDashboardPage.applyingButton') : t('studentDashboardPage.applyButton')}
                     </button>
                 </div>
             );

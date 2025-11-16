@@ -2,9 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Matching.module.css'; 
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
+
+
 
 function Matching() {
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
   const user = getStoredUser();
+
   const [profile, setProfile] = useState({
     gpa: '',
     skills: '',
@@ -18,7 +25,7 @@ function Matching() {
 
   async function runMatch() {
     if (!user?.id) {
-      setError('Vui lòng đăng nhập để sử dụng tính năng này');
+      setError(t('matchingPage.errorLogin'));
       return;
     }
 
@@ -39,7 +46,7 @@ function Matching() {
       const res = await api.matchOpportunities(user.id, studentProfile);
       setResults(res);
     } catch (err) {
-      setError(err.message || 'Lỗi khi thực hiện matching');
+      setError(err.message || t('matchingPage.errorMatch'));
     } finally {
       setLoading(false);
     }
@@ -51,11 +58,12 @@ function Matching() {
     return styles.scoreLow;
   };
 
+  // 3. Thay thế strings
   return (
     <div className={styles.pageContainer}> 
-      <h2>Gợi ý Cơ hội phù hợp</h2>
+      <h2>{t('matchingPage.title')}</h2>
       <p className={styles.description}> 
-        Nhập thông tin hồ sơ của bạn để nhận gợi ý các khóa học, học bổng, và chương trình phù hợp nhất.
+        {t('matchingPage.subtitle')}
       </p>
 
       {error && (
@@ -67,14 +75,14 @@ function Matching() {
       <div className={styles.inputSection}> 
         <div>
           <label className={styles.label}> 
-            GPA (Điểm trung bình)
+            {t('matchingPage.gpa')}
           </label>
           <input
             type="number"
             step="0.01"
             min="0"
             max="4"
-            placeholder="Ví dụ: 3.5"
+            placeholder={t('matchingPage.gpaPlaceholder')}
             value={profile.gpa}
             onChange={e => setProfile({ ...profile, gpa: e.target.value })}
             className={styles.input} 
@@ -83,11 +91,12 @@ function Matching() {
 
         <div>
           <label className={styles.label}> 
-            Kỹ năng (phân cách bởi dấu phẩy)
+            {t('matchingPage.skills')}
+
           </label>
           <input
             type="text"
-            placeholder="Ví dụ: Python, Machine Learning, Data Analysis"
+            placeholder={t('matchingPage.skillsPlaceholder')}
             value={profile.skills}
             onChange={e => setProfile({ ...profile, skills: e.target.value })}
             className={styles.input} 
@@ -96,27 +105,27 @@ function Matching() {
 
         <div>
           <label className={styles.label}> 
-            Mục tiêu (phân cách bởi dấu phẩy)
+            {t('matchingPage.goals')}
           </label>
           <input
             type="text"
-            placeholder="Ví dụ: research, academic, industry"
+            placeholder={t('matchingPage.goalsPlaceholder')}
             value={profile.goals}
             onChange={e => setProfile({ ...profile, goals: e.target.value })}
             className={styles.input} 
           />
           <small className={styles.smallText}> 
-            Các mục tiêu: research, academic, industry, job, career
+            {t('matchingPage.goalsHelp')}
           </small>
         </div>
-
         <div>
           <label className={styles.label}> 
-            Điểm mạnh (phân cách bởi dấu phẩy)
+            {t('matchingPage.strengths')}
+
           </label>
           <input
             type="text"
-            placeholder="Ví dụ: analytical, programming, leadership"
+            placeholder={t('matchingPage.strengthsPlaceholder')}
             value={profile.strengths}
             onChange={e => setProfile({ ...profile, strengths: e.target.value })}
             className={styles.input} 
@@ -125,11 +134,11 @@ function Matching() {
 
         <div>
           <label className={styles.label}> 
-            Sở thích / Lĩnh vực quan tâm (phân cách bởi dấu phẩy)
+            {t('matchingPage.interests')}
           </label>
           <input
             type="text"
-            placeholder="Ví dụ: AI, Data Science, Robotics"
+            placeholder={t('matchingPage.interestsPlaceholder')}
             value={profile.interests}
             onChange={e => setProfile({ ...profile, interests: e.target.value })}
             className={styles.input} 
@@ -141,14 +150,14 @@ function Matching() {
           disabled={loading}
           className={styles.button} 
         >
-          {loading ? 'Đang xử lý...' : 'Tìm kiếm cơ hội phù hợp'}
+          {loading ? t('matchingPage.loadingButton') : t('matchingPage.submitButton')}
         </button>
       </div>
 
       {results && (
         <div>
           <h3 style={{ marginBottom: 16 }}>
-            Kết quả gợi ý ({results.total_opportunities} cơ hội)
+            {t('matchingPage.resultsTitle', { count: results.total_opportunities })}
           </h3>
           
           {results.results && results.results.length > 0 ? (
@@ -168,7 +177,7 @@ function Matching() {
                       </span>
                     </div>
                     <div className={`${styles.scoreBadge} ${getScoreClass(result.score)}`}> 
-                      {Math.round(result.score * 100)}% phù hợp
+                      {t('matchingPage.score', { score: Math.round(result.score * 100) })}
                     </div>
                   </div>
                   
@@ -179,7 +188,7 @@ function Matching() {
                   {result.match_reasons && result.match_reasons.length > 0 && (
                     <div className={styles.reasonsContainer}> 
                       <strong className={styles.reasonsTitle}> 
-                        Lý do phù hợp:
+                        {t('matchingPage.reasonsTitle')}
                       </strong>
                       <ul className={styles.reasonsList}> 
                         {result.match_reasons.map((reason, idx) => (
@@ -195,7 +204,7 @@ function Matching() {
             </div>
           ) : (
             <div className={styles.noResults}> 
-              Không tìm thấy cơ hội phù hợp. Vui lòng thử lại với thông tin khác.
+              {t('matchingPage.noResults')}
             </div>
           )}
         </div>

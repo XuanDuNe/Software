@@ -28,11 +28,14 @@ async function request(path, options = {}) {
   const contentType = response.headers.get('content-type') || '';
   const text = await response.text();
   let data = null;
-  if (text && contentType.includes('application/json')) {
+  let isJson = contentType.includes('application/json');
+
+  if (text && isJson) {
     try {
       data = JSON.parse(text);
     } catch (_) {
-      // ignore parse error, we'll fall back to raw text
+      // Bỏ qua lỗi parse, coi như đây là text
+      isJson = false; 
     }
   }
 
@@ -48,7 +51,12 @@ async function request(path, options = {}) {
     throw new Error(message);
   }
 
-  return data ?? text ?? null;
+  if (isJson) {
+    // Nếu là JSON, trả về data (có thể là object, array, hoặc null nếu body rỗng/text="null")
+    return data;
+  }
+
+  return text ?? null;
 }
 
 export const api = {

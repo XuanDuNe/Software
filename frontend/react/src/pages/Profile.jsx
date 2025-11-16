@@ -2,9 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Profile.module.css'; 
+// 1. Import hook
+import { useTranslation } from 'react-i18next';
 
 function Profile() {
+  // 2. Khởi tạo hook
+  const { t } = useTranslation();
   const user = getStoredUser();
+
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -60,7 +65,7 @@ function Profile() {
 
   async function handleUploadCv() {
     if (!cvFile) {
-      setError('Vui lòng chọn file CV trước khi upload');
+      setError(t('profilePage.errorChooseFile'));
       return;
     }
 
@@ -78,10 +83,10 @@ function Profile() {
         cv_file_id: fileId
       };
       await api.updateStudentProfile(payload);
-      setMessage('Upload CV thành công!');
+      setMessage(t('profilePage.successMessage'));
       setCvFile(null); 
     } catch (err) {
-      setError(err.message || 'Lỗi upload CV');
+      setError(err.message || t('profilePage.errorUpload'));
     } finally {
       setUploadingCv(false);
     }
@@ -99,7 +104,7 @@ function Profile() {
         cv_file_id: cvFileId 
       };
       const saved = await api.updateStudentProfile(payload);
-      setMessage('Cập nhật thành công');
+      setMessage(t('profilePage.successMessage'));
       setForm({
         full_name: saved.full_name || '',
         email: saved.email || '',
@@ -115,17 +120,19 @@ function Profile() {
       });
       setCvFileId(saved.cv_file_id || null);
     } catch (err) {
-      setError(err.message || 'Lỗi cập nhật hồ sơ');
+      setError(err.message || t('profilePage.errorUpdate'));
     } finally {
       setLoading(false);
     }
   }
 
+
+  // 3. Thay thế strings
   return (
     <div className={styles.container}> 
-      <h1 className={styles.title}>Hồ sơ sinh viên</h1> 
+      <h1 className={styles.title}>{t('profilePage.title')}</h1> 
       <p className={styles.subtitle}> 
-        Cập nhật thông tin cá nhân để nhà tuyển dụng hiểu rõ hơn về bạn và để hệ thống gợi ý cơ hội phù hợp.
+        {t('profilePage.subtitle')}
       </p>
 
       {error && <div className={styles.error}>{error}</div>} 
@@ -134,65 +141,72 @@ function Profile() {
       <form onSubmit={handleSubmit} className={styles.form}> 
         <section className={styles.section}> 
           <div className={styles.field}> 
-            <label>Họ và tên</label>
-            <input className={styles.input} value={form.full_name} onChange={handleChange('full_name')} placeholder="Nguyễn Văn A" />
+            <label>{t('profilePage.fullName')}</label>
+            <input className={styles.input} value={form.full_name} onChange={handleChange('full_name')} placeholder={t('profilePage.fullNamePlaceholder')} />
           </div>
           <div className={styles.field}> 
-            <label>Email</label>
-            <input className={styles.input} type="email" value={form.email} onChange={handleChange('email')} placeholder="a.nguyen@example.com" />
+            <label>{t('common.email')}</label>
+            <input className={styles.input} type="email" value={form.email} onChange={handleChange('email')} placeholder={t('profilePage.emailPlaceholder')} />
           </div>
           <div className={styles.field}> 
-            <label>Số điện thoại</label>
-            <input className={styles.input} value={form.phone} onChange={handleChange('phone')} placeholder="0123456789" />
+            <label>{t('profilePage.phone')}</label>
+            <input className={styles.input} value={form.phone} onChange={handleChange('phone')} placeholder={t('profilePage.phonePlaceholder')} />
           </div>
           <div className={styles.field}> 
-            <label>Ảnh đại diện (URL)</label>
-            <input className={styles.input} value={form.avatar_url} onChange={handleChange('avatar_url')} placeholder="https://..." />
+            <label>{t('profilePage.avatar')}</label>
+            <input className={styles.input} value={form.avatar_url} onChange={handleChange('avatar_url')} placeholder={t('profilePage.avatarPlaceholder')} />
+
           </div>
         </section>
 
         <section className={styles.section}> 
           <div className={styles.field}> 
-            <label>GPA</label>
-            <input className={styles.input} type="number" step="0.01" min="0" max="4" value={form.gpa} onChange={handleChange('gpa')} placeholder="3.8" />
+
+            <label>{t('profilePage.gpa')}</label>
+            <input className={styles.input} type="number" step="0.01" min="0" max="4" value={form.gpa} onChange={handleChange('gpa')} placeholder={t('profilePage.gpaPlaceholder')} />
           </div>
           <div className={styles.field}> 
-            <label>Trình độ</label>
-            <input className={styles.input} value={form.education_level} onChange={handleChange('education_level')} placeholder="Bachelor" />
+            <label>{t('profilePage.educationLevel')}</label>
+            <input className={styles.input} value={form.education_level} onChange={handleChange('education_level')} placeholder={t('profilePage.educationLevelPlaceholder')} />
           </div>
           <div className={styles.field}> 
-            <label>Chuyên ngành</label>
-            <input className={styles.input} value={form.major} onChange={handleChange('major')} placeholder="Computer Science" />
+            <label>{t('profilePage.major')}</label>
+            <input className={styles.input} value={form.major} onChange={handleChange('major')} placeholder={t('profilePage.majorPlaceholder')} />
+
           </div>
         </section>
 
         <div className={styles.field}> 
-          <label>Kỹ năng (phân tách bởi dấu phẩy)</label>
-          <input className={styles.input} value={form.skills} onChange={handleChange('skills')} placeholder="Python, Java, Data Analysis" />
+
+          <label>{t('profilePage.skills')}</label>
+          <input className={styles.input} value={form.skills} onChange={handleChange('skills')} placeholder={t('profilePage.skillsPlaceholder')} />
         </div>
 
         <div className={styles.field}> 
-          <label>Thành tích</label>
+          <label>{t('profilePage.achievements')}</label>
+
           <textarea
             className={styles.textarea} 
             value={form.achievements}
             onChange={handleChange('achievements')}
-            placeholder="Giải Nhất Cuộc thi Lập trình Quốc gia 2024"
+            placeholder={t('profilePage.achievementsPlaceholder')}
           />
         </div>
 
         <div className={styles.field}> 
-          <label>Quan tâm nghiên cứu</label>
-          <input className={styles.input} value={form.research_interests} onChange={handleChange('research_interests')} placeholder="Machine Learning, NLP" />
+
+          <label>{t('profilePage.researchInterests')}</label>
+          <input className={styles.input} value={form.research_interests} onChange={handleChange('research_interests')} placeholder={t('profilePage.researchInterestsPlaceholder')} />
         </div>
 
         <div className={styles.field}> 
-          <label>Đề tài luận văn</label>
-          <input className={styles.input} value={form.thesis_topic} onChange={handleChange('thesis_topic')} placeholder="Ứng dụng NLP trong phân tích dữ liệu học thuật" />
+          <label>{t('profilePage.thesisTopic')}</label>
+          <input className={styles.input} value={form.thesis_topic} onChange={handleChange('thesis_topic')} placeholder={t('profilePage.thesisTopicPlaceholder')} />
         </div>
 
         <div className={styles.cvSection}> 
-          <label className={styles.cvLabel}>CV / Hồ sơ (PDF)</label> 
+          <label className={styles.cvLabel}>{t('profilePage.cvLabel')}</label> 
+
           <input 
             type="file" 
             accept=".pdf,.doc,.docx" 
@@ -200,13 +214,16 @@ function Profile() {
             className={styles.input} 
           />
           {cvFile && (
-            <div className={styles.cvFileSelected}> 
-              File đã chọn: <strong>{cvFile.name}</strong>
-            </div>
+
+            <div 
+              className={styles.cvFileSelected}
+              dangerouslySetInnerHTML={{ __html: t('profilePage.cvFileSelected', { fileName: cvFile.name }) }}
+            />
           )}
           {cvFileId && (
             <div className={styles.cvFileSaved}> 
-              ✓ CV đã được lưu (ID: {cvFileId.substring(0, 8)}...)
+              {t('profilePage.cvFileSaved', { fileId: cvFileId.substring(0, 8) })}
+
             </div>
           )}
           <button
@@ -215,7 +232,7 @@ function Profile() {
             disabled={uploadingCv || !cvFile}
             className={styles.uploadButton} 
           >
-            {uploadingCv ? 'Đang upload...' : 'Upload CV'}
+            {uploadingCv ? t('profilePage.uploadingButton') : t('profilePage.uploadButton')}
           </button>
         </div>
 
@@ -225,14 +242,16 @@ function Profile() {
             disabled={loading}
             className={styles.submitButton} 
           >
-            {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {loading ? t('profilePage.savingButton') : t('profilePage.saveButton')}
           </button>
         </div>
       </form>
 
-      <div className={styles.note}> 
-        <strong>Lưu ý:</strong> Hồ sơ sẽ được chia sẻ với các nhà cung cấp khi bạn nộp hồ sơ ứng tuyển, giúp họ dễ dàng đánh giá năng lực của bạn.
-      </div>
+      <div 
+        className={styles.note}
+        dangerouslySetInnerHTML={{ __html: t('profilePage.note') }}
+      />
+
     </div>
   );
 }
