@@ -118,3 +118,228 @@
 .actionLink[data-color="edit"] {
     color: #f59e0b;
 }
+.statCard[data-color="#3b82f6"] { border-left-color: #3b82f6; }
+.statCard[data-color="#f59e0b"] { border-left-color: #f59e0b; }
+.statCard[data-color="#ef4444"] { border-left-color: #ef4444; }
+.statIcon[data-color="#3b82f6"] { color: #3b82f6; }
+.statIcon[data-color="#f59e0b"] { color: #f59e0b; }
+.statIcon[data-color="#ef4444"] { color: #ef4444; }
+
+
+/* New: Modal styles for Opportunity Detail */
+.detailHeaderTitle {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+.detailInfoCard {
+    margin-bottom: 20px;
+    padding: 15px; 
+    border: 1px solid #e5e7eb; 
+    border-radius: 8px;
+}
+.detailDescription {
+    white-space: pre-wrap;
+    margin: 5px 0 0 0;
+}
+.detailGrid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 15px; 
+    font-size: 14px;
+}
+.criteriaBox {
+    margin-top: 20px; 
+    background: #f8fafc; 
+    padding: 15px; 
+    border-radius: 8px;
+}
+.criteriaTitle {
+    margin: 0 0 10px 0; 
+    font-size: 16px;
+}
+.criteriaList {
+    display: grid; 
+    gap: 8px; 
+    font-size: 14px;
+}
+
+/* New: Modal styles for Student Profile */
+.profileContainer {
+    display: grid; 
+    gap: 16px;
+}
+.profileHeader {
+    margin: 0 0 8px 0;
+}
+.profileContactInfo {
+    font-size: 14px; 
+    color: #64748b;
+}
+.profileStatGrid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 12px;
+}
+.profileSkillBadgeContainer {
+    margin-top: 8px;
+}
+.profileSkillBadge {
+    background: #e0ecff; 
+    color: #1d4ed8; 
+    padding: 4px 8px; 
+    border-radius: 6px; 
+    margin-right: 6px; 
+    font-size: 12px;
+}
+.profileAchievementBox {
+    margin-top: 6px; 
+    background: #f8fafc; 
+    padding: 12px; 
+    border-radius: 10px;
+}
+.profileDocumentSection {
+    margin-top: 8px;
+}
+.profileNoCv {
+    font-size: 13px; 
+    color: #94a3b8;
+}
+
+/* New: Modal chat styles (scoped) */
+.chatContainer {
+    display: grid; 
+    gap: 12px;
+}
+.messageArea {
+    max-height: 320px; 
+    overflow-y: auto; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 8px; 
+    padding: 12px; 
+    display: grid; 
+    gap: 10px;
+    align-content: end;
+}
+.messageItem {
+    padding: 8px 12px;
+    border-radius: 12px;
+    max-width: 70%;
+    min-width: 100px;
+}
+.messageSent {
+    align-self: end;
+    background: #2563eb;
+    color: #fff;
+    margin-left: auto;
+    margin-right: unset;
+}
+.messageReceived {
+    align-self: start;
+    background: #f1f5f9;
+    color: #1f2937;
+    margin-left: unset;
+    margin-right: auto;
+}
+.messageContent {
+    font-size: 13px; 
+    word-break: break-word;
+}
+.messageDate {
+    font-size: 11px; 
+    opacity: 0.7; 
+    margin-top: 4px;
+}
+.chatEmpty {
+    text-align: center; 
+    color: #94a3b8; 
+    grid-column: 1 / -1;
+}
+.chatForm {
+    display: flex; 
+    gap: 10px;
+}
+.chatInput {
+    flex: 1;
+}
+
+/* New: Status Badges for ApplicantsList */
+.statusBadge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.statusPending, .statusSubmitted {
+    color: #f59e0b; 
+    background: #fffbeb;
+}
+.statusReviewed, .statusViewed {
+    color: #3b82f6; 
+    background: #eff6ff;
+}
+.statusInterview {
+    color: #8b5cf6; 
+    background: #f5f3ff;
+}
+.statusAccepted {
+    color: #10b981; 
+    background: #ecfdf5;
+}
+.statusRejected {
+    color: #ef4444; 
+    background: #fef2f2;
+}
+.statusUnknown {
+    color: #64748b; 
+    background: #f3f4f6;
+}
+
+/* New: Applicant Row Styling */
+.applicantDetail {
+    font-size: 12px; 
+    color: #64748b;
+}
+.applicantGpaSkills {
+    font-size: 12px; 
+    color: #475569;
+}
+.applicationInfo {
+    font-weight: 600;
+}
+.actionButtons {
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px;
+}
+.actionMessageUnread {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    z-index: 10;
+}
+.actionProcessed {
+    color: #64748b; 
+    font-size: 12px; 
+    align-self: center;
+}
+.actionMessage {
+    background-color: #3b82f6; 
+    color: #fff; 
+    position: relative;
+}
+.actionViewProfile {
+    background-color: #475569; 
+    color: #fff;
+}
+.actionAccept {
+    background-color: #10b981; 
+    color: white;
+}
+.actionReject {
+    background-color: #ef4444; 
+    color: white;
+}

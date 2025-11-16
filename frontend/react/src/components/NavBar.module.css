@@ -43,3 +43,12 @@
 .link:hover {
     color: var(--color-primary);
 }
+
+.langButton {
+    background-color: #475569 !important; 
+    min-width: 50px;
+}
+
+.langButton:hover:not(:disabled) {
+    background-color: #374151 !important; 
+}

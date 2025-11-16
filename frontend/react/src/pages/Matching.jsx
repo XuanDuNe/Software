@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Matching.module.css'; 
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 
 
 function Matching() {
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
   const user = getStoredUser();
 
@@ -58,7 +56,6 @@ function Matching() {
     return styles.scoreLow;
   };
 
-  // 3. Thay thế strings
   return (
     <div className={styles.pageContainer}> 
       <h2>{t('matchingPage.title')}</h2>

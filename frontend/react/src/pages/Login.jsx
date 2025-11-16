@@ -3,15 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api.js';
 import { storeAuth } from '../utils/auth.js';
 import styles from './Login.module.css'; 
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 
 function Login() {
   const navigate = useNavigate();
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
-
   const [isRegister, setIsRegister] = useState(false);
   
   // Login state

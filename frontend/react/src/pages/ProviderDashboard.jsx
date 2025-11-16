@@ -3,33 +3,28 @@ import { Link } from 'react-router-dom';
 import { api, BASE_URL } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './ProviderDashboard.module.css';
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 
-// --- HELPER COMPONENTS ---
-
 const StatCard = ({ title, value, icon, color }) => (
-    <div className={styles.statCard} data-color={color || '#3b82f6'} style={{ borderLeftColor: color || '#3b82f6' }}>
+    <div className={styles.statCard} data-color={color || '#3b82f6'}>
         <div>
             <h3 className={styles.statTitle}>{title}</h3>
             <p className={styles.statValue}>{value}</p>
         </div>
-        <div className={styles.statIcon} style={{ color: color || '#3b82f6' }}>
+        <div className={styles.statIcon} data-color={color || '#3b82f6'}>
             {icon}
         </div>
     </div>
 );
 
 const Sidebar = ({ activeTab, onSelectTab }) => {
-    // 2. Hook
     const { t } = useTranslation();
 
     const navItems = [
         { id: 'overview', name: t('providerDashboardPage.sidebar.overview'), icon: '📊' },
         { id: 'opportunities', name: t('providerDashboardPage.sidebar.opportunities'), icon: '📋' },
         { id: 'applicants', name: t('providerDashboardPage.sidebar.applicants'), icon: '👥' },
-        { id: 'settings', name: t('providerDashboardPage.sidebar.settings'), icon: '⚙️' },
     ];
 
     return (
@@ -52,10 +47,8 @@ const Sidebar = ({ activeTab, onSelectTab }) => {
     );
 };
 
-// ... Các component Modal (OpportunityModal, OpportunityDetailModal, StudentProfileModal, MessageModal)
 
 const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
-    // 2. Hook
     const { t } = useTranslation();
 
     const [title, setTitle] = useState('');
@@ -118,7 +111,6 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
         }
     };
 
-    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content">
@@ -217,7 +209,6 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
 };
 
 const OpportunityDetailModal = ({ opportunityId, onClose }) => {
-    // 2. Hook
     const { t } = useTranslation();
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -236,14 +227,13 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                 setLoading(false);
             })
             .catch(err => {
-                setError(err.message || t('studentDashboardPage.modal_loadError')); // Reuse key
+                setError(err.message || t('studentDashboardPage.modal_loadError')); 
                 setLoading(false);
             });
     }, [opportunityId, t]);
 
     if (!opportunityId) return null;
 
-    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -251,28 +241,28 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                     <h3>{t('studentDashboardPage.modal_opportunityDetails')}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
-                {loading && <div style={{ textAlign: 'center' }}>{t('common.loading')}</div>}
+                {loading && <div className="p-4" style={{ textAlign: 'center' }}>{t('common.loading')}</div>}
                 {error && <div className="alert-error">{error}</div>}
                 
                 {detail && (
-                    <div className="detail-content">
-                        <h4 style={{ fontSize: '24px', marginBottom: '10px' }}>{detail.title}</h4>
+                    <div className={styles.detailContent}>
+                        <h4 className={styles.detailHeaderTitle}>{detail.title}</h4>
 
-                        <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                        <div className={styles.detailInfoCard}>
                             <strong className="label">{t('providerDashboardPage.modals.opp_desc')}:</strong>
-                            <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0 0 0' }}>{detail.description}</p>
+                            <p className={styles.detailDescription}>{detail.description}</p>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', fontSize: '14px' }}>
+                        <div className={styles.detailGrid}>
                             <div><strong>ID Cơ hội:</strong> {detail.id}</div>
                             <div><strong>{t('providerDashboardPage.modals.opp_type')}:</strong> {detail.type}</div>
                             <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
                         </div>
 
                         {detail.criteria && (
-                            <div style={{ marginTop: '20px', background: '#f8fafc', padding: '15px', borderRadius: '8px' }}>
-                                <h5 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Tiêu chí tuyển chọn</h5>
-                                <div style={{ display: 'grid', gap: '8px', fontSize: '14px' }}>
+                            <div className={styles.criteriaBox}>
+                                <h5 className={styles.criteriaTitle}>Tiêu chí tuyển chọn</h5>
+                                <div className={styles.criteriaList}>
                                     {detail.criteria.gpa_min !== null && (
                                         <div><strong>{t('providerDashboardPage.modals.opp_gpa')}:</strong> {detail.criteria.gpa_min}</div>
                                     )}
@@ -298,7 +288,6 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
 };
 
 const StudentProfileModal = ({ isOpen, loading, error, profile, application, onClose }) => {
-    // 2. Hook
     const { t } = useTranslation();
     if (!isOpen) return null;
     
@@ -310,7 +299,6 @@ const StudentProfileModal = ({ isOpen, loading, error, profile, application, onC
     })();
     const skills = profile?.skills ? profile.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
     
-    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 640 }}>
@@ -319,62 +307,62 @@ const StudentProfileModal = ({ isOpen, loading, error, profile, application, onC
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>{t('providerDashboardPage.modals.profile_loading')}</div>
+                    <div className="p-4" style={{ textAlign: 'center' }}>{t('providerDashboardPage.modals.profile_loading')}</div>
                 ) : error ? (
                     <div className="alert-error">{error}</div>
                 ) : profile ? (
-                    <div style={{ display: 'grid', gap: 16 }}>
+                    <div className={styles.profileContainer}>
                         <div>
-                            <h2 style={{ margin: '0 0 8px 0' }}>{profile.full_name || t('providerDashboardPage.applicants.applicantName', {id: application?.student_user_id})}</h2>
-                            <div style={{ fontSize: 14, color: '#64748b' }}>{profile.email || t('providerDashboardPage.modals.profile_no_email')}</div>
-                            {profile.phone && <div style={{ fontSize: 14, color: '#64748b' }}>{t('providerDashboardPage.modals.profile_phone', {phone: profile.phone})}</div>}
+                            <h2 className={styles.profileHeader}>{profile.full_name || t('providerDashboardPage.applicants.applicantName', {id: application?.student_user_id})}</h2>
+                            <div className={styles.profileContactInfo}>{profile.email || t('providerDashboardPage.modals.profile_no_email')}</div>
+                            {profile.phone && <div className={styles.profileContactInfo}>{t('providerDashboardPage.modals.profile_phone', {phone: profile.phone})}</div>}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                        <div className={styles.profileStatGrid}>
                             <div><strong>{t('providerDashboardPage.modals.profile_gpa')}</strong> {profile.gpa ?? t('providerDashboardPage.modals.profile_no_update')}</div>
                             <div><strong>{t('providerDashboardPage.modals.profile_level')}</strong> {profile.education_level || t('providerDashboardPage.modals.profile_no_update')}</div>
                             <div><strong>{t('providerDashboardPage.modals.profile_major')}</strong> {profile.major || t('providerDashboardPage.modals.profile_no_update')}</div>
                         </div>
                         <div>
                             <strong>{t('providerDashboardPage.modals.profile_skills')}</strong>
-                            <div style={{ marginTop: 8 }}>
+                            <div className={styles.profileSkillBadgeContainer}>
                                 {skills.length ? skills.map((skill, idx) => (
-                                    <span key={idx} style={{ background: '#e0ecff', color: '#1d4ed8', padding: '4px 8px', borderRadius: 6, marginRight: 6, fontSize: 12 }}>{skill}</span>
+                                    <span key={idx} className={styles.profileSkillBadge}>{skill}</span>
                                 )) : t('providerDashboardPage.modals.profile_no_update')}
                             </div>
                         </div>
                         {profile.achievements && (
                             <div>
                                 <strong>{t('providerDashboardPage.modals.profile_achievements')}</strong>
-                                <p style={{ marginTop: 6, background: '#f8fafc', padding: 12, borderRadius: 10 }}>{profile.achievements}</p>
+                                <p className={styles.profileAchievementBox}>{profile.achievements}</p>
                             </div>
                         )}
                         {profile.research_interests && (
-                            <div>
+                            <div style={{marginTop: '16px'}}>
                                 <strong>{t('providerDashboardPage.modals.profile_interests')}</strong>
-                                <p style={{ marginTop: 6 }}>{profile.research_interests}</p>
+                                <p style={{marginTop: '6px'}}>{profile.research_interests}</p>
                             </div>
                         )}
                         {profile.thesis_topic && (
-                            <div>
+                            <div style={{marginTop: '16px'}}>
                                 <strong>{t('providerDashboardPage.modals.profile_thesis')}</strong>
-                                <p style={{ marginTop: 6 }}>{profile.thesis_topic}</p>
+                                <p style={{marginTop: '6px'}}>{profile.thesis_topic}</p>
                             </div>
                         )}
                         <div>
                             <strong>{t('providerDashboardPage.modals.profile_documents')}</strong>
-                            <div style={{ marginTop: 8 }}>
+                            <div className={styles.profileDocumentSection}>
                                 {cvUrl ? (
                                     <a href={cvUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">
                                         {t('providerDashboardPage.applicants.action_viewCV')}
                                     </a>
                                 ) : (
-                                    <span style={{ fontSize: 13, color: '#94a3b8' }}>{t('providerDashboardPage.modals.profile_no_cv')}</span>
+                                    <span className={styles.profileNoCv}>{t('providerDashboardPage.modals.profile_no_cv')}</span>
                                 )}
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <div style={{ padding: 16, textAlign: 'center', color: '#64748b' }}>{t('providerDashboardPage.modals.profile_no_data')}</div>
+                    <div className="p-4" style={{ textAlign: 'center', color: '#64748b' }}>{t('providerDashboardPage.modals.profile_no_data')}</div>
                 )}
             </div>
         </div>
@@ -394,7 +382,6 @@ const MessageModal = ({
     partnerName,
     currentUserId
 }) => {
-    // 2. Hook
     const { t } = useTranslation();
     const messagesEndRef = useRef(null); 
     
@@ -407,7 +394,6 @@ const MessageModal = ({
     }, [messages]);
 
     if (!isOpen) return null;
-    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
@@ -416,40 +402,21 @@ const MessageModal = ({
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>
+                    <div className="p-4" style={{ textAlign: 'center' }}>{t('common.loading')}</div>
                 ) : (
-                    <div style={{ display: 'grid', gap: 12 }}>
+                    <div className={styles.chatContainer}>
                         {error && <div className="alert-error">{error}</div>}
-                        <div style={{ 
-                            maxHeight: 320, 
-                            overflowY: 'auto', 
-                            border: '1px solid #e2e8f0', 
-                            borderRadius: 8, 
-                            padding: 12, 
-                            display: 'grid', 
-                            gap: 10,
-                            alignContent: 'end'
-                        }}>
+                        <div className={styles.messageArea}>
                             {messages && messages.length ? messages.map(msg => (
                                 <div
                                     key={msg.id}
-                                    style={{
-                                        alignSelf: msg.sender_user_id === currentUserId ? 'end' : 'start',
-                                        background: msg.sender_user_id === currentUserId ? '#2563eb' : '#f1f5f9',
-                                        color: msg.sender_user_id === currentUserId ? '#fff' : '#1f2937',
-                                        padding: '8px 12px',
-                                        borderRadius: 12,
-                                        maxWidth: '70%',
-                                        minWidth: '100px',
-                                        marginLeft: msg.sender_user_id === currentUserId ? 'auto' : 'unset',
-                                        marginRight: msg.sender_user_id === currentUserId ? 'unset' : 'auto',
-                                    }}
+                                    className={`${styles.messageItem} ${msg.sender_user_id === currentUserId ? styles.messageSent : styles.messageReceived}`}
                                 >
-                                    <div style={{ fontSize: 13, wordBreak: 'break-word' }}>{msg.content}</div>
-                                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
+                                    <div className={styles.messageContent}>{msg.content}</div>
+                                    <div className={styles.messageDate}>{new Date(msg.created_at).toLocaleString()}</div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>{t('providerDashboardPage.modals.chat_empty', 'Chưa có tin nhắn.')}</div>
+                                <div className={styles.chatEmpty}>{t('providerDashboardPage.modals.chat_empty', 'Chưa có tin nhắn.')}</div>
                             )}
                             <div ref={messagesEndRef} />
                         </div>
@@ -458,14 +425,13 @@ const MessageModal = ({
                                 e.preventDefault();
                                 onSend();
                             }}
-                            style={{ display: 'flex', gap: 10 }}
+                            className={styles.chatForm}
                         >
                             <input
-                                className="input"
+                                className={`input ${styles.chatInput}`}
                                 value={input}
                                 onChange={(e) => onInputChange(e.target.value)}
                                 placeholder={t('providerDashboardPage.modals.chat_placeholder', 'Nhập tin nhắn...')}
-                                style={{ flex: 1 }}
                             />
                             <button
                                 type="submit"
@@ -484,7 +450,6 @@ const MessageModal = ({
 
 
 const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
-    // 2. Hook
     const { t } = useTranslation();
 
     const handleDelete = (opportunityId, title) => {
@@ -497,7 +462,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
         onOpportunityAction('viewDetail', opportunityId);
     };
 
-    // 3. Thay thế strings
     return (
         <div style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -530,7 +494,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                             <div style={{ fontSize: 12, color: '#64748b' }}>{opp.type}</div>
                                         </td>
                                         
-                                        {/* === BẢN SỬA LỖI CHO PHẦN TIÊU CHÍ === */}
                                         <td style={{ fontSize: 13, color: '#475569' }}>
                                             {criteria.gpa_min 
                                                 ? <div>{t('providerDashboardPage.opportunities.criteria_gpa', { gpa: criteria.gpa_min })}</div> 
@@ -552,7 +515,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                                 </div>
                                             )}
                                         </td>
-                                        {/* === KẾT THÚC BẢN SỬA === */}
 
                                         <td>{opp.applications_count || 0}</td> 
                                         <td style={{ display: 'flex', gap: '8px' }}>
@@ -567,7 +529,6 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                                 onClick={() => onOpportunityAction('edit', opp.id, opp)} 
                                                 className={styles.actionLink}
                                                 data-color="edit"
-                                                style={{color: '#f59e0b'}}
                                             >
                                                 {t('providerDashboardPage.opportunities.action_edit')}
                                             </button>
@@ -590,35 +551,29 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
     );
 };
 
-// Component Placeholder: Bảng Ứng viên 
 const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {}, onMessage = () => {}, onApplicationAction }) => {
-    // 2. Hook
     const { t } = useTranslation();
-
-
-    const getStatusStyle = (status) => {
-        // (Sử dụng lại logic, không cần dịch)
+    const getStatusClass = (status) => {
         switch (status) {
             case 'pending':
             case 'submitted':
-                return { color: '#f59e0b', background: '#fffbeb' };
+                return styles.statusSubmitted;
             case 'reviewed':
             case 'viewed':
-                return { color: '#3b82f6', background: '#eff6ff' };
+                return styles.statusViewed;
             case 'interview':
-                return { color: '#8b5cf6', background: '#f5f3ff' };
+                return styles.statusInterview;
             case 'accepted':
-                return { color: '#10b981', background: '#ecfdf5' };
+                return styles.statusAccepted;
             case 'rejected':
-                return { color: '#ef4444', background: '#fef2f2' };
+                return styles.statusRejected;
             default:
-                return { color: '#64748b', background: '#f3f4f6' };
+                return styles.statusUnknown;
         }
     };
     
-    // 3. Thay thế strings
     const getStatusText = (status) => {
-        const key = `studentDashboardPage.status_${status}`; // Dùng chung key với student
+        const key = `studentDashboardPage.status_${status}`; 
         const defaultText = status || t('studentDashboardPage.status_unknown');
         return t(key, defaultText);
     };
@@ -656,7 +611,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                         </thead>
                         <tbody>
                             {applications.map(app => {
-                                const statusInfo = getStatusStyle(app.status);
+                                const statusClass = getStatusClass(app.status);
                                 const profile = app.student_profile || {};
                                 const fullName = profile.full_name && profile.full_name.trim().length > 0
                                     ? profile.full_name
@@ -676,33 +631,26 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                     <tr key={app.id}>
                                         <td>
                                             <div style={{ fontWeight: 600 }}>{fullName}</div>
-                                            <div style={{ fontSize: 12, color: '#64748b' }}>{profile.email || t('providerDashboardPage.applicants.applicantEmail')}</div>
+                                            <div className={styles.applicantDetail}>{profile.email || t('providerDashboardPage.applicants.applicantEmail')}</div>
                                             {profile.gpa !== null && profile.gpa !== undefined && (
-                                                <div style={{ fontSize: 12, color: '#475569' }}>{t('providerDashboardPage.applicants.applicantGPA', {gpa: profile.gpa})}</div>
+                                                <div className={styles.applicantGpaSkills}>{t('providerDashboardPage.applicants.applicantGPA', {gpa: profile.gpa})}</div>
                                             )}
                                             {profile.skills && (
-                                                <div style={{ fontSize: 12, color: '#475569' }}>{t('providerDashboardPage.applicants.applicantSkills', {skills: profile.skills})}</div>
+                                                <div className={styles.applicantGpaSkills}>{t('providerDashboardPage.applicants.applicantSkills', {skills: profile.skills})}</div>
                                             )}
                                         </td>
                                         <td>
-                                            <div style={{ fontWeight: 600 }}>{getOpportunityTitle(app.opportunity_id)}</div>
-                                            <div style={{ fontSize: 12, color: '#64748b' }}>{t('providerDashboardPage.applicants.applicationId', {id: app.id})}</div>
+                                            <div className={styles.applicationInfo}>{getOpportunityTitle(app.opportunity_id)}</div>
+                                            <div className={styles.applicantDetail}>{t('providerDashboardPage.applicants.applicationId', {id: app.id})}</div>
                                         </td>
                                         <td>
                                             <span 
-                                                style={{ 
-                                                    padding: '4px 8px', 
-                                                    borderRadius: '4px', 
-                                                    fontSize: '12px', 
-                                                    fontWeight: 'bold', 
-                                                    color: statusInfo.color,
-                                                    background: statusInfo.background
-                                                }}
+                                                className={`${styles.statusBadge} ${statusClass}`}
                                             >
                                                 {getStatusText(app.status)}
                                             </span>
                                         </td>
-                                        <td style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                        <td className={styles.actionButtons}>
 
                                             {cvUrl ? (
                                                 <a 
@@ -714,33 +662,22 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                     {t('providerDashboardPage.applicants.action_viewCV')}
                                                 </a>
                                             ) : (
-                                                <span style={{ fontSize: 12, color: '#94a3b8', alignSelf: 'center' }}>{t('providerDashboardPage.applicants.noCV')}</span>
+                                                <span className={styles.actionProcessed}>{t('providerDashboardPage.applicants.noCV')}</span>
                                             )}
                                             <button
                                                 onClick={() => onViewProfile(app)}
-                                                className="btn btn-sm"
-                                                style={{ backgroundColor: '#475569', color: '#fff' }}
+                                                className={`btn btn-sm ${styles.actionViewProfile}`}
                                             >
                                                 {t('providerDashboardPage.applicants.action_viewProfile')}
                                             </button>
                                             <button
                                                 onClick={() => onMessage(app)}
-                                                className="btn btn-sm"
-                                                style={{ backgroundColor: '#3b82f6', color: '#fff', position: 'relative' }}
+                                                className={`btn btn-sm ${styles.actionMessage}`}
                                                 disabled={app.status !== 'accepted'}
                                             >
                                                 {t('providerDashboardPage.applicants.action_message')}
                                                 {app.status === 'accepted' && hasUnread && (
-                                                    <span style={{
-                                                        position: 'absolute',
-                                                        top: '-4px',
-                                                        right: '-4px',
-                                                        width: '8px',
-                                                        height: '8px',
-                                                        backgroundColor: '#ef4444',
-                                                        borderRadius: '50%',
-                                                        zIndex: 10
-                                                    }}></span>
+                                                    <span className={styles.actionMessageUnread}></span>
                                                 )}
                                             </button>
                                              
@@ -748,21 +685,19 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                                                  <>
                                                      <button 
                                                          onClick={() => handleAction(app.id, 'accepted')} 
-                                                         className="btn btn-sm"
-                                                         style={{ backgroundColor: '#10b981', color: 'white' }}
+                                                         className={`btn btn-sm ${styles.actionAccept}`}
                                                      >
                                                          {t('providerDashboardPage.applicants.action_accept')}
                                                      </button>
                                                      <button 
                                                          onClick={() => handleAction(app.id, 'rejected')} 
-                                                         className="btn btn-sm"
-                                                         style={{ backgroundColor: '#ef4444', color: 'white' }}
+                                                         className={`btn btn-sm ${styles.actionReject}`}
                                                      >
                                                          {t('providerDashboardPage.applicants.action_reject')}
                                                      </button>
                                                  </>
                                              ) : (
-                                                 <span style={{ color: '#64748b', fontSize: '12px', alignSelf: 'center' }}>{t('providerDashboardPage.applicants.action_processed')}</span>
+                                                 <span className={styles.actionProcessed}>{t('providerDashboardPage.applicants.action_processed')}</span>
                                              )}
                                         </td>
                                     </tr>
@@ -777,14 +712,9 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
 };
 
 
-// --- MAIN DASHBOARD COMPONENT ---
 
 const ProviderDashboard = () => {
-
-    // 2. Hook
     const { t } = useTranslation();
-
-
     const [activeTab, setActiveTab] = useState('overview');
     const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -828,7 +758,7 @@ const ProviderDashboard = () => {
             fetchData();
         }
         return () => { mounted = false; };
-    }, [providerUserId, t]); // Thêm t
+    }, [providerUserId, t]); 
 
     const handleApplicationAction = async (appId, status) => {
         setError('');
@@ -980,7 +910,7 @@ const ProviderDashboard = () => {
             { title: t('providerDashboardPage.stats.totalApplicants'), value: totalApplications, icon: '👥', color: '#f59e0b' },
             { title: t('providerDashboardPage.stats.pendingApplicants'), value: pendingApplications, icon: '⏳', color: '#ef4444' },
         ];
-    }, [opportunities, applications, t]); // Thêm t
+    }, [opportunities, applications, t]); 
 
     const renderContent = () => {
         if (loading) {
@@ -1039,14 +969,14 @@ const ProviderDashboard = () => {
     };
 
     return (
-        <div className="flex"> {/* Global class */}
+        <div className="flex"> 
             <Sidebar activeTab={activeTab} onSelectTab={setActiveTab} />
 
             <div className={styles.dashboardContent}>
                 {renderContent()}
             </div>
 
-            {/* Modals */}
+            
 
             <OpportunityModal 
                 isOpen={isCreateModalOpen} 

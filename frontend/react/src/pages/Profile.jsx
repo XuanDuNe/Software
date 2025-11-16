@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Profile.module.css'; 
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 function Profile() {
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
   const user = getStoredUser();
 
@@ -127,7 +125,6 @@ function Profile() {
   }
 
 
-  // 3. Thay thế strings
   return (
     <div className={styles.container}> 
       <h1 className={styles.title}>{t('profilePage.title')}</h1> 

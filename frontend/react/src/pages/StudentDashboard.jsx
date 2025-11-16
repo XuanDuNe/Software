@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './StudentDashboard.module.css'; 
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 const StudentMessageModal = ({
@@ -18,7 +17,6 @@ const StudentMessageModal = ({
     currentUserId,
     opportunityTitle
 }) => {
-    // 2. Khởi tạo hook trong component con
     const { t } = useTranslation();
     const messagesEndRef = useRef(null); 
     useEffect(() => {
@@ -28,7 +26,6 @@ const StudentMessageModal = ({
     }, [messages]);
     
     if (!isOpen) return null;
-    // 3. Thay thế strings
     return (
         <div className="modal-overlay">
             <div className="modal-content" style={{ maxWidth: 600 }}>
@@ -37,40 +34,21 @@ const StudentMessageModal = ({
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
                 {loading ? (
-                    <div style={{ padding: 16, textAlign: 'center' }}>{t('common.loading')}</div>
+                    <div className="p-4" style={{ textAlign: 'center' }}>{t('common.loading')}</div>
                 ) : (
-                    <div style={{ display: 'grid', gap: 12 }}>
+                    <div className={styles.chatContainer}>
                         {error && <div className="alert-error">{error}</div>}
-                        <div style={{ 
-                            maxHeight: 320, 
-                            overflowY: 'auto', 
-                            border: '1px solid #e2e8f0', 
-                            borderRadius: 8, 
-                            padding: 12, 
-                            display: 'grid', 
-                            gap: 10,
-                            alignContent: 'end'
-                        }}>
+                        <div className={styles.messageArea}>
                             {messages && messages.length ? messages.map(msg => (
                                 <div
                                     key={msg.id}
-                                    style={{
-                                        alignSelf: msg.sender_user_id === currentUserId ? 'end' : 'start',
-                                        background: msg.sender_user_id === currentUserId ? '#2563eb' : '#f1f5f9',
-                                        color: msg.sender_user_id === currentUserId ? '#fff' : '#1f2937',
-                                        padding: '8px 12px',
-                                        borderRadius: 12,
-                                        maxWidth: '70%',
-                                        minWidth: '100px',
-                                        marginLeft: msg.sender_user_id === currentUserId ? 'auto' : 'unset',
-                                        marginRight: msg.sender_user_id === currentUserId ? 'unset' : 'auto',
-                                    }}
+                                    className={`${styles.messageItem} ${msg.sender_user_id === currentUserId ? styles.messageSent : styles.messageReceived}`}
                                 >
-                                    <div style={{ fontSize: 13, wordBreak: 'break-word' }}>{msg.content}</div>
-                                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{new Date(msg.created_at).toLocaleString()}</div>
+                                    <div className={styles.messageContent}>{msg.content}</div>
+                                    <div className={styles.messageDate}>{new Date(msg.created_at).toLocaleString()}</div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>{t('studentDashboardPage.modal_chat_empty')}</div>
+                                <div className={styles.chatEmpty}>{t('studentDashboardPage.modal_chat_empty')}</div>
                             )}
                             <div ref={messagesEndRef} />
                         </div>
@@ -79,14 +57,13 @@ const StudentMessageModal = ({
                                 e.preventDefault();
                                 onSend();
                             }}
-                            style={{ display: 'flex', gap: 10 }}
+                            className={styles.chatForm}
                         >
                             <input
-                                className="input"
+                                className={`input ${styles.chatInput}`}
                                 value={input}
                                 onChange={(e) => onInputChange(e.target.value)}
                                 placeholder={t('studentDashboardPage.modal_chat_placeholder')}
-                                style={{ flex: 1 }}
                             />
                             <button
                                 type="submit"
@@ -103,8 +80,6 @@ const StudentMessageModal = ({
     );
 };
 
-
-// --- COMPONENT CON 2: OPPORTUNITY DETAIL MODAL ---
 const OpportunityDetailModal = ({
   isOpen,
   detail,
@@ -115,7 +90,6 @@ const OpportunityDetailModal = ({
   hasApplied,
   submitting
 }) => {
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
   if (!isOpen) return null;
 
@@ -125,7 +99,6 @@ const OpportunityDetailModal = ({
     </div>
   );
 
-  // 3. Thay thế strings
   return (
     <div className="modal-overlay">
       <div className="modal-content" style={{ maxWidth: 720 }}>
@@ -135,29 +108,29 @@ const OpportunityDetailModal = ({
         </div>
 
         {loading ? (
-          <div style={{ padding: 16, textAlign: 'center' }}>{t('studentDashboardPage.modal_loading')}</div>
+          <div className="p-4" style={{ textAlign: 'center' }}>{t('studentDashboardPage.modal_loading')}</div>
         ) : error ? (
           <div className="alert-error">{error}</div>
         ) : detail ? (
-          <div style={{ display: 'grid', gap: 16 }}>
+          <div className={styles.modalDetailContent}>
             <div>
-              <h2 style={{ margin: '0 0 8px 0' }}>{detail.title}</h2>
-              <span style={{ background: '#e0ecff', padding: '4px 8px', borderRadius: 6, fontSize: 12, color: '#1d4ed8' }}>
+              <h2 className={styles.detailHeader}>{detail.title}</h2>
+              <span className={styles.typeBadge}>
                 {detail.type}
               </span>
             </div>
-            <div style={{ background: '#f8fafc', padding: 16, borderRadius: 12 }}>
+            <div className={styles.descriptionCard}>
               <strong>Mô tả</strong>
-              <p style={{ marginTop: 8, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{detail.description}</p>
+              <p className={styles.descriptionText}>{detail.description}</p>
             </div>
-            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <div className={styles.detailGrid}>
               <div><strong>ID cơ hội:</strong> {detail.id}</div>
               <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
             </div>
             {detail.criteria && (
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: 12, padding: 16 }}>
-                <h4 style={{ margin: '0 0 12px 0' }}>Tiêu chí tuyển chọn</h4>
-                <div style={{ display: 'grid', gap: 8 }}>
+              <div className={styles.criteriaCard}>
+                <h4 className={styles.criteriaTitle}>Tiêu chí tuyển chọn</h4>
+                <div className={styles.criteriaList}>
                   <div><strong>GPA tối thiểu:</strong> {detail.criteria.gpa_min ?? 'Không yêu cầu'}</div>
                   {detail.criteria.deadline && (
                     <div><strong>Hạn nộp:</strong> {new Date(detail.criteria.deadline).toLocaleDateString()}</div>
@@ -167,7 +140,7 @@ const OpportunityDetailModal = ({
                 </div>
               </div>
             )}
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
+            <div className={styles.detailAction}>
               <button
                 className={`btn ${hasApplied ? 'btn-disabled' : 'btn-secondary'}`}
                 onClick={onApply}
@@ -184,9 +157,7 @@ const OpportunityDetailModal = ({
 };
 
 
-// --- COMPONENT CON 3: MY APPLICATIONS SUMMARY ---
 const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
-    // 2. Khởi tạo hook
     const { t } = useTranslation();
 
 
@@ -205,28 +176,46 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
         return appWithOpp?.opportunity?.title || `[Cơ hội #${opportunityId}]`;
     };
 
-    const getStatusStyle = (status) => {
+    const getStatusClass = (status) => {
         switch (status) {
             case 'pending':
             case 'submitted':
-                return { color: '#f59e0b', background: '#fffbeb' };
+                return styles.statusSubmitted;
             case 'reviewed':
-            case 'viewed': // Thêm
-                return { color: '#3b82f6', background: '#eff6ff' };
-            case 'interview': // Thêm
-                return { color: '#8b5cf6', background: '#f5f3ff' };
+            case 'viewed': 
+                return styles.statusViewed;
+            case 'interview': 
+                return styles.statusInterview;
             case 'accepted':
-                return { color: '#10b981', background: '#ecfdf5' };
+                return styles.statusAccepted;
             case 'rejected':
-                return { color: '#ef4444', background: '#fef2f2' };
+                return styles.statusRejected;
             default:
-                return { color: '#64748b', background: '#f3f4f6' };
+                return styles.statusUnknown;
+        }
+    };
+    
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'pending':
+            case 'submitted':
+                return '#f59e0b';
+            case 'reviewed':
+            case 'viewed': 
+                return '#3b82f6';
+            case 'interview': 
+                return '#8b5cf6';
+            case 'accepted':
+                return '#10b981';
+            case 'rejected':
+                return '#ef4444';
+            default:
+                return '#64748b';
         }
     };
 
-    // 3. Thay thế strings
+
     const getStatusText = (status) => {
-        // Dùng key-safe fallback
         const key = `studentDashboardPage.status_${status}`;
         const defaultText = status || t('studentDashboardPage.status_unknown');
         return t(key, defaultText);
@@ -236,7 +225,8 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
         <div style={{ marginTop: '15px' }}>
             <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
                 {applications.map((app) => {
-                    const statusInfo = getStatusStyle(app.status);
+                    const statusClass = getStatusClass(app.status);
+                    const statusColor = getStatusColor(app.status);
                     const oppTitle = getOpportunityTitle(app.opportunity_id);
                     const isChatEnabled = app.status === 'accepted'; 
                     const hasUnread = app.has_unread_messages; 
@@ -244,25 +234,11 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                     return (
                         <div 
                             key={app.id} 
-                            className="card" 
-                            style={{ 
-                                borderLeft: `5px solid ${statusInfo.color}`, 
-                                padding: '15px', 
-                                cursor: isChatEnabled ? 'pointer' : 'default', 
-                                position: 'relative' 
-                            }}
+                            className={`card ${styles.applicationCard} ${isChatEnabled ? styles.applicationCardChatEnabled : ''}`} 
+                            style={{ borderLeft: `5px solid ${statusColor}` }}
                             onClick={() => isChatEnabled && onOpenChat(app, oppTitle)}   >
                             {isChatEnabled && hasUnread && (
-                                <span style={{
-                                    position: 'absolute',
-                                    top: '10px',
-                                    right: '10px',
-                                    width: '10px',
-                                    height: '10px',
-                                    backgroundColor: '#ef4444',
-                                    borderRadius: '50%',
-                                    zIndex: 10
-                                }}></span>
+                                <span className={styles.unreadIndicator}></span>
                             )}
                             <div style={{ fontWeight: 600, marginBottom: '5px' }}>
                                 {oppTitle}
@@ -271,14 +247,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
                                 {t('studentDashboardPage.submittedOn', { date: new Date(app.submitted_at).toLocaleDateString() })}
                             </div>
                             <span 
-                                style={{ 
-                                    padding: '4px 8px', 
-                                    borderRadius: '4px', 
-                                    fontSize: '12px', 
-                                    fontWeight: 'bold', 
-                                    color: statusInfo.color,
-                                    background: statusInfo.background
-                                }}
+                                className={`${styles.statusBadge} ${statusClass}`}
                             >
                                 {t('studentDashboardPage.status', { statusText: getStatusText(app.status) })}
                             </span>
@@ -297,9 +266,7 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
 
 
 function StudentDashboard() {
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
-
   const [applications, setApplications] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [error, setError] = useState('');
@@ -343,7 +310,7 @@ function StudentDashboard() {
     let mounted = true;
     if (mounted) fetchAllData();
     return () => { mounted = false; };
-  }, [studentUserId, t]); // Thêm t vào dependency array
+  }, [studentUserId, t]); 
 
   const hasApplied = (opportunityId) => {
     return applications.some(app => app.opportunity_id === opportunityId);
@@ -496,7 +463,6 @@ function StudentDashboard() {
     }
   };
 
-  // 3. Thay thế strings
   return (
 
     <div className="container p-6">

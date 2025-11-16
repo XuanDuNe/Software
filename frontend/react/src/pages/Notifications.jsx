@@ -2,16 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Notifications.module.css'; 
-// 1. Import hook
 import { useTranslation } from 'react-i18next';
 
 function Notifications() {
-  // 2. Khởi tạo hook
   const { t } = useTranslation();
-
   const [items, setItems] = useState([]);
   const [error, setError] = useState('');
-
   const setSafeItems = (list) => {
     setItems(Array.isArray(list) ? list : []);
   };
@@ -29,7 +25,7 @@ function Notifications() {
       }
     })();
     return () => { mounted = false; };
-  }, [t]); // Thêm t vào dependency
+  }, [t]); 
 
   async function markRead(id) {
     try {
@@ -42,7 +38,6 @@ function Notifications() {
     }
   }
 
-  // 3. Thay thế strings
   return (
     <div className="container p-6">
       <h2>{t('notificationsPage.title')}</h2>
