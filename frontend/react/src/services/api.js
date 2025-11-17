@@ -65,10 +65,6 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(payload)
   }),
-  register: (payload) => request('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  }),
   verifyToken: (token) => request('/auth/verify-token', {
     method: 'POST',
     body: JSON.stringify({ token })
