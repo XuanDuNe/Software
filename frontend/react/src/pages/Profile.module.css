@@ -44,7 +44,6 @@
     padding: 10px 12px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-    /* Dùng global .input nếu muốn, nhưng để đây cho rõ ràng */
     box-sizing: border-box;
     width: 100%;
 }

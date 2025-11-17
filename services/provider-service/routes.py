@@ -1,4 +1,3 @@
-# services/provider-service/routes.py
 from urllib import response
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response
 from sqlmodel import Session, select
@@ -10,21 +9,17 @@ import httpx
 import os
 import asyncio
 
-# URL của các service khác
 APPLICATION_SERVICE_URL = os.getenv("APPLICATION_SERVICE_URL", "http://application-service:8004")
 NOTIFICATION_SERVICE_URL = os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8005")
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8002")
 
 router = APIRouter(prefix="/api", tags=["Provider Service"])
 
-# --- Helpers (Copy từ routes_opportunity.py) ---
 def parse_list_to_str(items: Optional[List[str]]) -> Optional[str]:
     return ",".join(items) if items else None
 
 def parse_str_to_list(s: Optional[str]) -> List[str]:
     return [item for item in s.split(",") if item] if s else []
-
-# === OPPORTUNITY ROUTES (Chuyển từ routes_opportunity.py) ===
 
 def _upsert_criteria(session: Session, opportunity_id: int, criteria_in: Optional[schemas.CriteriaCreate]):
     if not criteria_in:
@@ -70,7 +65,6 @@ async def get_unread_status_for_app(student_user_id: int, provider_user_id: int,
     """
     try:
         async with httpx.AsyncClient() as client:
-            # 1. Tạo hoặc lấy Conversation
             convo_resp = await client.post(
                 f"{NOTIFICATION_SERVICE_URL}/api/conversations",
                 json={
@@ -86,7 +80,6 @@ async def get_unread_status_for_app(student_user_id: int, provider_user_id: int,
             if not conversation_id:
                 return False
 
-            # 2. Lấy số lượng tin nhắn chưa đọc
             unread_resp = await client.get(
                 f"{NOTIFICATION_SERVICE_URL}/api/conversations/{conversation_id}/unread_count/{user_to_check}"
             )
@@ -111,6 +104,16 @@ def create_opportunity(
                 base_payload["type"] = models.OpportunityType(base_payload["type"])
             except Exception:
                 raise HTTPException(status_code=400, detail="Invalid opportunity type")
+        
+        if "status" in base_payload:
+             if isinstance(base_payload["status"], str):
+                 try:
+                     base_payload["status"] = models.OpportunityStatus(base_payload["status"])
+                 except Exception:
+                     raise HTTPException(status_code=400, detail="Invalid opportunity status")
+        else:
+             base_payload["status"] = models.OpportunityStatus.OPEN
+
         if not base_payload.get("title") or not base_payload.get("description"):
             raise HTTPException(status_code=400, detail="Title and description are required")
         if not isinstance(base_payload.get("provider_user_id"), int):
@@ -148,7 +151,6 @@ def get_all_opportunities(session: Session = Depends(get_session)):
                 deadline=criteria.deadline,
                 required_documents=parse_str_to_list(criteria.required_documents)
             )
-        # Xây thủ công để tránh from_orm auto-map quan hệ criteria (string) gây lỗi list
         opp_read = schemas.OpportunityRead.from_orm(opp)
         opp_with_criteria = schemas.OpportunityReadWithCriteria(
             **opp_read.dict(),
@@ -160,7 +162,6 @@ def get_all_opportunities(session: Session = Depends(get_session)):
 
 @router.get("/opportunities/{opp_id}", response_model=schemas.OpportunityReadWithCriteria)
 def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
-    # Endpoint này sẽ được application-service gọi nội bộ
     opp = session.get(models.Opportunity, opp_id)
     if not opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
@@ -180,7 +181,6 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
             required_documents=parse_str_to_list(criteria.required_documents)
         )
 
-    # Xây thủ công để tránh from_orm auto-map quan hệ criteria (string) gây lỗi list
     opp_read = schemas.OpportunityRead.from_orm(opp)
     return schemas.OpportunityReadWithCriteria(
         **opp_read.dict(),
@@ -199,6 +199,10 @@ def update_opportunity(
     opp_data = opp_in.dict(exclude_unset=True, exclude={"criteria"})
     if "type" in opp_data and isinstance(opp_data["type"], str):
         opp_data["type"] = models.OpportunityType(opp_data["type"])
+    
+    if "status" in opp_data and isinstance(opp_data["status"], str):
+         opp_data["status"] = models.OpportunityStatus(opp_data["status"]) 
+
     for key, value in opp_data.items():
         setattr(db_opp, key, value)
     session.add(db_opp)
@@ -208,6 +212,30 @@ def update_opportunity(
     criteria_read = _upsert_criteria(session, db_opp.id, opp_in.criteria)
     opp_read = schemas.OpportunityRead.from_orm(db_opp)
     return schemas.OpportunityReadWithCriteria(**opp_read.dict(), criteria=criteria_read)
+
+@router.patch("/opportunities/{opp_id}/status", response_model=schemas.OpportunityRead)
+def update_opportunity_status(
+    opp_id: int,
+    status_in: schemas.OpportunityStatusUpdate,
+    session: Session = Depends(get_session)
+):
+    """Cập nhật trạng thái Mở/Đóng cho Cơ hội."""
+    db_opp = session.get(models.Opportunity, opp_id)
+    if not db_opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+    
+    # Check if the status is valid
+    try:
+        new_status = models.OpportunityStatus(status_in.status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid status value")
+    
+    db_opp.status = new_status
+    session.add(db_opp)
+    session.commit()
+    session.refresh(db_opp)
+    
+    return db_opp
 
 @router.delete("/opportunities/{opp_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_opportunity(opp_id: int, session: Session = Depends(get_session)):
@@ -273,10 +301,8 @@ def create_or_update_criteria(
         required_documents=parse_str_to_list(db_criteria.required_documents)
     )
 
-# === APPLICATION MANAGEMENT ROUTES (Chuyển từ routes_application.py) ===
 
 async def notify_user(user_id: int, content: str, link_url: Optional[str] = None):
-    # Hàm này gọi sang notification-service
     try:
         async with httpx.AsyncClient() as client:
             await client.post(
@@ -320,10 +346,8 @@ async def get_applications_by_provider_enriched(user_id: int):
                 student_id = app.get("student_user_id")
                 
                 if student_id is not None:
-                    # Task 1: Fetch profile
                     profile_coro = client.get(f"{USER_SERVICE_URL}/api/student/profile/{student_id}")
                     
-                    # Task 2: Get unread status cho Provider (user_id)
                     unread_coro_provider = get_unread_status_for_app(
                         student_user_id=student_id,
                         provider_user_id=user_id,
@@ -371,13 +395,12 @@ async def update_application_status(
     app_id: int,
     status_in: schemas.ApplicationStatusUpdate,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session) # Cần session để lấy Opp
+    session: Session = Depends(get_session)
 ):
     """
     Provider cập nhật trạng thái hồ sơ (gọi sang Application Service).
     """
     try:
-        # 1. Gọi sang Application Service để cập nhật trạng thái
         async with httpx.AsyncClient() as client:
             response = await client.patch(
                 f"{APPLICATION_SERVICE_URL}/api/applications/{app_id}/status",
@@ -385,11 +408,8 @@ async def update_application_status(
             )
             response.raise_for_status()
             updated_app = response.json()
-
-            # 2. Lấy thông tin Opportunity (từ DB của service này) để gửi thông báo
             db_opp = session.get(models.Opportunity, updated_app.get("opportunity_id"))
 
-            # 3. Gửi thông báo cho sinh viên
             if db_opp:
                 background_tasks.add_task(
                     notify_user,

@@ -115,7 +115,14 @@
     "modal_chat_empty": "Bắt đầu cuộc trò chuyện.",
     "modal_chat_load_error": "Không thể tải hội thoại",
     "modal_chat_send_error": "Không thể gửi tin nhắn",
-    "modal_chat_only_accepted": "Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận."
+    "modal_chat_only_accepted": "Chỉ có thể nhắn tin sau khi hồ sơ đã được chấp nhận.",
+    "filterGoalsPlaceholder": "Mục tiêu (ví dụ: research, job)...",
+    "filterStrengthsPlaceholder": "Điểm mạnh (ví dụ: analytical)...",
+    "filterInterestsPlaceholder": "Sở thích (ví dụ: AI, Data Science)...",
+    "banner": {
+      "title": "Sẵn sàng cho các Cơ hội, {{name}}!",
+      "subtitle": "Khám phá và kết nối với các chương trình phù hợp với hồ sơ của bạn."
+    }
   },
   "matchingPage": {
     "title": "Gợi ý Cơ hội phù hợp",
@@ -144,15 +151,22 @@
     "title": "Thông báo",
     "loadError": "Lỗi tải thông báo",
     "updateError": "Lỗi cập nhật",
-    "markRead": "Đánh dấu đã đọc"
+    "markRead": "Đánh dấu đã đọc",
+    "markAllRead": "Đánh dấu tất cả đã đọc", 
+    "noNotifications": "Bạn không có thông báo nào.",
+    "app_status_update_template": "Trạng thái hồ sơ của bạn cho '{{title}}' đã được cập nhật: {{status}}",
+    "new_application_template": "Bạn có hồ sơ ứng tuyển mới cho cơ hội '{{title}}'."
   },
   "providerDashboardPage": {
     "sidebar": {
-      "hubTitle": "Provider Hub",
+      "hubTitle": "Trung tâm nhà cung cấp",
       "overview": "Tổng quan",
-      "opportunities": "Cơ hội (Listings)",
-      "applicants": "Ứng viên (Applicants)",
-      "settings": "Cài đặt"
+      "opportunities": "Cơ hội",
+      "applicants": "Ứng viên"
+    },
+    "banner": {
+      "title": "Chào mừng trở lại, {{name}}!",
+      "subtitle": "Kết nối nhân tài, Kiến tạo tương lai"
     },
     "stats": {
       "totalOpportunities": "Tổng số cơ hội",
@@ -183,7 +197,16 @@
       "confirmDelete": "Bạn có chắc chắn muốn xóa cơ hội: \"{{title}}\"?",
       "alert_added": "Đã thêm cơ hội thành công!",
       "alert_updated": "Đã cập nhật cơ hội thành công!",
-      "alert_deleted": "Đã xóa cơ hội thành công!"
+      "alert_deleted": "Đã xóa cơ hội thành công!",
+      "header_status": "Trạng thái",
+      "status_open": "Đang mở",
+      "status_closed": "Đã đóng",
+      "action_close": "Đóng Cơ hội",
+      "action_open": "Mở lại Cơ hội",
+      "alert_status_updated": "Đã cập nhật trạng thái cơ hội thành {{status}}.",
+      "searchPlaceholder": "Tìm kiếm theo tên/mô tả...",
+      "filterByType": "Lọc theo loại",
+      "allTypes": "Tất cả loại"
     },
     "applicants": {
       "title": "Danh sách Ứng viên",
@@ -210,7 +233,11 @@
       "action_reject_confirm": "TỪ CHỐI",
       "alert_statusUpdated": "Đã cập nhật trạng thái hồ sơ #{{appId}} thành {{status}}.",
       "error_statusUpdate": "Lỗi khi cập nhật trạng thái hồ sơ.",
-      "error_noProvider": "Không tìm thấy thông tin nhà cung cấp."
+      "error_noProvider": "Không tìm thấy thông tin nhà cung cấp.",
+      "filterByOpportunity": "Lọc theo Cơ hội",
+      "filterByStatus": "Lọc theo Trạng thái",
+      "allOpportunities": "Tất cả cơ hội",
+      "allStatuses": "Tất cả trạng thái"
     },
     "settings": {
       "title": "Cài đặt Tài khoản",

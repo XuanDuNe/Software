@@ -1,9 +1,11 @@
-import React from 'react';
+// src/components/NavBar.jsx
+
+import React, { useState, useEffect } from 'react'; // THAY ĐỔI: Thêm useState, useEffect
 import { Link, useNavigate } from 'react-router-dom';
 import { getStoredUser, clearAuth } from '../utils/auth.js';
 import styles from './NavBar.module.css'; 
 import { useTranslation } from 'react-i18next';
-
+import { api } from '../services/api.js'; // THAY ĐỔI: Import api
 
 
 function NavBar() {
@@ -11,6 +13,36 @@ function NavBar() {
   const user = getStoredUser();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const [hasUnread, setHasUnread] = useState(false); // THAY ĐỔI: Trạng thái thông báo chưa đọc
+  
+  // NEW: Hàm kiểm tra thông báo chưa đọc
+  const checkUnreadNotifications = async () => {
+    if (!user?.id) {
+        setHasUnread(false);
+        return;
+    }
+    try {
+        const notifications = await api.listNotifications(user.id);
+        const unreadCount = (notifications || []).filter(n => !n.read_status).length;
+        setHasUnread(unreadCount > 0);
+    } catch (err) {
+        console.error("Failed to fetch unread notifications count:", err);
+        setHasUnread(false);
+    }
+  };
+  
+  useEffect(() => {
+    // 1. Kiểm tra khi component mount
+    checkUnreadNotifications();
+    
+    // 2. Lắng nghe sự kiện tùy chỉnh từ Notifications.jsx (để cập nhật trạng thái chấm đỏ)
+    window.addEventListener('unreadCountUpdated', checkUnreadNotifications);
+
+    // 3. Cleanup listener
+    return () => {
+        window.removeEventListener('unreadCountUpdated', checkUnreadNotifications);
+    };
+  }, [user?.id]); // Phụ thuộc vào user.id
 
   const handleChangeLanguage = () => {
     const newLang = currentLang.startsWith('vi') ? 'en' : 'vi';
@@ -25,11 +57,20 @@ function NavBar() {
   return (
     <div className={styles.navbar}> 
       <div className={styles.nav}> 
+
+        <Link to="/" className={styles.logo}>
+          EduMatch
+        </Link>
+
         {user?.role === 'student' && (
           <>
             <Link to="/student/dashboard" className={styles.link}>{t('nav.student')}</Link> 
             <Link to="/student/profile" className={styles.link}>{t('nav.profile')}</Link> 
-            <Link to="/notifications" className={styles.link}>{t('nav.notifications')}</Link> 
+            {/* THAY ĐỔI: Thêm chấm đỏ vào link Notifications */}
+            <Link to="/notifications" className={styles.link}>
+                {t('nav.notifications')}
+                {hasUnread && <span className={styles.unreadDot}></span>}
+            </Link> 
             <Link to="/matching" className={styles.link}>{t('nav.matching')}</Link> 
 
           </>
@@ -38,7 +79,11 @@ function NavBar() {
           <>
 
             <Link to="/provider/dashboard" className={styles.link}>{t('nav.provider')}</Link> 
-            <Link to="/notifications" className={styles.link}>{t('nav.notifications')}</Link> 
+            {/* THAY ĐỔI: Thêm chấm đỏ vào link Notifications */}
+            <Link to="/notifications" className={styles.link}>
+                {t('nav.notifications')}
+                {hasUnread && <span className={styles.unreadDot}></span>}
+            </Link>
           </>
         )}
       </div>

@@ -115,7 +115,14 @@
     "modal_chat_empty": "Start the conversation.",
     "modal_chat_load_error": "Could not load conversation",
     "modal_chat_send_error": "Could not send message",
-    "modal_chat_only_accepted": "You can only chat after your application has been accepted."
+    "modal_chat_only_accepted": "You can only chat after your application has been accepted.",
+    "filterGoalsPlaceholder": "Goals (e.g., research, job)...",
+    "filterStrengthsPlaceholder": "Strengths (e.g., analytical)...",
+    "filterInterestsPlaceholder": "Interests (e.g., AI, Data Science)...",
+    "banner": {
+      "title": "Ready for Opportunities, {{name}}!",
+      "subtitle": "Explore and connect with programs that match your profile."
+    }
   },
   "matchingPage": {
     "title": "Opportunity Matching",
@@ -144,15 +151,22 @@
     "title": "Notifications",
     "loadError": "Error loading notifications",
     "updateError": "Update error",
-    "markRead": "Mark as read"
+    "markRead": "Mark as read",
+    "markAllRead": "Mark All as Read", 
+    "noNotifications": "You have no notifications.",
+    "app_status_update_template": "Your application status for '{{title}}' has been updated: {{status}}",
+    "new_application_template": "You have a new application for opportunity '{{title}}'."
   },
   "providerDashboardPage": {
     "sidebar": {
       "hubTitle": "Provider Hub",
       "overview": "Overview",
-      "opportunities": "Opportunities (Listings)",
-      "applicants": "Applicants",
-      "settings": "Settings"
+      "opportunities": "Opportunities",
+      "applicants": "Applicants"
+    },
+    "banner": {
+      "title": "Welcome Back, {{name}}!",
+      "subtitle": "Connecting Talent, Shaping the Future"
     },
     "stats": {
       "totalOpportunities": "Total Opportunities",
@@ -179,11 +193,15 @@
       "alert_added": "Successfully added opportunity!",
       "alert_updated": "Successfully updated opportunity!",
       "alert_deleted": "Successfully deleted opportunity!",
-      "criteria_gpa": "GPA ≥ {{gpa}}",
-      "criteria_no_gpa": "No GPA requirement",
-      "criteria_skills_label": "Skills:",
-      "criteria_skills_none": "No specific skills required",
-      "criteria_deadline_label": "Deadline:"
+      "header_status": "Status",
+      "status_open": "Open",
+      "status_closed": "Closed",
+      "action_close": "Close Opportunity",
+      "action_open": "Reopen Opportunity",
+      "alert_status_updated": "Updated opportunity status to {{status}}.",
+      "searchPlaceholder": "Search by name/description...",
+      "filterByType": "Filter by Type",
+      "allTypes": "All Types"
     },
     "applicants": {
       "title": "Applicant List",
@@ -210,7 +228,11 @@
       "action_reject_confirm": "REJECT",
       "alert_statusUpdated": "Updated application #{{appId}} status to {{status}}.",
       "error_statusUpdate": "Error updating application status.",
-      "error_noProvider": "Provider information not found."
+      "error_noProvider": "Provider information not found.",
+      "filterByOpportunity": "Filter by Opportunity",
+      "filterByStatus": "Filter by Status",
+      "allOpportunities": "All Opportunities",
+      "allStatuses": "All Statuses"
     },
     "settings": {
       "title": "Account Settings",

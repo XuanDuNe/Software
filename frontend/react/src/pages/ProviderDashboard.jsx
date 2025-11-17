@@ -451,6 +451,42 @@ const MessageModal = ({
 
 const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
     const { t } = useTranslation();
+    const [searchTerm, setSearchTerm] = useState(''); 
+    const [typeFilter, setTypeFilter] = useState('all'); 
+    
+    const getOpportunityStatus = (opp) => {
+        const deadline = opp.criteria?.deadline;
+        if (!deadline) return 'open'; 
+        
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        
+        return deadlineDate > now ? 'open' : 'closed'; 
+    };
+
+
+    const filteredOpportunities = useMemo(() => {
+        return opportunities.filter(opp => {
+            const titleLower = opp.title ? opp.title.toLowerCase() : '';
+            const descriptionLower = opp.description ? opp.description.toLowerCase() : '';
+            const searchTermLower = searchTerm.toLowerCase();
+
+            const matchesSearch = titleLower.includes(searchTermLower) || 
+                                  descriptionLower.includes(searchTermLower);
+            
+            const matchesType = typeFilter === 'all' || opp.type === typeFilter;
+            
+            return matchesSearch && matchesType;
+        });
+    }, [opportunities, searchTerm, typeFilter]);
+
+    const opportunityTypes = [
+        { value: 'all', label: t('providerDashboardPage.opportunities.allTypes') },
+        { value: 'program', label: t('providerDashboardPage.modals.opp_type_program') },
+        { value: 'scholarship', label: t('providerDashboardPage.modals.opp_type_scholarship') },
+        { value: 'research_lab', label: t('providerDashboardPage.modals.opp_type_lab') },
+    ];
+
 
     const handleDelete = (opportunityId, title) => {
         if (window.confirm(t('providerDashboardPage.opportunities.confirmDelete', { title }))) {
@@ -462,6 +498,17 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
         onOpportunityAction('viewDetail', opportunityId);
     };
 
+    const handleStatusToggle = (opportunityId, currentStatus) => {
+        const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+        const actionTextKey = newStatus === 'closed' 
+            ? 'providerDashboardPage.opportunities.action_close' 
+            : 'providerDashboardPage.opportunities.action_open';
+            
+        if (window.confirm(t('providerDashboardPage.applicants.confirmAction', { action: t(actionTextKey).toLowerCase() }))) {
+             onOpportunityAction('toggleStatus', opportunityId, { newStatus });
+        }
+    };
+
     return (
         <div style={{ marginTop: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -470,9 +517,29 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                     {t('providerDashboardPage.opportunities.addNew')}
                 </button>
             </div>
-            
+            <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 200px', marginBottom: '20px' }}>
+                <input
+                    type="text"
+                    className="input"
+                    placeholder={t('providerDashboardPage.opportunities.searchPlaceholder')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <select 
+                    className="input" 
+                    value={typeFilter} 
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                    <option disabled>{t('providerDashboardPage.opportunities.filterByType')}</option>
+                    {opportunityTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                </select>
+            </div>
+
+
             <div className={styles.tableManagement}>
-                {opportunities.length === 0 ? (
+                {filteredOpportunities.length === 0 ? ( 
                     <p>{t('providerDashboardPage.opportunities.noOpportunities')}</p>
                 ) : (
                     <table>
@@ -480,21 +547,24 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                             <tr>
                                 <th style={{ width: '30%' }}>{t('providerDashboardPage.opportunities.header_name')}</th>
                                 <th style={{ width: '25%' }}>{t('providerDashboardPage.opportunities.header_criteria')}</th>
-                                <th style={{ width: '10%' }}>{t('providerDashboardPage.opportunities.header_applicants')}</th>
-                                <th style={{ width: '20%' }}>{t('providerDashboardPage.opportunities.header_action')}</th>
+                                <th style={{ width: '8%' }} className={styles.textCenter}>{t('providerDashboardPage.opportunities.header_applicants')}</th>
+                                <th style={{ width: '12%' }} className={styles.textCenter}>{t('providerDashboardPage.opportunities.header_status')}</th>
+                                <th style={{ width: '25%' }}>{t('providerDashboardPage.opportunities.header_action')}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {opportunities.map(opp => {
+                            {filteredOpportunities.map(opp => { 
                                 const criteria = opp.criteria || {};
+                                const status = opp.status || 'open';
+                                
                                 return (
                                     <tr key={opp.id}>
-                                        <td>
+                                        <td style={{ width: '30%' }}> 
                                             <div style={{ fontWeight: 600 }}>{opp.title}</div>
                                             <div style={{ fontSize: 12, color: '#64748b' }}>{opp.type}</div>
                                         </td>
                                         
-                                        <td style={{ fontSize: 13, color: '#475569' }}>
+                                        <td style={{ width: '25%', fontSize: 13, color: '#475569' }}> {/* 25% */}
                                             {criteria.gpa_min 
                                                 ? <div>{t('providerDashboardPage.opportunities.criteria_gpa', { gpa: criteria.gpa_min })}</div> 
                                                 : <div>{t('providerDashboardPage.opportunities.criteria_no_gpa')}</div>
@@ -516,29 +586,55 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                             )}
                                         </td>
 
-                                        <td>{opp.applications_count || 0}</td> 
-                                        <td style={{ display: 'flex', gap: '8px' }}>
-                                            <button 
-                                                onClick={() => handleViewDetail(opp.id)} 
-                                                className={styles.actionLink}
+                                        <td style={{ width: '8%' }} className={styles.textCenter}>{opp.applications_count || 0}</td> 
+                                        <td style={{ width: '12%' }} className={styles.textCenter}>
+                                            <span 
+                                                className={styles.statusBadge} 
+                                                style={{ 
+                                                    backgroundColor: status === 'open' ? '#ecfdf5' : '#fef2f2', 
+                                                    color: status === 'open' ? '#10b981' : '#ef4444' 
+                                                }}
                                             >
-                                                {t('providerDashboardPage.opportunities.action_view')}
-                                            </button> 
-                                            |
+                                                {status === 'open' ? t('providerDashboardPage.opportunities.status_open') : t('providerDashboardPage.opportunities.status_closed')}
+                                            </span>
+                                        </td>
+
+
+                                        <td style={{ width: '25%' }} className={styles.actionCell}>
                                             <button 
-                                                onClick={() => onOpportunityAction('edit', opp.id, opp)} 
-                                                className={styles.actionLink}
-                                                data-color="edit"
+                                                onClick={() => handleStatusToggle(opp.id, status)} 
+                                                className={`btn btn-sm ${styles.statusToggleButton}`}
+                                                style={{ 
+                                                    backgroundColor: status === 'open' ? '#ef4444' : '#10b981', 
+                                                    color: 'white'
+                                                }}
                                             >
-                                                {t('providerDashboardPage.opportunities.action_edit')}
+                                                {status === 'open' ? t('providerDashboardPage.opportunities.action_close') : t('providerDashboardPage.opportunities.action_open')}
                                             </button>
-                                            |
-                                            <button 
-                                                onClick={() => handleDelete(opp.id, opp.title)} 
-                                                className={`${styles.actionLink} ${styles.delete}`}
-                                            >
-                                                {t('providerDashboardPage.opportunities.action_delete')}
-                                            </button>
+                                            
+                                            <div className={styles.secondaryActions}>
+                                                <button 
+                                                    onClick={() => handleViewDetail(opp.id)} 
+                                                    className={styles.actionLink}
+                                                >
+                                                    {t('providerDashboardPage.opportunities.action_view')}
+                                                </button> 
+                                                <span className={styles.actionSeparator}>|</span>
+                                                <button 
+                                                    onClick={() => onOpportunityAction('edit', opp.id, opp)} 
+                                                    className={styles.actionLink}
+                                                    data-color="edit"
+                                                >
+                                                    {t('providerDashboardPage.opportunities.action_edit')}
+                                                </button>
+                                                <span className={styles.actionSeparator}>|</span>
+                                                <button 
+                                                    onClick={() => handleDelete(opp.id, opp.title)} 
+                                                    className={`${styles.actionLink} ${styles.delete}`}
+                                                >
+                                                    {t('providerDashboardPage.opportunities.action_delete')}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -553,6 +649,9 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
 
 const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {}, onMessage = () => {}, onApplicationAction }) => {
     const { t } = useTranslation();
+    const [oppFilter, setOppFilter] = useState('all'); 
+    const [statusFilter, setStatusFilter] = useState('all'); 
+
     const getStatusClass = (status) => {
         switch (status) {
             case 'pending':
@@ -578,7 +677,6 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
         return t(key, defaultText);
     };
 
-
     const handleAction = (appId, status) => {
         const actionText = status === 'accepted' ? t('providerDashboardPage.applicants.action_accept_confirm') : t('providerDashboardPage.applicants.action_reject_confirm');
         if (window.confirm(t('providerDashboardPage.applicants.confirmAction', { action: actionText }))) {
@@ -590,14 +688,96 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
         const opp = opportunities.find(o => o.id === opportunityId);
         return opp ? opp.title : t('providerDashboardPage.applicants.opportunityTitle', {id: opportunityId});
     };
+    
+    const opportunityOptions = useMemo(() => {
+        const options = [{ id: 'all', title: t('providerDashboardPage.applicants.allOpportunities') }];
+        
+        const uniqueOpps = new Set();
+        applications.forEach(app => {
+            const oppId = app.opportunity_id;
+            if (!uniqueOpps.has(oppId)) {
+                const opp = opportunities.find(o => o.id === oppId);
+                if (opp) {
+                    options.push({ id: opp.id, title: opp.title });
+                    uniqueOpps.add(oppId);
+                } else {
+                    const placeholderTitle = t('providerDashboardPage.applicants.opportunityTitle', {id: oppId});
+                    options.push({ id: oppId, title: placeholderTitle });
+                    uniqueOpps.add(oppId);
+                }
+            }
+        });
+        
+        options.sort((a, b) => {
+            if (a.id === 'all') return -1;
+            if (b.id === 'all') return 1;
+            return a.title.localeCompare(b.title);
+        });
+        
+        return options;
+    }, [applications, opportunities, t]);
+
+    const statusOptions = useMemo(() => {
+        const statuses = [
+            'pending', 'accepted', 'rejected'
+        ];
+        
+        return [
+            { value: 'all', label: t('providerDashboardPage.applicants.allStatuses') },
+            ...statuses.map(s => ({
+                value: s,
+                label: getStatusText(s)
+            }))
+        ];
+    }, [t]);
+
+
+    const filteredApplications = useMemo(() => {
+        return applications.filter(app => {
+            let matchesOpportunity = true;
+            if (oppFilter !== 'all') {
+                const oppId = Number(oppFilter);
+                matchesOpportunity = !isNaN(oppId) && app.opportunity_id === oppId;
+            }
+
+            const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+            
+            return matchesOpportunity && matchesStatus;
+        });
+    }, [applications, oppFilter, statusFilter]);
  
     return (
         <div style={{ marginTop: '30px' }}>
 
             <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>{t('providerDashboardPage.applicants.title')}</h2>
 
+            {/* Filter Bar */}
+            <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: '20px' }}>
+                <select 
+                    className="input" 
+                    value={oppFilter} 
+                    onChange={(e) => setOppFilter(e.target.value)}
+                >
+                    <option value="" disabled>{t('providerDashboardPage.applicants.filterByOpportunity')}</option>
+                    {opportunityOptions.map(opt => (
+                        <option key={opt.id} value={opt.id}>{opt.title}</option>
+                    ))}
+                </select>
+                <select 
+                    className="input" 
+                    value={statusFilter} 
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                    <option value="" disabled>{t('providerDashboardPage.applicants.filterByStatus')}</option>
+                    {statusOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+            </div>
+
+
             <div className={styles.tableManagement}>
-                {applications.length === 0 ? (
+                {filteredApplications.length === 0 ? ( 
                     <p>{t('providerDashboardPage.applicants.noApplicants')}</p>
                 ) : (
                     <table>
@@ -610,7 +790,7 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
                             </tr>
                         </thead>
                         <tbody>
-                            {applications.map(app => {
+                            {filteredApplications.map(app => {
                                 const statusClass = getStatusClass(app.status);
                                 const profile = app.student_profile || {};
                                 const fullName = profile.full_name && profile.full_name.trim().length > 0
@@ -711,7 +891,21 @@ const ApplicantsList = ({ applications, opportunities, onViewProfile = () => {},
     );
 };
 
-
+const WelcomeBanner = ({ providerName }) => {
+    const { t } = useTranslation();
+    return (
+        <div className={styles.welcomeBanner}>
+            <div className={styles.bannerTextContent}>
+                <h1 className={styles.bannerTitle}>
+                    {t('providerDashboardPage.banner.title', { name: providerName || 'Provider' })} 
+                </h1>
+                <p className={styles.bannerSubtitle}>
+                    {t('providerDashboardPage.banner.subtitle', 'Kết nối nhân tài, Kiến tạo tương lai')}
+                </p>
+            </div>
+        </div>
+    );
+};
 
 const ProviderDashboard = () => {
     const { t } = useTranslation();
@@ -725,9 +919,9 @@ const ProviderDashboard = () => {
     const [selectedOpportunityId, setSelectedOpportunityId] = useState(null); 
     const [profileModalState, setProfileModalState] = useState({ isOpen: false, loading: false, error: '', profile: null, application: null });
     const [messageModalState, setMessageModalState] = useState({ isOpen: false, loading: false, error: '', conversation: null, messages: [], input: '', sending: false, application: null });
-    
     const user = getStoredUser();
     const providerUserId = user?.id;
+    const providerName = user?.email || `User #${providerUserId}`; 
 
     async function fetchData() {
         if (!providerUserId) {
@@ -863,6 +1057,14 @@ const ProviderDashboard = () => {
                 return; 
             }
 
+            if (action === 'toggleStatus') {
+                const { newStatus } = payload;
+                await api.updateOpportunityStatus(id, newStatus);
+                alert(t('providerDashboardPage.opportunities.alert_status_updated', { status: t(`providerDashboardPage.opportunities.status_${newStatus}`) }));
+                fetchData();
+                return;
+            }
+
 
             if (action === 'saveNew') {
                 const { opportunity, criteria } = payload;
@@ -925,7 +1127,8 @@ const ProviderDashboard = () => {
             case 'overview':
                 return (
                     <>
-
+                        <WelcomeBanner providerName={providerName} /> 
+                        
                         <h1 style={{ fontSize: '28px', color: '#1f2937' }}>{t('providerDashboardPage.overview.title')}</h1>
                        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', marginTop: '20px' }}>
 

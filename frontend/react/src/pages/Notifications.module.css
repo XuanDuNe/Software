@@ -3,6 +3,33 @@
     border-radius: 8px;
     padding: 12px;
     background-color: var(--color-surface);
+    display: flex; 
+    align-items: center; 
+    cursor: pointer; 
+    transition: all 0.2s;
+    position: relative; 
+}
+.item:hover {
+    background-color: #f8fafc; 
+}
+.item.unread {
+    background-color: #eff6ff; 
+    border-left: 5px solid var(--color-primary); 
+    padding-left: 7px; 
+}
+
+
+.unreadDot {
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444; 
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.itemContent { 
+    flex-grow: 1;
 }
 
 .date {

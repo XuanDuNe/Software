@@ -1,4 +1,3 @@
-
 .sidebar {
     width: 250px;
     background: var(--sidebar-bg);
@@ -74,8 +73,6 @@
 .statIcon {
     font-size: 30px;
 }
-
-
 .tableManagement {
     background: #fff; 
     border-radius: 8px; 
@@ -89,8 +86,9 @@
     min-width: 600px; 
 }
 .tableManagement th, .tableManagement td {
-    padding: 12px;
+    padding: 10px 12px; 
     text-align: left;
+    vertical-align: top;
 }
 .tableManagement thead tr {
     background: #f3f4f6;
@@ -105,12 +103,12 @@
 .actionLink {
     color: var(--color-primary);
     text-decoration: none;
-    margin-right: 8px;
     
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
+    margin-right: 0; 
 }
 .actionLink.delete {
     color: var(--color-danger);
@@ -126,7 +124,44 @@
 .statIcon[data-color="#ef4444"] { color: #ef4444; }
 
 
-/* New: Modal styles for Opportunity Detail */
+.welcomeBanner {
+    background-image: url('/images/welcome_banner_provider.png'); 
+    background-size: auto 100%; 
+    background-position: left center; 
+    background-repeat: no-repeat; 
+    border-radius: 12px;
+    height: 200px; 
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    position: relative; 
+    overflow: hidden;
+}
+
+.bannerTextContent {
+    position: absolute;
+    right: 30px; 
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff; 
+    text-align: right;
+    max-width: 400px;
+}
+
+.bannerTitle {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.bannerSubtitle {
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 5px;
+    opacity: 0.9;
+}
 .detailHeaderTitle {
     font-size: 24px;
     margin-bottom: 10px;
@@ -162,8 +197,6 @@
     gap: 8px; 
     font-size: 14px;
 }
-
-/* New: Modal styles for Student Profile */
 .profileContainer {
     display: grid; 
     gap: 16px;
@@ -204,8 +237,6 @@
     font-size: 13px; 
     color: #94a3b8;
 }
-
-/* New: Modal chat styles (scoped) */
 .chatContainer {
     display: grid; 
     gap: 12px;
@@ -261,8 +292,6 @@
 .chatInput {
     flex: 1;
 }
-
-/* New: Status Badges for ApplicantsList */
 .statusBadge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -293,8 +322,6 @@
     color: #64748b; 
     background: #f3f4f6;
 }
-
-/* New: Applicant Row Styling */
 .applicantDetail {
     font-size: 12px; 
     color: #64748b;
@@ -342,4 +369,32 @@
 .actionReject {
     background-color: #ef4444; 
     color: white;
+}
+.textCenter {
+    text-align: center !important;
+}
+.actionCell {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 6px; 
+    align-items: center;
+}
+
+.statusToggleButton {
+    min-width: 100px; 
+    padding: 10px 5px !important; 
+    font-size: 13px;
+    height: auto; 
+    line-height: normal;
+}
+.secondaryActions {
+    display: flex;
+    align-items: center;
+    font-size: 13px; 
+    line-height: 1; 
+}
+.actionSeparator {
+    color: #cbd5e1; 
+    margin: 0 4px; 
+    align-self: center; 
 }

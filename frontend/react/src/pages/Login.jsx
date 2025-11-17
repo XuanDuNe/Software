@@ -8,19 +8,23 @@ import { useTranslation } from 'react-i18next';
 
 function Login() {
   const navigate = useNavigate();
-<<<<<<< HEAD
   const { t } = useTranslation();
   const [isRegister, setIsRegister] = useState(false);
   
   // Login state
-=======
->>>>>>> parent of d65355b (design issue register by OTP Gmail and format login)
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Register state
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regRole, setRegRole] = useState('student');
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -47,7 +51,6 @@ function Login() {
     }
   }
 
-<<<<<<< HEAD
   async function handleRegister(e) {
     e.preventDefault();
     setError('');
@@ -261,46 +264,8 @@ function Login() {
               </button>
             </form>
           )}
-=======
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="card" style={{ width: 360, padding: 24 }}>
-        <h2 style={{ marginTop: 0, marginBottom: 16 }}>Đăng nhập</h2>
-        <div className="form-group">
-          <label className="label">Tên đăng nhập</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="username"
-            className="input"
-            required
-          />
         </div>
-        <div className="form-group">
-          <label className="label">Mật khẩu</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="input"
-            required
-          />
->>>>>>> parent of d65355b (design issue register by OTP Gmail and format login)
-        </div>
-        {error && (
-          <div className="alert-error">{error}</div>
-        )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-        >
-          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+/* src/pages/StudentDashboard.module.css */
+
 .list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -185,4 +187,43 @@
     gap: 12px; 
     align-items: center; 
     margin-top: 8px;
+}
+
+.welcomeBanner {
+    background-image: url('/images/welcome_banner_student.png'); 
+    background-size: auto 100%; 
+    background-position: left center; 
+    background-repeat: no-repeat; 
+    border-radius: 12px;
+    height: 200px; 
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    padding: 30px;
+    position: relative; 
+    overflow: hidden;
+}
+
+.bannerTextContent {
+    position: absolute;
+    right: 30px; 
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff; 
+    text-align: right;
+    max-width: 400px;
+}
+
+.bannerTitle {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.bannerSubtitle {
+    font-size: 18px;
+    font-weight: 500;
+    margin-top: 5px;
+    opacity: 0.9;
 }

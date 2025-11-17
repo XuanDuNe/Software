@@ -1,8 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+// src/pages/StudentDashboard.jsx
+
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
-import styles from './StudentDashboard.module.css'; 
+import styles from './StudentDashboard.module.css';
 import { useTranslation } from 'react-i18next';
+
+// --- Components Con (Giữ nguyên so với phiên bản trước) ---
 
 const StudentMessageModal = ({
     isOpen,
@@ -18,7 +22,7 @@ const StudentMessageModal = ({
     opportunityTitle
 }) => {
     const { t } = useTranslation();
-    const messagesEndRef = useRef(null); 
+    const messagesEndRef = useRef(null);
     useEffect(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -265,6 +269,225 @@ const MyApplicationsSummary = ({ applications, opportunities, onOpenChat }) => {
 };
 
 
+// --- Component CẬP NHẬT: OpportunitiesList (thêm filter goals/strengths/interests) ---
+const OpportunitiesList = ({
+    opportunities,
+    hasApplied,
+    submitting,
+    onOpenDetail,
+    onSubmitApplication,
+    t
+}) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [typeFilter, setTypeFilter] = useState('all');
+    // THÊM CÁC TRẠNG THÁI LỌC MỚI
+    const [goalsFilter, setGoalsFilter] = useState('');
+    const [strengthsFilter, setStrengthsFilter] = useState('');
+    const [interestsFilter, setInterestsFilter] = useState('');
+    
+    // Helper để chuẩn hóa và tách chuỗi keywords
+    const normalizeText = (text) => text ? text.toLowerCase().trim() : '';
+    const extractKeywords = (filterString) => 
+        filterString.split(',').map(normalizeText).filter(Boolean);
+
+    // Available types for dropdown (Reusing i18n keys from ProviderDashboard)
+    const opportunityTypes = useMemo(() => ([
+        { value: 'all', label: t('providerDashboardPage.opportunities.allTypes') },
+        { value: 'program', label: t('providerDashboardPage.modals.opp_type_program') },
+        { value: 'scholarship', label: t('providerDashboardPage.modals.opp_type_scholarship') },
+        { value: 'research_lab', label: t('providerDashboardPage.modals.opp_type_lab') },
+    ]), [t]);
+
+    // Filtering logic CẬP NHẬT
+    const filteredOpportunities = useMemo(() => {
+        const keywordsGoals = extractKeywords(goalsFilter);
+        const keywordsStrengths = extractKeywords(strengthsFilter);
+        const keywordsInterests = extractKeywords(interestsFilter);
+        const searchTermLower = normalizeText(searchTerm);
+
+        return opportunities.filter(opp => {
+            const titleLower = normalizeText(opp.title);
+            const descriptionLower = normalizeText(opp.description);
+
+            // 1. Lọc theo Tìm kiếm & Loại cơ hội
+            const matchesSearch = titleLower.includes(searchTermLower) || 
+                                  descriptionLower.includes(searchTermLower);
+
+            const matchesType = typeFilter === 'all' || opp.type === typeFilter;
+
+            // 2. Lọc theo Mục tiêu (Goals)
+            const matchesGoals = keywordsGoals.length === 0 || 
+                                 keywordsGoals.some(keyword => 
+                                     titleLower.includes(keyword) || 
+                                     descriptionLower.includes(keyword)
+                                 );
+
+            // 3. Lọc theo Điểm mạnh (Strengths)
+            const matchesStrengths = keywordsStrengths.length === 0 || 
+                                     keywordsStrengths.some(keyword => 
+                                         titleLower.includes(keyword) || 
+                                         descriptionLower.includes(keyword)
+                                     );
+
+            // 4. Lọc theo Sở thích (Interests)
+            const matchesInterests = keywordsInterests.length === 0 || 
+                                     keywordsInterests.some(keyword => 
+                                         titleLower.includes(keyword) || 
+                                         descriptionLower.includes(keyword)
+                                     );
+            
+            return matchesSearch && matchesType && matchesGoals && matchesStrengths && matchesInterests;
+        });
+    }, [opportunities, searchTerm, typeFilter, goalsFilter, strengthsFilter, interestsFilter]);
+
+    // Helper to render criteria snippet
+    const renderCriteriaSnippet = (criteria) => {
+        if (!criteria) return 'Không có tiêu chí cụ thể.';
+
+        let snippet = [];
+        if (criteria.gpa_min) {
+            snippet.push(`GPA ≥ ${criteria.gpa_min}`);
+        }
+        if (criteria.skills && criteria.skills.length > 0) {
+            snippet.push(`Kỹ năng: ${criteria.skills.slice(0, 2).join(', ')}${criteria.skills.length > 2 ? '...' : ''}`);
+        }
+        return snippet.length > 0 ? snippet.join(' | ') : 'Không có tiêu chí cụ thể.';
+    };
+
+
+   return (
+        <div>
+            {/* Filter/Search Bar CẬP NHẬT */}
+            <div 
+                className="grid gap-4" 
+                // Sử dụng một grid duy nhất cho tất cả 5 trường, đảm bảo chúng đều nhau
+                style={{ 
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                    marginBottom: '20px' 
+                }}
+            >
+                {/* 1. Tìm kiếm tên/mô tả */}
+                <input
+                    type="text"
+                    className="input"
+                    placeholder={t('providerDashboardPage.opportunities.searchPlaceholder', 'Tìm kiếm tên/mô tả...')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                
+                {/* 2. Loại */}
+                <select
+                    className="input"
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                >
+                    <option value="" disabled>{t('providerDashboardPage.opportunities.filterByType', 'Lọc theo loại')}</option>
+                    {opportunityTypes.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                </select>
+                
+                {/* 3. Mục tiêu */}
+                <input
+                    type="text"
+                    className="input"
+                    placeholder={t('studentDashboardPage.filterGoalsPlaceholder')}
+                    value={goalsFilter}
+                    onChange={(e) => setGoalsFilter(e.target.value)}
+                />
+                
+                {/* 4. Điểm mạnh */}
+                <input
+                    type="text"
+                    className="input"
+                    placeholder={t('studentDashboardPage.filterStrengthsPlaceholder')}
+                    value={strengthsFilter}
+                    onChange={(e) => setStrengthsFilter(e.target.value)}
+                />
+                
+                {/* 5. Sở thích */}
+                <input
+                    type="text"
+                    className="input"
+                    placeholder={t('studentDashboardPage.filterInterestsPlaceholder')}
+                    value={interestsFilter}
+                    onChange={(e) => setInterestsFilter(e.target.value)}
+                />
+            </div>
+
+            <div className={styles.list}>
+                {(filteredOpportunities || []).map((opp) => {
+                    const applied = hasApplied(opp.id);
+                    return (
+                        <div
+                            key={opp.id}
+                            className={styles.card}
+                            onClick={() => onOpenDetail(opp.id)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className={styles.title}>{opp.title}</div>
+                            <div className={styles.description}>{opp.description}</div>
+                            
+                            {/* New: Display Criteria Snippet for better context */}
+                            <div style={{ fontSize: 12, color: '#475569', marginBottom: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                                {renderCriteriaSnippet(opp.criteria)}
+                            </div>
+
+                            <button
+                                disabled={submitting || applied}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onSubmitApplication(opp.id);
+                                }}
+                                className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`}
+                                style={{ marginTop: 8 }}
+                            >
+                                {applied ? t('studentDashboardPage.appliedButton') : submitting ? t('studentDashboardPage.applyingButton') : t('studentDashboardPage.applyButton')}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+            {filteredOpportunities.length === 0 && opportunities.length > 0 && (
+                <div className="alert-error" style={{ marginTop: 20 }}>
+                    Không tìm thấy cơ hội nào khớp với tiêu chí tìm kiếm.
+                </div>
+            )}
+            {opportunities.length === 0 && (
+                <div className="card" style={{ padding: '15px', textAlign: 'center', color: '#64748b', marginTop: '15px' }}>
+                    Chưa có cơ hội nào được đăng tải.
+                </div>
+            )}
+        </div>
+    );
+};
+// --- END Component CẬP NHẬT: OpportunitiesList ---
+
+
+// NEW COMPONENT: StudentWelcomeBanner
+const StudentWelcomeBanner = ({ studentName }) => {
+    const { t } = useTranslation();
+    
+    // Tùy chỉnh thông báo chào mừng cho sinh viên
+    const defaultTitle = t('studentDashboardPage.banner.title', { name: studentName });
+    const defaultSubtitle = t('studentDashboardPage.banner.subtitle');
+
+    return (
+        <div className={styles.welcomeBanner}>
+            {/* Văn bản được đặt bên phải để tránh hình ảnh (như trong ProviderDashboard.module.css) */}
+            <div className={styles.bannerTextContent}>
+                <h1 className={styles.bannerTitle}>
+                    {defaultTitle}
+                </h1>
+                <p className={styles.bannerSubtitle}>
+                    {defaultSubtitle}
+                </p>
+            </div>
+        </div>
+    );
+};
+// END NEW COMPONENT
+
 function StudentDashboard() {
   const { t } = useTranslation();
   const [applications, setApplications] = useState([]);
@@ -291,16 +514,24 @@ function StudentDashboard() {
 
   const user = getStoredUser();
   const studentUserId = user?.id;
+  // Lấy tên để truyền vào banner
+  const studentName = user?.email || `User #${studentUserId}`; // THAY ĐỔI: Thêm biến studentName
 
   async function fetchAllData() {
     if (!studentUserId) return;
     try {
+        // api.listOpportunities() trả về OpportunityReadWithCriteria, bao gồm criteria
         const [apps, opps] = await Promise.all([
             api.listMyApplications(studentUserId),
-            api.listOpportunities()
+            api.listOpportunities() 
         ]);
         setApplications(apps || []);
-        setOpportunities(opps || []);
+        // Đảm bảo mỗi cơ hội có criteria (đã được fetch trong listOpportunities)
+        const oppsWithCriteria = (opps || []).map(opp => ({
+            ...opp,
+            criteria: opp.criteria // Lấy criteria từ kết quả API
+        }));
+        setOpportunities(oppsWithCriteria);
     } catch (err) {
         setError(err.message || t('common.error'));
     }
@@ -322,6 +553,7 @@ function StudentDashboard() {
     setDetailError('');
     setSelectedOpportunityDetail(null);
     try {
+      // Lấy chi tiết cơ hội (bao gồm criteria)
       const detail = await api.getOpportunity(opportunityId);
       setSelectedOpportunityDetail(detail);
     } catch (err) {
@@ -466,7 +698,11 @@ function StudentDashboard() {
   return (
 
     <div className="container p-6">
-      <h2>{t('studentDashboardPage.title')}</h2>
+      {/* THAY ĐỔI: Thêm StudentWelcomeBanner */}
+      <StudentWelcomeBanner studentName={studentName} /> 
+
+      {/* THAY ĐỔI: Điều chỉnh h2 để tránh bị trùng lặp với banner */}
+      <h2 style={{ fontSize: '28px', color: '#1f2937' }}>{t('studentDashboardPage.title')}</h2>
 
       
       {error && <div className="alert-error" style={{ marginBottom: 12 }}>{error}</div>} 
@@ -480,33 +716,16 @@ function StudentDashboard() {
 
       <h3 style={{ marginTop: 40, marginBottom: 15 }}>{t('studentDashboardPage.opportunitiesTitle')}</h3>
       
-      <div className={styles.list}> 
-        {(opportunities || []).map((opp) => {
-            const applied = hasApplied(opp.id);
-            return (
-                <div
-                  key={opp.id}
-                  className={styles.card} 
-                  onClick={() => openOpportunityDetail(opp.id)}
-                  style={{ cursor: 'pointer' }}
-                >
-                    <div className={styles.title}>{opp.title}</div> 
-                    <div className={styles.description}>{opp.description}</div> 
-                    <button
-                        disabled={submitting || applied} 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          submitApplication(opp.id);
-                        }}
-                        className={`btn ${applied ? 'btn-disabled' : 'btn-secondary'}`} 
-                        style={{ marginTop: 8 }}
-                    >
-                        {applied ? t('studentDashboardPage.appliedButton') : submitting ? t('studentDashboardPage.applyingButton') : t('studentDashboardPage.applyButton')}
-                    </button>
-                </div>
-            );
-        })}
-      </div>
+      {/* THAY THẾ KHU VỰC HIỂN THỊ CƠ HỘI BẰNG COMPONENT MỚI */}
+      <OpportunitiesList 
+        opportunities={opportunities}
+        hasApplied={hasApplied}
+        submitting={submitting}
+        onOpenDetail={openOpportunityDetail}
+        onSubmitApplication={submitApplication}
+        t={t}
+      />
+      {/* END THAY THẾ */}
 
       <OpportunityDetailModal
         isOpen={selectedOpportunityId !== null}

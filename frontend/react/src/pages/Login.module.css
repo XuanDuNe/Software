@@ -1,4 +1,3 @@
-/* src/pages/Login.module.css */
 .container {
     min-height: 100vh;
     display: flex;
@@ -6,22 +5,18 @@
     justify-content: center;
     background: #f8fafc;
 }
-
 .card {
     width: 420px;
     padding: 0;
     overflow: hidden;
-    /* Lấy từ global .card và ghi đè padding */
     background: var(--color-surface);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 .tabContainer {
     display: flex;
     border-bottom: 2px solid #e2e8f0;
 }
-
 .tabButton {
     flex: 1;
     padding: 16px;
@@ -33,28 +28,23 @@
     font-size: 16px;
     transition: all 0.2s;
 }
-
 .tabButtonActive {
     background: #2563eb;
     color: #fff;
 }
-
 .formContainer {
     padding: 24px;
 }
-
 .title {
     margin-top: 0;
     margin-bottom: 20px;
     font-size: 24px;
 }
-
 .roleContainer {
     display: flex;
     gap: 12px;
     margin-top: 8px;
 }
-
 .roleButton {
     flex: 1;
     padding: 12px 16px;
@@ -67,24 +57,20 @@
     font-size: 14px;
     transition: all 0.2s;
 }
-
 .roleButtonActive {
     background: #2563eb;
     color: #fff;
     border-color: #2563eb;
 }
-
 .errorText {
     color: #ef4444;
     font-size: 12px;
     margin-top: 4px;
     display: block;
 }
-
 .submitButton {
     width: 100%;
 }
-
 .submitButtonDisabled {
     width: 100%;
     opacity: 0.6;

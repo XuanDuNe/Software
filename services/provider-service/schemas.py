@@ -1,14 +1,16 @@
-# services/provider-service/schemas.py
 from sqlmodel import SQLModel
 from typing import Optional, List
 from datetime import datetime
 import enum
 
-# --- Enums (sao chép từ application-service/models.py) ---
 class OpportunityType(str, enum.Enum):
     SCHOLARSHIP = "scholarship"
     RESEARCH_LAB = "research_lab"
     PROGRAM = "program"
+
+class OpportunityStatus(str, enum.Enum): 
+    OPEN = "open"
+    CLOSED = "closed"
 
 class ApplicationStatus(str, enum.Enum):
     PENDING = "pending"
@@ -17,7 +19,6 @@ class ApplicationStatus(str, enum.Enum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
 
-# --- Opportunity Schemas (chuyển từ application-service/schemas.py) ---
 class OpportunityBase(SQLModel):
     provider_user_id: int
     title: str
@@ -30,13 +31,20 @@ class OpportunityCreate(OpportunityBase):
 
 class OpportunityRead(OpportunityBase):
     id: int
+    status: Optional[OpportunityStatus]
     created_at: datetime
+
+
 class OpportunityUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
     type: Optional[OpportunityType] = None
     criteria: Optional["CriteriaCreate"] = None
     type: Optional[OpportunityType] = None
+    status: Optional[OpportunityStatus] = None
+
+class OpportunityStatusUpdate(SQLModel):
+    status: OpportunityStatus
 
 class CriteriaBase(SQLModel):
     gpa_min: Optional[float] = None
@@ -57,10 +65,6 @@ class OpportunityReadWithCriteria(OpportunityRead):
 OpportunityCreate.update_forward_refs()
 OpportunityUpdate.update_forward_refs()
 OpportunityReadWithCriteria.update_forward_refs()
-
-# --- Application Schemas (chuyển các phần Provider cần) ---
-# Đây là các schema mà service này cần để giao tiếp với application-service
-# hoặc để trả về dữ liệu cho provider
 
 class DocumentRead(SQLModel):
     id: int

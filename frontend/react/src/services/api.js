@@ -1,5 +1,3 @@
-
-
 import { getToken, clearAuth } from '../utils/auth.js';
 
 const BASE_URL = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -34,7 +32,6 @@ async function request(path, options = {}) {
     try {
       data = JSON.parse(text);
     } catch (_) {
-      // Bỏ qua lỗi parse, coi như đây là text
       isJson = false; 
     }
   }
@@ -52,7 +49,6 @@ async function request(path, options = {}) {
   }
 
   if (isJson) {
-    // Nếu là JSON, trả về data (có thể là object, array, hoặc null nếu body rỗng/text="null")
     return data;
   }
 
@@ -60,8 +56,11 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-// ... (Nội dung giữ nguyên)
   login: (payload) => request('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }),
+  register: (payload) => request('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload)
   }),
@@ -70,7 +69,6 @@ export const api = {
     body: JSON.stringify({ token })
   }),
 
-  // Student profile
   getStudentProfile: () => request('/user/student/profile'),
   updateStudentProfile: (payload) => request('/user/student/profile', {
     method: 'PUT',
@@ -78,14 +76,12 @@ export const api = {
   }),
   getStudentProfileById: (userId) => request(`/user/student/profile/${userId}`),
 
-  // Student/application flows
   listMyApplications: (userId) => request(`/application/student/${userId}`),
   submitApplication: (data) => request('/application/', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
 
-  // Opportunities (from provider service)
   listOpportunities: () => request('/opportunity/'),
   getOpportunity: (id) => request(`/opportunity/${id}`),
   createOpportunity: (payload) => request('/opportunity/', {
@@ -99,12 +95,17 @@ export const api = {
   deleteOpportunity: (id) => request(`/opportunity/${id}`, {
     method: 'DELETE'
   }),
+
+  updateOpportunityStatus: (id, status) => request(`/opportunity/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status })
+  }),
+
   upsertCriteria: (id, payload) => request(`/opportunity/${id}/criteria`, {
     method: 'POST',
     body: JSON.stringify(payload)
   }),
 
-  // Provider applications
   getProviderInfo: () => request('/provider/info'),
   listProviderApplications: (providerUserId) => request(`/provider_app/provider/${providerUserId}`),
   listProviderApplicationsEnriched: (providerUserId) => request(`/provider_app/provider/${providerUserId}/enriched`),
@@ -113,7 +114,6 @@ export const api = {
     body: JSON.stringify({ status })
   }),
 
-  // Conversations & messaging
   createConversation: (participant1UserId, participant2UserId, applicationId) => request('/notification/conversations', { // THAY ĐỔI: Thêm applicationId
     method: 'POST',
     body: JSON.stringify({
@@ -128,18 +128,15 @@ export const api = {
     body: JSON.stringify(payload)
   }),
 
-  // Notifications service
   listNotifications: (userId) => request(`/notification/notifications/${userId}`),
   markNotificationRead: (notifId) => request(`/notification/notifications/${notifId}/read`, { method: 'POST' }),
   
-  // NEW: Mark messages as read (SỬ DỤNG PATH PARAMETER)
   markConversationAsRead: (conversationId, userId) => request(`/notification/conversations/${conversationId}/read/${userId}`, {
     method: 'POST'
   }),
-  // NEW: Check unread count (Chỉ để tham khảo)
+
   getUnreadCount: (conversationId, userId) => request(`/notification/conversations/${conversationId}/unread_count/${userId}`),
-  
-  // Storage service
+
   uploadFile: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -150,7 +147,6 @@ export const api = {
   },
   getFileUrl: (fileId) => `${BASE_URL}/storage/files/${fileId}`,
 
-  // Matching service
   matchOpportunities: (studentUserId, studentProfile) => request('/matching/match', {
     method: 'POST',
     body: JSON.stringify({
