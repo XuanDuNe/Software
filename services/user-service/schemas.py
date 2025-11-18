@@ -24,4 +24,17 @@ class StudentProfileRead(StudentProfileBase):
 class StudentProfileUpdate(StudentProfileBase):
     pass
 
+#provider
+class ProviderProfileBase(SQLModel):
+    company_name: Optional[str] = None
+    contact_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
 
+class ProviderProfileRead(ProviderProfileBase):
+    user_id: int
+
+class ProviderProfileUpdate(ProviderProfileBase):
+    pass

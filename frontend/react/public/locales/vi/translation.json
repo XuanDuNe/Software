@@ -12,7 +12,9 @@
     "sending": "Đang gửi...",
     "save": "Lưu",
     "saving": "Đang lưu...",
-    "close": "Đóng"
+    "close": "Đóng",
+    "notAvailable": "Không có", 
+    "noDescription": "Không có mô tả" 
   },
   "nav": {
     "student": "Học sinh",
@@ -80,6 +82,36 @@
     "errorChooseFile": "Vui lòng chọn file CV trước khi upload",
     "note": "<strong>Lưu ý:</strong> Hồ sơ sẽ được chia sẻ với các nhà cung cấp khi bạn nộp hồ sơ ứng tuyển, giúp họ dễ dàng đánh giá năng lực của bạn."
   },
+  "providerProfilePage": {
+    "title": "Hồ sơ Nhà cung cấp",
+    "subtitle": "Cập nhật thông tin công ty và liên hệ. Thông tin này sẽ hiển thị cho sinh viên khi bạn đăng tải cơ hội.",
+    "companyName": "Tên Công ty/Tổ chức",
+    "companyNamePlaceholder": "Phòng thí nghiệm Nghiên cứu ABC",
+    "contactName": "Người Liên hệ",
+    "contactNamePlaceholder": "Trần Thị B",
+    "emailPlaceholder": "contact@abclab.com",
+    "phone": "Số điện thoại",
+    "phonePlaceholder": "0123456789",
+    "website": "Website/URL",
+    "websitePlaceholder": "https://abclab.com",
+    "description": "Mô tả Công ty/Tổ chức",
+    "descriptionPlaceholder": "Mô tả ngắn gọn về công ty và lĩnh vực nghiên cứu...",
+    "saveButton": "Lưu thay đổi",
+    "savingButton": "Đang lưu...",
+    "successMessage": "Cập nhật thành công",
+    "errorUpdate": "Lỗi cập nhật hồ sơ",
+    "note": "<strong>Lưu ý:</strong> Việc có một hồ sơ hoàn chỉnh giúp xây dựng niềm tin và thu hút ứng viên chất lượng."
+  },
+  "providerProfileModal": {
+    "title": "Thông tin Chi tiết Nhà cung cấp",
+    "companyName": "Tên Công ty/Tổ chức",
+    "contactName": "Người Liên hệ",
+    "phone": "Số điện thoại",
+    "website": "Website/URL",
+    "description": "Mô tả Công ty/Tổ chức",
+    "errorFetch": "Lỗi khi tải hồ sơ nhà cung cấp.",
+    "noProfileFound": "Không tìm thấy dữ liệu hồ sơ nhà cung cấp."
+},
   "studentDashboardPage": {
     "title": "Trang sinh viên",
     "myApplicationsTitle": "Hồ sơ của bạn",
@@ -119,6 +151,7 @@
     "filterGoalsPlaceholder": "Mục tiêu (ví dụ: research, job)...",
     "filterStrengthsPlaceholder": "Điểm mạnh (ví dụ: analytical)...",
     "filterInterestsPlaceholder": "Sở thích (ví dụ: AI, Data Science)...",
+    "viewProviderProfile": "Xem Hồ sơ Nhà cung cấp",
     "banner": {
       "title": "Sẵn sàng cho các Cơ hội, {{name}}!",
       "subtitle": "Khám phá và kết nối với các chương trình phù hợp với hồ sơ của bạn."

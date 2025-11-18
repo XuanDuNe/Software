@@ -78,7 +78,8 @@ function NavBar() {
         {user?.role === 'provider' && (
           <>
 
-            <Link to="/provider/dashboard" className={styles.link}>{t('nav.provider')}</Link> 
+            <Link to="/provider/dashboard" className={styles.link}>{t('nav.provider')}</Link>
+            <Link to="/provider/profile" className={styles.link}>{t('nav.profile')}</Link>
             {/* THAY ĐỔI: Thêm chấm đỏ vào link Notifications */}
             <Link to="/notifications" className={styles.link}>
                 {t('nav.notifications')}

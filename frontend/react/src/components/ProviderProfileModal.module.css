@@ -1,0 +1,71 @@
+/* src/components/ProviderProfileModal.module.css */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2010;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.closeButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.title {
+  color: #007bff; /* Ví dụ màu xanh dương */
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.profileDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detailItem strong {
+  color: #555;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.descriptionText {
+  white-space: pre-wrap;
+  background-color: #f8f8f8;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.error {
+  color: #d9534f;
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  padding: 10px;
+  border-radius: 4px;
+}

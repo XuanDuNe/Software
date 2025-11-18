@@ -5,6 +5,7 @@ import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './StudentDashboard.module.css';
 import { useTranslation } from 'react-i18next';
+import ProviderProfileModal from '../components/ProviderProfileModal.jsx';
 
 // --- Components Con (Giữ nguyên so với phiên bản trước) ---
 
@@ -92,7 +93,8 @@ const OpportunityDetailModal = ({
   onClose,
   onApply,
   hasApplied,
-  submitting
+  submitting,
+  onViewProvider // <--- THAY ĐỔI: Thêm prop onViewProvider
 }) => {
   const { t } = useTranslation();
   if (!isOpen) return null;
@@ -145,6 +147,19 @@ const OpportunityDetailModal = ({
               </div>
             )}
             <div className={styles.detailAction}>
+              
+              {/* NÚT MỚI: XEM HỒ SƠ PROVIDER */}
+              <button
+                className="btn btn-primary"
+                onClick={() => onViewProvider(detail.provider_user_id)}
+                style={{ marginRight: '10px' }}
+                // Kiểm tra nếu có provider_user_id (được trả về từ API)
+                disabled={!detail || !detail.provider_user_id}
+              >
+                {t('studentDashboardPage.viewProviderProfile')} 
+              </button>
+              
+              {/* Nút nộp hồ sơ hiện tại */}
               <button
                 className={`btn ${hasApplied ? 'btn-disabled' : 'btn-secondary'}`}
                 onClick={onApply}
@@ -511,6 +526,11 @@ function StudentDashboard() {
     opportunityTitle: ''
   });
 
+  // KHỐI MỚI: State cho Provider Profile Modal
+  const [providerModalState, setProviderModalState] = useState({ 
+    isOpen: false, 
+    providerUserId: null 
+  }); 
 
   const user = getStoredUser();
   const studentUserId = user?.id;
@@ -553,7 +573,7 @@ function StudentDashboard() {
     setDetailError('');
     setSelectedOpportunityDetail(null);
     try {
-      // Lấy chi tiết cơ hội (bao gồm criteria)
+      // Lấy chi tiết cơ hội (bao gồm criteria và provider_user_id)
       const detail = await api.getOpportunity(opportunityId);
       setSelectedOpportunityDetail(detail);
     } catch (err) {
@@ -568,6 +588,17 @@ function StudentDashboard() {
     setSelectedOpportunityDetail(null);
     setDetailError('');
   }
+  
+  // HÀM MỚI: Mở Modal Hồ sơ Nhà cung cấp
+  const openProviderProfileModal = (providerUserId) => {
+    setProviderModalState({ isOpen: true, providerUserId });
+  };
+  
+  // HÀM MỚI: Đóng Modal Hồ sơ Nhà cung cấp
+  const closeProviderProfileModal = () => {
+    setProviderModalState({ isOpen: false, providerUserId: null });
+  };
+
 
   async function submitApplication(opportunityId) {
     if (!studentUserId) return;
@@ -736,6 +767,7 @@ function StudentDashboard() {
         onApply={() => submitApplication(selectedOpportunityId)}
         hasApplied={selectedOpportunityId ? hasApplied(selectedOpportunityId) : false}
         submitting={submitting}
+        onViewProvider={openProviderProfileModal} // <--- THAY ĐỔI: Truyền handler
       />
       
       
@@ -751,6 +783,12 @@ function StudentDashboard() {
           sending={messageModalState.sending} 
           currentUserId={studentUserId}
           opportunityTitle={messageModalState.opportunityTitle}
+      />
+      
+      {/* THAY ĐỔI: Thêm Provider Profile Modal */}
+      <ProviderProfileModal 
+          providerId={providerModalState.providerUserId} 
+          onClose={closeProviderProfileModal} 
       />
     </div>
   );

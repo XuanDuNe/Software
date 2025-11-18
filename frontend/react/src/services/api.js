@@ -76,6 +76,14 @@ export const api = {
   }),
   getStudentProfileById: (userId) => request(`/user/student/profile/${userId}`),
 
+  getProviderProfile: () => request('/user/provider/profile'),
+  updateProviderProfile: (payload) => request('/user/provider/profile', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  }),
+
+  getProviderProfileById: (userId) => request(`/user/provider/profile/${userId}`),
+
   listMyApplications: (userId) => request(`/application/student/${userId}`),
   submitApplication: (data) => request('/application/', {
     method: 'POST',

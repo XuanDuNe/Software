@@ -9,6 +9,7 @@ import Notifications from './pages/Notifications.jsx';
 import Matching from './pages/Matching.jsx';
 import Profile from './pages/Profile.jsx';
 import NavBar from './components/NavBar.jsx';
+import ProviderProfile from './pages/ProviderProfile.jsx';
 
 function App() {
   const user = getStoredUser();
@@ -33,6 +34,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/provider/profile" // DÒNG CẬP NHẬT: Route mới
+        element={
+          <ProtectedRoute allowedRoles={["provider"]}>
+            <ProviderProfile />
           </ProtectedRoute>
         }
       />

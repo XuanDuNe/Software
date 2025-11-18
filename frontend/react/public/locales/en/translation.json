@@ -12,7 +12,9 @@
     "sending": "Sending...",
     "save": "Save",
     "saving": "Saving...",
-    "close": "Close"
+    "close": "Close",
+    "notAvailable": "N/A", 
+    "noDescription": "No description provided" 
   },
   "nav": {
     "student": "Student",
@@ -80,6 +82,36 @@
     "errorChooseFile": "Please select a CV file before uploading",
     "note": "<strong>Note:</strong> Your profile will be shared with providers when you apply for an opportunity, helping them evaluate your qualifications."
   },
+  "providerProfilePage": {
+    "title": "Provider Profile",
+    "subtitle": "Update your company and contact information. This information is visible to students when you post opportunities.",
+    "companyName": "Company/Organization Name",
+    "companyNamePlaceholder": "ABC Research Lab",
+    "contactName": "Contact Person Name",
+    "contactNamePlaceholder": "Jane Smith",
+    "emailPlaceholder": "contact@abclab.com",
+    "phone": "Phone Number",
+    "phonePlaceholder": "0123456789",
+    "website": "Website/URL",
+    "websitePlaceholder": "https://abclab.com",
+    "description": "Company Description/Bio",
+    "descriptionPlaceholder": "Brief description of the company and research area...",
+    "saveButton": "Save Changes",
+    "savingButton": "Saving...",
+    "successMessage": "Profile updated successfully",
+    "errorUpdate": "Profile update failed",
+    "note": "<strong>Note:</strong> Having a complete profile helps build trust and attracts high-quality applicants."
+  },
+  "providerProfileModal": {
+    "title": "Provider Profile Details",
+    "companyName": "Company/Organization Name",
+    "contactName": "Contact Person Name",
+    "phone": "Phone Number",
+    "website": "Website/URL",
+    "description": "Company Description/Bio",
+    "errorFetch": "Failed to load provider profile.",
+    "noProfileFound": "No profile data found for this provider."
+},
   "studentDashboardPage": {
     "title": "Student Dashboard",
     "myApplicationsTitle": "Your Applications",
@@ -119,6 +151,7 @@
     "filterGoalsPlaceholder": "Goals (e.g., research, job)...",
     "filterStrengthsPlaceholder": "Strengths (e.g., analytical)...",
     "filterInterestsPlaceholder": "Interests (e.g., AI, Data Science)...",
+    "viewProviderProfile": "View Provider Profile",
     "banner": {
       "title": "Ready for Opportunities, {{name}}!",
       "subtitle": "Explore and connect with programs that match your profile."
