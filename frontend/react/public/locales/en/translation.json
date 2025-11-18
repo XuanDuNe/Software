@@ -336,7 +336,7 @@
       "columns": {
         "email": "Email",
         "role": "Role",
-        "actions": "Status"
+        "actions": "Actions"
       },
       "filters": {
         "all": "All roles",
@@ -349,12 +349,24 @@
       },
       "messages": {
         "roleUpdated": "User role updated successfully.",
-        "roleUpdateFailed": "Failed to update user role."
+        "roleUpdateFailed": "Failed to update user role.",
+        "blocked": "User has been blocked and removed.",
+        "blockFailed": "Failed to block user.",
+        "cannotDeleteAdmin": "Default admin account cannot be deleted.",
+        "loadFailed": "Unable to load users data."
       },
       "empty": "No users match the selected filter.",
       "locked": "System Admin",
       "verified": "Verified",
-      "pending": "Not verified"
+      "pending": "Not verified",
+      "confirmBlock": "Are you sure you want to block {{email}}? This action cannot be undone.",
+      "actions": {
+        "view": "View profile",
+        "toggleRole": "Switch role",
+        "block": "Block user"
+      },
+      "detailTitle": "Account Details",
+      "noProfile": "This account has not completed a profile yet."
     },
     "opportunities": {
       "title": "Opportunity Approvals",
@@ -385,7 +397,8 @@
       "messages": {
         "approved": "Opportunity approved and published.",
         "rejected": "Opportunity rejected.",
-        "updateFailed": "Failed to update opportunity status."
+        "updateFailed": "Failed to update opportunity status.",
+        "loadFailed": "Unable to load opportunities data."
       },
       "empty": "No opportunities found for this filter.",
       "providerId": "Provider #{{id}}",
@@ -401,7 +414,8 @@
         "documents": "Required documents: {{value}}",
         "deadline": "Deadline: {{value}}",
         "noCriteria": "No additional criteria provided."
-      }
+      },
+      "providerLabel": "Provider"
     }
   }
 }

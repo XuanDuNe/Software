@@ -131,6 +131,9 @@ export const api = {
     method: 'PATCH',
     body: JSON.stringify({ role })
   }),
+  adminDeleteUser: (userId) => request(`/auth/users/${userId}`, {
+    method: 'DELETE'
+  }),
   adminListOpportunities: (params = {}) => {
     const query = new URLSearchParams(params || {}).toString();
     const path = query ? `/opportunity/admin?${query}` : '/opportunity/admin';

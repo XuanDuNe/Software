@@ -341,7 +341,7 @@
       "columns": {
         "email": "Email",
         "role": "Vai trò",
-        "actions": "Trạng thái"
+        "actions": "Hành động"
       },
       "filters": {
         "all": "Tất cả vai trò",
@@ -354,12 +354,24 @@
       },
       "messages": {
         "roleUpdated": "Đã cập nhật vai trò thành công.",
-        "roleUpdateFailed": "Không thể cập nhật vai trò."
+        "roleUpdateFailed": "Không thể cập nhật vai trò.",
+        "blocked": "Đã chặn và xóa tài khoản.",
+        "blockFailed": "Không thể chặn tài khoản.",
+        "cannotDeleteAdmin": "Không thể xóa tài khoản admin mặc định.",
+        "loadFailed": "Không thể tải dữ liệu người dùng."
       },
       "empty": "Không có người dùng nào phù hợp với bộ lọc.",
       "locked": "Admin hệ thống",
       "verified": "Đã xác thực",
-      "pending": "Chưa xác thực"
+      "pending": "Chưa xác thực",
+      "confirmBlock": "Bạn có chắc chắn muốn chặn {{email}}? Hành động này không thể hoàn tác.",
+      "actions": {
+        "view": "Xem thông tin",
+        "toggleRole": "Đổi vai trò",
+        "block": "Chặn tài khoản"
+      },
+      "detailTitle": "Thông tin tài khoản",
+      "noProfile": "Tài khoản chưa cập nhật hồ sơ."
     },
     "opportunities": {
       "title": "Duyệt cơ hội",
@@ -390,7 +402,8 @@
       "messages": {
         "approved": "Đã phê duyệt cơ hội.",
         "rejected": "Đã từ chối cơ hội.",
-        "updateFailed": "Không thể cập nhật trạng thái."
+        "updateFailed": "Không thể cập nhật trạng thái.",
+        "loadFailed": "Không thể tải danh sách cơ hội."
       },
       "empty": "Không có cơ hội nào trong bộ lọc này.",
       "providerId": "Nhà cung cấp #{{id}}",
@@ -406,7 +419,8 @@
         "documents": "Tài liệu yêu cầu: {{value}}",
         "deadline": "Hạn nộp: {{value}}",
         "noCriteria": "Không có tiêu chí bổ sung."
-      }
+      },
+      "providerLabel": "Nhà cung cấp"
     }
   }
 }

@@ -3,6 +3,7 @@ import { api } from '../services/api.js';
 import styles from './AdminDashboard.module.css';
 import { useTranslation } from 'react-i18next';
 import { getStoredUser } from '../utils/auth.js';
+import ProviderProfileModal from '../components/ProviderProfileModal.jsx';
 
 const roleOptions = [
   { value: 'all', labelKey: 'adminDashboard.users.filters.all' },
@@ -26,30 +27,79 @@ function AdminDashboard() {
   const [userFilter, setUserFilter] = useState('all');
   const [approvalFilter, setApprovalFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [pageError, setPageError] = useState('');
+  const [usersError, setUsersError] = useState('');
+  const [oppsError, setOppsError] = useState('');
   const [actionMessage, setActionMessage] = useState('');
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [userModalState, setUserModalState] = useState({ isOpen: false, loading: false, error: '', user: null, profile: null });
+  const [providerProfiles, setProviderProfiles] = useState({});
+  const [providerModalState, setProviderModalState] = useState({ isOpen: false, providerUserId: null });
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      setError('');
+      setPageError('');
+      setUsersError('');
+      setOppsError('');
       try {
-        const [userRes, oppRes] = await Promise.all([
+        const [userRes, oppRes] = await Promise.allSettled([
           api.adminListUsers(),
           api.adminListOpportunities()
         ]);
-        setUsers(userRes?.users || []);
-        setOpportunities(oppRes || []);
-      } catch (err) {
-        setError(err.message || t('common.error'));
+
+        if (userRes.status === 'fulfilled') {
+          setUsers(userRes.value?.users || []);
+        } else {
+          setUsers([]);
+          setUsersError(userRes.reason?.message || t('adminDashboard.users.messages.loadFailed'));
+        }
+
+        if (oppRes.status === 'fulfilled') {
+          setOpportunities(oppRes.value || []);
+        } else {
+          setOpportunities([]);
+          setOppsError(oppRes.reason?.message || t('adminDashboard.opportunities.messages.loadFailed'));
+        }
+
+        if (userRes.status === 'rejected' && oppRes.status === 'rejected') {
+          setPageError(t('common.error'));
+        }
       } finally {
         setLoading(false);
       }
     };
     loadData();
   }, [t, refreshToken]);
+
+  useEffect(() => {
+    const uniqueIds = [...new Set(opportunities.map((opp) => opp.provider_user_id).filter(Boolean))];
+    if (!uniqueIds.length) {
+      setProviderProfiles({});
+      return;
+    }
+    let cancelled = false;
+    const fetchProfiles = async () => {
+      try {
+        const results = await Promise.allSettled(uniqueIds.map((id) => api.getProviderProfileById(id)));
+        if (cancelled) return;
+        const nextMap = {};
+        results.forEach((res, idx) => {
+          if (res.status === 'fulfilled' && res.value) {
+            nextMap[uniqueIds[idx]] = res.value;
+          }
+        });
+        setProviderProfiles(nextMap);
+      } catch (err) {
+        console.error('Failed to fetch provider profiles', err);
+      }
+    };
+    fetchProfiles();
+    return () => {
+      cancelled = true;
+    };
+  }, [opportunities]);
 
   const filteredUsers = useMemo(() => {
     if (userFilter === 'all') return users;
@@ -73,16 +123,6 @@ function AdminDashboard() {
     ];
   }, [users, opportunities, t]);
 
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await api.adminUpdateUserRole(userId, newRole);
-      setActionMessage(t('adminDashboard.users.messages.roleUpdated'));
-      setRefreshToken(prev => prev + 1);
-    } catch (err) {
-      setError(err.message || t('adminDashboard.users.messages.roleUpdateFailed'));
-    }
-  };
-
   const handleApprovalAction = async (opportunityId, status) => {
     try {
       await api.adminUpdateOpportunityApproval(opportunityId, status);
@@ -96,12 +136,60 @@ function AdminDashboard() {
         setSelectedOpportunity(prev => ({ ...prev, approval_status: status }));
       }
     } catch (err) {
-      setError(err.message || t('adminDashboard.opportunities.messages.updateFailed'));
+      setOppsError(err.message || t('adminDashboard.opportunities.messages.updateFailed'));
     }
   };
 
   const approvalLabel = (status) =>
     t(`adminDashboard.opportunities.status.${status}`, status);
+
+  const handleViewUser = async (user) => {
+    setUserModalState({ isOpen: true, loading: true, error: '', user, profile: null });
+    try {
+      let profile = null;
+      if (user.role === 'student') {
+        profile = await api.getStudentProfileById(user.id);
+      } else if (user.role === 'provider') {
+        profile = await api.getProviderProfileById(user.id);
+      }
+      setUserModalState(prev => ({ ...prev, loading: false, profile }));
+    } catch (err) {
+      setUserModalState(prev => ({ ...prev, loading: false, error: err.message || t('common.error') }));
+    }
+  };
+
+  const handleCloseUserModal = () => {
+    setUserModalState({ isOpen: false, loading: false, error: '', user: null, profile: null });
+  };
+
+  const handleBlockUser = async (user) => {
+    if (user.email.toLowerCase() === 'admin@gmail.com') {
+      setUsersError(t('adminDashboard.users.messages.cannotDeleteAdmin'));
+      return;
+    }
+    if (!window.confirm(t('adminDashboard.users.confirmBlock', { email: user.email }))) return;
+    try {
+      await api.adminDeleteUser(user.id);
+      setActionMessage(t('adminDashboard.users.messages.blocked'));
+      setRefreshToken(prev => prev + 1);
+    } catch (err) {
+      setUsersError(err.message || t('adminDashboard.users.messages.blockFailed'));
+    }
+  };
+
+  const openProviderModal = (providerUserId) => {
+    setProviderModalState({ isOpen: true, providerUserId });
+  };
+
+  const closeProviderModal = () => {
+    setProviderModalState({ isOpen: false, providerUserId: null });
+  };
+
+  const renderUserRoleBadge = (role) => (
+    <span className={`${styles.badge} ${styles.badgeNeutral}`}>
+      {role === 'student' ? t('adminDashboard.users.roles.student') : t('adminDashboard.users.roles.provider')}
+    </span>
+  );
 
   const renderOpportunityRow = (opp) => (
     <tr key={opp.id}>
@@ -112,8 +200,17 @@ function AdminDashboard() {
         </div>
       </td>
       <td>
-        <div>{t('adminDashboard.opportunities.providerId', { id: opp.provider_user_id })}</div>
-        <div>{t('adminDashboard.opportunities.type', { type: opp.type })}</div>
+        <button
+          className={styles.linkButton}
+          onClick={() => openProviderModal(opp.provider_user_id)}
+        >
+          {providerProfiles[opp.provider_user_id]?.company_name ||
+            providerProfiles[opp.provider_user_id]?.contact_name ||
+            providerProfiles[opp.provider_user_id]?.email ||
+            users.find(u => u.id === opp.provider_user_id)?.email ||
+            t('adminDashboard.opportunities.providerId', { id: opp.provider_user_id })}
+        </button>
+        <div className={styles.oppMeta}>{t('adminDashboard.opportunities.type', { type: opp.type })}</div>
       </td>
       <td>
         <span className={`${styles.badge} ${styles.badgeNeutral}`}>
@@ -170,7 +267,7 @@ function AdminDashboard() {
         </div>
       </header>
 
-      {error && <div className="alert-error">{error}</div>}
+      {pageError && <div className="alert-error">{pageError}</div>}
       {actionMessage && (
         <div className="alert-success">
           {actionMessage}
@@ -209,6 +306,7 @@ function AdminDashboard() {
                 ))}
               </select>
             </div>
+            {usersError && <div className="alert-error">{usersError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -229,29 +327,36 @@ function AdminDashboard() {
                     filteredUsers.map(user => (
                       <tr key={user.id}>
                         <td>
-                          <div className={styles.userEmail}>{user.email}</div>
+                          <button
+                            className={styles.userEmailButton}
+                            onClick={() => handleViewUser(user)}
+                          >
+                            {user.email}
+                          </button>
                           <div className={styles.userMeta}>#{user.id}</div>
                         </td>
                         <td>
-                          {user.email.toLowerCase() === 'admin@gmail.com' ? (
-                            <span className={`${styles.badge} ${styles.badgeNeutral}`}>
-                              {t('adminDashboard.users.locked')}
-                            </span>
-                          ) : (
-                            <select
-                              className="input"
-                              value={user.role}
-                              onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                            >
-                              <option value="student">{t('adminDashboard.users.roles.student')}</option>
-                              <option value="provider">{t('adminDashboard.users.roles.provider')}</option>
-                            </select>
-                          )}
+                          {user.email.toLowerCase() === 'admin@gmail.com'
+                            ? <span className={`${styles.badge} ${styles.badgeNeutral}`}>{t('adminDashboard.users.locked')}</span>
+                            : renderUserRoleBadge(user.role)}
                         </td>
                         <td className={styles.actionsCell}>
-                          <span className={styles.userStatus}>
-                            {user.is_verified ? t('adminDashboard.users.verified') : t('adminDashboard.users.pending')}
-                          </span>
+                          <button
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => handleViewUser(user)}
+                          >
+                            {t('adminDashboard.users.actions.view')}
+                          </button>
+                          {user.email.toLowerCase() !== 'admin@gmail.com' && (
+                            <>
+                              <button
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleBlockUser(user)}
+                              >
+                                {t('adminDashboard.users.actions.block')}
+                              </button>
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -279,6 +384,7 @@ function AdminDashboard() {
                 ))}
               </select>
             </div>
+            {oppsError && <div className="alert-error">{oppsError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -346,10 +452,87 @@ function AdminDashboard() {
                     <p className={styles.muted}>{t('adminDashboard.opportunities.detailFields.noCriteria')}</p>
                   )}
                 </div>
+                <div>
+                  <strong>{t('adminDashboard.opportunities.providerLabel')}</strong>
+                  <p>
+                    <button
+                      className={styles.linkButton}
+                      onClick={() => openProviderModal(selectedOpportunity.provider_user_id)}
+                    >
+                      {providerProfiles[selectedOpportunity.provider_user_id]?.company_name ||
+                        providerProfiles[selectedOpportunity.provider_user_id]?.contact_name ||
+                        providerProfiles[selectedOpportunity.provider_user_id]?.email ||
+                        t('adminDashboard.opportunities.providerId', { id: selectedOpportunity.provider_user_id })}
+                    </button>
+                  </p>
+                </div>
               </div>
             </section>
           )}
         </>
+      )}
+
+      <ProviderProfileModal
+        providerId={providerModalState.providerUserId}
+        onClose={closeProviderModal}
+      />
+
+      {userModalState.isOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <h3>{t('adminDashboard.users.detailTitle')}</h3>
+              <button className="modal-close-btn" onClick={handleCloseUserModal}>
+                &times;
+              </button>
+            </div>
+            {userModalState.loading ? (
+              <div className={styles.loading}>{t('common.loading')}</div>
+            ) : userModalState.error ? (
+              <div className="alert-error">{userModalState.error}</div>
+            ) : (
+              <div className={styles.modalSection}>
+                <p><strong>Email:</strong> {userModalState.user?.email}</p>
+                <p><strong>{t('adminDashboard.users.columns.role')}:</strong> {userModalState.user?.role}</p>
+                {userModalState.profile ? (
+                  <>
+                    {userModalState.user?.role === 'student' ? (
+                      <>
+                        {userModalState.profile.full_name && (
+                          <p><strong>{t('profilePage.fullName')}:</strong> {userModalState.profile.full_name}</p>
+                        )}
+                        {userModalState.profile.phone && (
+                          <p><strong>{t('providerProfilePage.phone')}:</strong> {userModalState.profile.phone}</p>
+                        )}
+                        {userModalState.profile.major && (
+                          <p><strong>{t('profilePage.major')}:</strong> {userModalState.profile.major}</p>
+                        )}
+                        {userModalState.profile.education_level && (
+                          <p><strong>{t('profilePage.educationLevel')}:</strong> {userModalState.profile.education_level}</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p><strong>{t('providerProfilePage.companyName')}:</strong> {userModalState.profile.company_name || t('adminDashboard.opportunities.providerId', { id: userModalState.user?.id })}</p>
+                        {userModalState.profile.contact_name && (
+                          <p><strong>{t('providerProfilePage.contactName')}:</strong> {userModalState.profile.contact_name}</p>
+                        )}
+                        {userModalState.profile.phone && (
+                          <p><strong>{t('providerProfilePage.phone')}:</strong> {userModalState.profile.phone}</p>
+                        )}
+                        {userModalState.profile.website && (
+                          <p><strong>{t('providerProfilePage.website')}:</strong> {userModalState.profile.website}</p>
+                        )}
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <p className={styles.muted}>{t('adminDashboard.users.noProfile')}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

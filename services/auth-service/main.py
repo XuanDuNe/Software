@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, status
+from fastapi import FastAPI, Depends, HTTPException, Header, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import models, schemas, auth_utils
@@ -146,3 +146,17 @@ def update_user_role(user_id: int, payload: schemas.UserRoleUpdate, authorizatio
     db.commit()
     db.refresh(user)
     return user
+
+
+@app.delete("/auth/users/{user_id}", status_code=204)
+def delete_user(user_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    require_admin(authorization)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email == DEFAULT_ADMIN_EMAIL:
+        raise HTTPException(status_code=400, detail="Cannot delete default admin account")
+
+    db.delete(user)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
