@@ -1,0 +1,169 @@
+.wrapper {
+  padding: 30px;
+  background: var(--color-background);
+  min-height: calc(100vh - var(--navbar-height));
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.adminInfo {
+  font-size: 14px;
+  color: #475569;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  background: var(--color-surface);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.panel {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  margin-bottom: 24px;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-size: 13px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.userEmail, .oppTitle {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.userMeta, .oppMeta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.actionsCell {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.emptyCell {
+  text-align: center;
+  padding: 30px;
+  color: #94a3b8;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badgeSuccess {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.badgeDanger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badgeWarning {
+  background: #fef9c3;
+  color: #92400e;
+}
+
+.badgeNeutral {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.userStatus {
+  font-size: 13px;
+  color: #475569;
+}
+
+.detailGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.criteriaList {
+  margin: 0;
+  padding-left: 16px;
+  color: #475569;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}
+
+.dismissBtn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  margin-left: 12px;
+  cursor: pointer;
+}
+

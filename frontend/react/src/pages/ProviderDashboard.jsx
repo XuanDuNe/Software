@@ -118,6 +118,9 @@ const OpportunityModal = ({ isOpen, onClose, onSave, existingData }) => {
                     <h3>{existingData ? t('providerDashboardPage.modals.opp_edit_title') : t('providerDashboardPage.modals.opp_add_title')}</h3>
                     <button onClick={onClose} className="modal-close-btn">&times;</button>
                 </div>
+                    <div className={styles.infoBanner}>
+                        {t('providerDashboardPage.opportunities.approval_create_hint')}
+                    </div>
                 {error && <div className="alert-error">{error}</div>}
                 <form onSubmit={handleSubmit} className="form-grid">
                     <div className="form-group">
@@ -257,6 +260,8 @@ const OpportunityDetailModal = ({ opportunityId, onClose }) => {
                             <div><strong>ID Cơ hội:</strong> {detail.id}</div>
                             <div><strong>{t('providerDashboardPage.modals.opp_type')}:</strong> {detail.type}</div>
                             <div><strong>Ngày tạo:</strong> {new Date(detail.created_at).toLocaleDateString()}</div>
+                            <div><strong>{t('providerDashboardPage.opportunities.detail_status')}:</strong> {detail.status ? t(`providerDashboardPage.opportunities.status_${detail.status}`) : t('providerDashboardPage.opportunities.status_open')}</div>
+                            <div><strong>{t('providerDashboardPage.opportunities.detail_approval')}:</strong> {detail.approval_status ? t(`providerDashboardPage.opportunities.approval_${detail.approval_status}`) : t('providerDashboardPage.opportunities.approval_pending')}</div>
                         </div>
 
                         {detail.criteria && (
@@ -487,6 +492,27 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
         { value: 'research_lab', label: t('providerDashboardPage.modals.opp_type_lab') },
     ];
 
+    const approvalLabels = {
+        pending: t('providerDashboardPage.opportunities.approval_pending'),
+        approved: t('providerDashboardPage.opportunities.approval_approved'),
+        rejected: t('providerDashboardPage.opportunities.approval_rejected')
+    };
+
+    const approvalStyles = {
+        pending: { backgroundColor: '#fef9c3', color: '#92400e' },
+        approved: { backgroundColor: '#ecfdf5', color: '#10b981' },
+        rejected: { backgroundColor: '#fee2e2', color: '#b91c1c' }
+    };
+
+    const renderApprovalBadge = (status) => {
+        const style = approvalStyles[status] || approvalStyles.pending;
+        return (
+            <span className={styles.statusBadge} style={style}>
+                {approvalLabels[status] || status}
+            </span>
+        );
+    };
+
 
     const handleDelete = (opportunityId, title) => {
         if (window.confirm(t('providerDashboardPage.opportunities.confirmDelete', { title }))) {
@@ -498,14 +524,18 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
         onOpportunityAction('viewDetail', opportunityId);
     };
 
-    const handleStatusToggle = (opportunityId, currentStatus) => {
+    const handleStatusToggle = (opportunityId, currentStatus, approvalStatus) => {
+        if (approvalStatus !== 'approved') {
+            alert(t('providerDashboardPage.opportunities.alert_status_requires_approval'));
+            return;
+        }
         const newStatus = currentStatus === 'open' ? 'closed' : 'open';
         const actionTextKey = newStatus === 'closed' 
             ? 'providerDashboardPage.opportunities.action_close' 
             : 'providerDashboardPage.opportunities.action_open';
             
         if (window.confirm(t('providerDashboardPage.applicants.confirmAction', { action: t(actionTextKey).toLowerCase() }))) {
-             onOpportunityAction('toggleStatus', opportunityId, { newStatus });
+             onOpportunityAction('toggleStatus', opportunityId, { newStatus, approvalStatus });
         }
     };
 
@@ -516,6 +546,9 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                 <button className="btn btn-secondary" onClick={() => onOpportunityAction('create')}>
                     {t('providerDashboardPage.opportunities.addNew')}
                 </button>
+            </div>
+            <div className={styles.infoBanner}>
+                {t('providerDashboardPage.opportunities.approval_note')}
             </div>
             <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 200px', marginBottom: '20px' }}>
                 <input
@@ -549,6 +582,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                 <th style={{ width: '25%' }}>{t('providerDashboardPage.opportunities.header_criteria')}</th>
                                 <th style={{ width: '8%' }} className={styles.textCenter}>{t('providerDashboardPage.opportunities.header_applicants')}</th>
                                 <th style={{ width: '12%' }} className={styles.textCenter}>{t('providerDashboardPage.opportunities.header_status')}</th>
+                                <th style={{ width: '12%' }} className={styles.textCenter}>{t('providerDashboardPage.opportunities.header_approval')}</th>
                                 <th style={{ width: '25%' }}>{t('providerDashboardPage.opportunities.header_action')}</th>
                             </tr>
                         </thead>
@@ -556,6 +590,7 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                             {filteredOpportunities.map(opp => { 
                                 const criteria = opp.criteria || {};
                                 const status = opp.status || 'open';
+                                const approvalStatus = opp.approval_status || 'pending';
                                 
                                 return (
                                     <tr key={opp.id}>
@@ -598,11 +633,14 @@ const OpportunitiesManagement = ({ opportunities, onOpportunityAction }) => {
                                                 {status === 'open' ? t('providerDashboardPage.opportunities.status_open') : t('providerDashboardPage.opportunities.status_closed')}
                                             </span>
                                         </td>
+                                        <td style={{ width: '12%' }} className={styles.textCenter}>
+                                            {renderApprovalBadge(approvalStatus)}
+                                        </td>
 
 
                                         <td style={{ width: '25%' }} className={styles.actionCell}>
                                             <button 
-                                                onClick={() => handleStatusToggle(opp.id, status)} 
+                                                onClick={() => handleStatusToggle(opp.id, status, approvalStatus)} 
                                                 className={`btn btn-sm ${styles.statusToggleButton}`}
                                                 style={{ 
                                                     backgroundColor: status === 'open' ? '#ef4444' : '#10b981', 
@@ -932,7 +970,7 @@ const ProviderDashboard = () => {
         setLoading(true);
         setError('');
         try {
-            const oppsPromise = api.listOpportunities(); 
+            const oppsPromise = api.listProviderOpportunities(providerUserId); 
             const appsPromise = api.listProviderApplicationsEnriched(providerUserId);
 
             const [opps, apps] = await Promise.all([oppsPromise, appsPromise]);
@@ -1058,7 +1096,11 @@ const ProviderDashboard = () => {
             }
 
             if (action === 'toggleStatus') {
-                const { newStatus } = payload;
+                const { newStatus, approvalStatus } = payload;
+                if (approvalStatus !== 'approved') {
+                    alert(t('providerDashboardPage.opportunities.alert_status_requires_approval'));
+                    return;
+                }
                 await api.updateOpportunityStatus(id, newStatus);
                 alert(t('providerDashboardPage.opportunities.alert_status_updated', { status: t(`providerDashboardPage.opportunities.status_${newStatus}`) }));
                 fetchData();

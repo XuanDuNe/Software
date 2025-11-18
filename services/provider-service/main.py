@@ -22,7 +22,17 @@ def on_startup():
                 if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
                      print("Migration: status column already exists. Skipping.")
                 else:
-                     print(f"Migration Error (non-critical): {e}") 
+                     print(f"Migration Error (non-critical): {e}")
+
+            try:
+                conn.execute(text("ALTER TABLE opportunity ADD COLUMN approval_status VARCHAR(50) DEFAULT 'pending'"))
+                conn.execute(text("UPDATE opportunity SET approval_status = 'approved' WHERE approval_status IS NULL"))
+                print("Migration: Added approval_status column to opportunity table.")
+            except Exception as e:
+                if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                    print("Migration: approval_status column already exists. Skipping.")
+                else:
+                    print(f"Migration Error (non-critical): {e}")
         
         SQLModel.metadata.create_all(bind=engine)
     except Exception as e:

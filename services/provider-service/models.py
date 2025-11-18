@@ -12,6 +12,12 @@ class OpportunityStatus(str, enum.Enum):
     OPEN = "open"
     CLOSED = "closed"
 
+
+class OpportunityApprovalStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class Opportunity(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     provider_user_id: int = Field(index=True)
@@ -19,6 +25,7 @@ class Opportunity(SQLModel, table=True):
     description: str
     type: OpportunityType = Field(default=OpportunityType.SCHOLARSHIP)
     status: Optional[OpportunityStatus] = Field(default=OpportunityStatus.OPEN)
+    approval_status: OpportunityApprovalStatus = Field(default=OpportunityApprovalStatus.PENDING, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     criteria: Optional["Criteria"] = Relationship(back_populates="opportunity", sa_relationship_kwargs={"uselist": False})
 

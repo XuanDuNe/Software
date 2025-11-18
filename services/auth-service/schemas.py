@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel, EmailStr
 
 class UserRegister(BaseModel):
@@ -19,3 +20,22 @@ class Token(BaseModel):
 
 class TokenVerify(BaseModel):
     token: str
+
+
+class UserPublic(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    is_verified: bool
+
+    class Config:
+        from_attributes = True
+
+
+class UserRoleUpdate(BaseModel):
+    role: str
+
+
+class UserListResponse(BaseModel):
+    total: int
+    users: List[UserPublic]

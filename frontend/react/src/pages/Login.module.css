@@ -76,3 +76,12 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+.infoBox {
+    margin-top: 12px;
+    padding: 12px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+}

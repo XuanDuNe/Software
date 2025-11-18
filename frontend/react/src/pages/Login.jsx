@@ -36,13 +36,15 @@ function Login() {
       const verified = await api.verifyToken(token);
       const user = {
         id: verified?.user_id,
-        role: verified?.role
+        role: verified?.role,
+        email: verified?.email
       };
 
       storeAuth(token, user);
 
       if (user.role === 'student') navigate('/student/dashboard', { replace: true });
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });
+      else if (user.role === 'admin') navigate('/admin/dashboard', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || t('loginPage.error_login_failed'));
@@ -85,13 +87,15 @@ function Login() {
       const verified = await api.verifyToken(token);
       const user = {
         id: verified?.user_id,
-        role: verified?.role
+        role: verified?.role,
+        email: verified?.email
       };
 
       storeAuth(token, user);
 
       if (user.role === 'student') navigate('/student/dashboard', { replace: true });
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });
+      else if (user.role === 'admin') navigate('/admin/dashboard', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || t('loginPage.error_register_failed'));
@@ -250,6 +254,10 @@ function Login() {
               {error && (
                 <div className="alert-error" style={{ marginBottom: 16 }}>{error}</div> 
               )}
+
+              <div className={styles.infoBox}>
+                {t('loginPage.adminNotice')}
+              </div>
 
               <button
                 type="submit"

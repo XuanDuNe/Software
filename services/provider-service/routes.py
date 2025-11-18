@@ -1,5 +1,5 @@
 from urllib import response
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Response, Header
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
@@ -8,10 +8,13 @@ import models, schemas
 import httpx
 import os
 import asyncio
+from jose import jwt, JWTError
 
 APPLICATION_SERVICE_URL = os.getenv("APPLICATION_SERVICE_URL", "http://application-service:8004")
 NOTIFICATION_SERVICE_URL = os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:8005")
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8002")
+AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "super_secret_key_123")
+AUTH_ALGORITHM = os.getenv("AUTH_ALGORITHM", "HS256")
 
 router = APIRouter(prefix="/api", tags=["Provider Service"])
 
@@ -20,6 +23,45 @@ def parse_list_to_str(items: Optional[List[str]]) -> Optional[str]:
 
 def parse_str_to_list(s: Optional[str]) -> List[str]:
     return [item for item in s.split(",") if item] if s else []
+
+def _criteria_to_schema(criteria: Optional[models.Criteria]) -> Optional[schemas.CriteriaRead]:
+    if not criteria:
+        return None
+    return schemas.CriteriaRead(
+        id=criteria.id,
+        opportunity_id=criteria.opportunity_id,
+        gpa_min=criteria.gpa_min,
+        skills=parse_str_to_list(criteria.skills),
+        deadline=criteria.deadline,
+        required_documents=parse_str_to_list(criteria.required_documents)
+    )
+
+def _build_opportunity_response(session: Session, opp: models.Opportunity) -> schemas.OpportunityReadWithCriteria:
+    criteria = session.exec(
+        select(models.Criteria).where(models.Criteria.opportunity_id == opp.id)
+    ).first()
+
+    criteria_read = _criteria_to_schema(criteria)
+    opp_read = schemas.OpportunityRead.from_orm(opp)
+    return schemas.OpportunityReadWithCriteria(**opp_read.dict(), criteria=criteria_read)
+
+def _to_model_approval(status_value: Optional[schemas.OpportunityApprovalStatus]):
+    if status_value is None:
+        return None
+    raw = status_value.value if hasattr(status_value, "value") else status_value
+    return models.OpportunityApprovalStatus(raw)
+
+def require_admin(authorization: Optional[str]) -> dict:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+    token = authorization.split(" ", 1)[1]
+    try:
+        payload = jwt.decode(token, AUTH_SECRET_KEY, algorithms=[AUTH_ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return payload
 
 def _upsert_criteria(session: Session, opportunity_id: int, criteria_in: Optional[schemas.CriteriaCreate]):
     if not criteria_in:
@@ -119,6 +161,8 @@ def create_opportunity(
         if not isinstance(base_payload.get("provider_user_id"), int):
             raise HTTPException(status_code=400, detail="provider_user_id must be an integer")
 
+        base_payload["approval_status"] = models.OpportunityApprovalStatus.PENDING
+
         db_opp = models.Opportunity(**base_payload)
         session.add(db_opp)
         session.commit()
@@ -135,30 +179,38 @@ def create_opportunity(
 
 @router.get("/opportunities/", response_model=List[schemas.OpportunityReadWithCriteria])
 def get_all_opportunities(session: Session = Depends(get_session)):
-    opportunities = session.exec(select(models.Opportunity)).all()
+    opportunities = session.exec(
+        select(models.Opportunity).where(
+            models.Opportunity.approval_status == models.OpportunityApprovalStatus.APPROVED
+        )
+    ).all()
     results = []
     for opp in opportunities:
-        criteria = session.exec(
-            select(models.Criteria).where(models.Criteria.opportunity_id == opp.id)
-        ).first()
-        criteria_read = None
-        if criteria:
-            criteria_read = schemas.CriteriaRead(
-                id=criteria.id,
-                opportunity_id=criteria.opportunity_id,
-                gpa_min=criteria.gpa_min,
-                skills=parse_str_to_list(criteria.skills),
-                deadline=criteria.deadline,
-                required_documents=parse_str_to_list(criteria.required_documents)
-            )
-        opp_read = schemas.OpportunityRead.from_orm(opp)
-        opp_with_criteria = schemas.OpportunityReadWithCriteria(
-            **opp_read.dict(),
-            criteria=criteria_read
-        )
-        results.append(opp_with_criteria)
+        results.append(_build_opportunity_response(session, opp))
 
     return results
+
+@router.get("/opportunities/provider/{provider_user_id}", response_model=List[schemas.OpportunityReadWithCriteria])
+def get_opportunities_by_provider(provider_user_id: int, session: Session = Depends(get_session)):
+    opportunities = session.exec(
+        select(models.Opportunity).where(models.Opportunity.provider_user_id == provider_user_id)
+    ).all()
+    return [_build_opportunity_response(session, opp) for opp in opportunities]
+
+@router.get("/opportunities/admin", response_model=List[schemas.OpportunityReadWithCriteria])
+def admin_list_opportunities(
+    approval_status: Optional[schemas.OpportunityApprovalStatus] = None,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session)
+):
+    require_admin(authorization)
+    query = select(models.Opportunity)
+    if approval_status:
+        query = query.where(
+            models.Opportunity.approval_status == _to_model_approval(approval_status)
+        )
+    opportunities = session.exec(query.order_by(models.Opportunity.created_at.desc())).all()
+    return [_build_opportunity_response(session, opp) for opp in opportunities]
 
 @router.get("/opportunities/{opp_id}", response_model=schemas.OpportunityReadWithCriteria)
 def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
@@ -166,26 +218,7 @@ def get_opportunity(opp_id: int, session: Session = Depends(get_session)):
     if not opp:
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
-    criteria = session.exec(
-        select(models.Criteria).where(models.Criteria.opportunity_id == opp_id)
-    ).first()
-
-    criteria_read = None
-    if criteria:
-        criteria_read = schemas.CriteriaRead(
-            id=criteria.id,
-            opportunity_id=criteria.opportunity_id,
-            gpa_min=criteria.gpa_min,
-            skills=parse_str_to_list(criteria.skills),
-            deadline=criteria.deadline,
-            required_documents=parse_str_to_list(criteria.required_documents)
-        )
-
-    opp_read = schemas.OpportunityRead.from_orm(opp)
-    return schemas.OpportunityReadWithCriteria(
-        **opp_read.dict(),
-        criteria=criteria_read
-    )
+    return _build_opportunity_response(session, opp)
 
 @router.put("/opportunities/{opp_id}", response_model=schemas.OpportunityReadWithCriteria)
 def update_opportunity(
@@ -213,6 +246,28 @@ def update_opportunity(
     opp_read = schemas.OpportunityRead.from_orm(db_opp)
     return schemas.OpportunityReadWithCriteria(**opp_read.dict(), criteria=criteria_read)
 
+@router.patch("/opportunities/{opp_id}/approval", response_model=schemas.OpportunityReadWithCriteria)
+def update_opportunity_approval(
+    opp_id: int,
+    approval_in: schemas.OpportunityApprovalUpdate,
+    authorization: Optional[str] = Header(None),
+    session: Session = Depends(get_session)
+):
+    require_admin(authorization)
+    db_opp = session.get(models.Opportunity, opp_id)
+    if not db_opp:
+        raise HTTPException(status_code=404, detail="Opportunity not found")
+
+    db_opp.approval_status = _to_model_approval(approval_in.approval_status)
+    if approval_in.approval_status == schemas.OpportunityApprovalStatus.APPROVED and db_opp.status is None:
+        db_opp.status = models.OpportunityStatus.OPEN
+
+    session.add(db_opp)
+    session.commit()
+    session.refresh(db_opp)
+
+    return _build_opportunity_response(session, db_opp)
+
 @router.patch("/opportunities/{opp_id}/status", response_model=schemas.OpportunityRead)
 def update_opportunity_status(
     opp_id: int,
@@ -230,6 +285,9 @@ def update_opportunity_status(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid status value")
     
+    if db_opp.approval_status != models.OpportunityApprovalStatus.APPROVED:
+        raise HTTPException(status_code=400, detail="Opportunity must be approved before updating status")
+
     db_opp.status = new_status
     session.add(db_opp)
     session.commit()

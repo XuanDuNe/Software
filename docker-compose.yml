@@ -106,6 +106,8 @@ services:
       - APPLICATION_SERVICE_URL=http://application-service:8004
       - NOTIFICATION_SERVICE_URL=http://notification-service:8005
       - USER_SERVICE_URL=http://user-service:8002
+      - AUTH_SECRET_KEY=super_secret_key_123
+      - AUTH_ALGORITHM=HS256
     depends_on:
       postgres-provider:            
         condition: service_healthy

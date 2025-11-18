@@ -22,7 +22,9 @@
     "notifications": "Thông báo",
     "matching": "Gợi ý",
     "provider": "Nhà cung cấp",
-    "welcome": "Xin chào, Người dùng #{{userId}} ({{role}})"
+    "admin": "Quản trị",
+    "welcome": "Xin chào, Người dùng #{{userId}} ({{role}})",
+    "welcomeNamed": "Xin chào, {{name}} ({{role}})"
   },
   "loginPage": {
     "loginTitle": "Đăng nhập",
@@ -43,7 +45,8 @@
     "error_no_role": "Vui lòng chọn vai trò",
     "error_login_failed": "Đăng nhập thất bại",
     "error_register_failed": "Đăng ký thất bại",
-    "error_invalid_response": "Phản hồi không hợp lệ"
+    "error_invalid_response": "Phản hồi không hợp lệ",
+    "adminNotice": "Tài khoản quản trị được hệ thống tạo sẵn. Vui lòng dùng tài khoản Admin mặc định để truy cập bảng điều khiển quản trị."
   },
   "profilePage": {
     "title": "Hồ sơ sinh viên",
@@ -218,6 +221,7 @@
       "header_criteria": "Tiêu chí",
       "header_applicants": "Ứng viên",
       "header_action": "Hành động",
+      "header_approval": "Duyệt",
       "criteria_gpa": "GPA ≥ {{gpa}}",
       "criteria_no_gpa": "Không yêu cầu GPA",
       "criteria_skills_label": "Kỹ năng:",
@@ -237,9 +241,17 @@
       "action_close": "Đóng Cơ hội",
       "action_open": "Mở lại Cơ hội",
       "alert_status_updated": "Đã cập nhật trạng thái cơ hội thành {{status}}.",
+      "alert_status_requires_approval": "Cơ hội cần được quản trị viên duyệt trước khi thay đổi trạng thái.",
       "searchPlaceholder": "Tìm kiếm theo tên/mô tả...",
       "filterByType": "Lọc theo loại",
-      "allTypes": "Tất cả loại"
+      "allTypes": "Tất cả loại",
+      "approval_pending": "Chờ duyệt",
+      "approval_approved": "Đã duyệt",
+      "approval_rejected": "Bị từ chối",
+      "approval_note": "Mọi cơ hội mới cần được quản trị viên xét duyệt trước khi hiển thị cho sinh viên.",
+      "approval_create_hint": "Sau khi tạo, cơ hội sẽ ở trạng thái \"Chờ duyệt\" cho đến khi được quản trị viên phê duyệt.",
+      "detail_status": "Trạng thái hiện tại",
+      "detail_approval": "Trạng thái duyệt"
     },
     "applicants": {
       "title": "Danh sách Ứng viên",
@@ -311,6 +323,90 @@
       "chat_title": "Nhắn tin với {{name}}",
       "chat_empty": "Chưa có tin nhắn nào.",
       "chat_placeholder": "Nhập tin nhắn của bạn..."
+    }
+  },
+  "adminDashboard": {
+    "title": "Bảng điều khiển Quản trị",
+    "subtitle": "Quản lý tài khoản và phê duyệt cơ hội trước khi đăng cho sinh viên.",
+    "youAre": "Đang đăng nhập với {{email}}",
+    "stats": {
+      "totalUsers": "Tổng người dùng",
+      "students": "Sinh viên",
+      "providers": "Nhà cung cấp",
+      "pendingOpportunities": "Cơ hội chờ duyệt"
+    },
+    "users": {
+      "title": "Quản lý người dùng",
+      "subtitle": "Theo dõi và điều chỉnh vai trò trong hệ thống.",
+      "columns": {
+        "email": "Email",
+        "role": "Vai trò",
+        "actions": "Trạng thái"
+      },
+      "filters": {
+        "all": "Tất cả vai trò",
+        "student": "Sinh viên",
+        "provider": "Nhà cung cấp"
+      },
+      "roles": {
+        "student": "Sinh viên",
+        "provider": "Nhà cung cấp"
+      },
+      "messages": {
+        "roleUpdated": "Đã cập nhật vai trò thành công.",
+        "roleUpdateFailed": "Không thể cập nhật vai trò."
+      },
+      "empty": "Không có người dùng nào phù hợp với bộ lọc.",
+      "locked": "Admin hệ thống",
+      "verified": "Đã xác thực",
+      "pending": "Chưa xác thực"
+    },
+    "opportunities": {
+      "title": "Duyệt cơ hội",
+      "subtitle": "Xem xét và phê duyệt các cơ hội trước khi công khai.",
+      "columns": {
+        "title": "Cơ hội",
+        "provider": "Nhà cung cấp",
+        "status": "Trạng thái",
+        "approval": "Phê duyệt",
+        "actions": "Hành động"
+      },
+      "filters": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối",
+        "all": "Tất cả trạng thái"
+      },
+      "status": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối"
+      },
+      "actions": {
+        "view": "Xem chi tiết",
+        "approve": "Phê duyệt",
+        "reject": "Từ chối"
+      },
+      "messages": {
+        "approved": "Đã phê duyệt cơ hội.",
+        "rejected": "Đã từ chối cơ hội.",
+        "updateFailed": "Không thể cập nhật trạng thái."
+      },
+      "empty": "Không có cơ hội nào trong bộ lọc này.",
+      "providerId": "Nhà cung cấp #{{id}}",
+      "type": "Loại: {{type}}",
+      "detailTitle": "Chi tiết cơ hội",
+      "detailSubtitle": "Cơ hội #{{id}}",
+      "detailFields": {
+        "title": "Tiêu đề",
+        "description": "Mô tả",
+        "criteria": "Tiêu chí",
+        "gpa": "GPA tối thiểu: {{value}}",
+        "skills": "Kỹ năng: {{value}}",
+        "documents": "Tài liệu yêu cầu: {{value}}",
+        "deadline": "Hạn nộp: {{value}}",
+        "noCriteria": "Không có tiêu chí bổ sung."
+      }
     }
   }
 }

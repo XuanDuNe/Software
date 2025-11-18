@@ -22,7 +22,9 @@
     "notifications": "Notifications",
     "matching": "Matching",
     "provider": "Provider",
-    "welcome": "Welcome, User #{{userId}} ({{role}})"
+    "admin": "Admin",
+    "welcome": "Welcome, User #{{userId}} ({{role}})",
+    "welcomeNamed": "Welcome, {{name}} ({{role}})"
   },
   "loginPage": {
     "loginTitle": "Sign In",
@@ -43,7 +45,8 @@
     "error_no_role": "Please select a role",
     "error_login_failed": "Login failed",
     "error_register_failed": "Registration failed",
-    "error_invalid_response": "Invalid response"
+    "error_invalid_response": "Invalid response",
+    "adminNotice": "Administrator accounts are managed by the system. Please use the default admin credentials to access the admin dashboard."
   },
   "profilePage": {
     "title": "Student Profile",
@@ -218,6 +221,7 @@
       "header_criteria": "Criteria",
       "header_applicants": "Applicants",
       "header_action": "Action",
+      "header_approval": "Approval",
       "action_view": "View",
       "action_edit": "Edit",
       "action_delete": "Delete",
@@ -232,9 +236,17 @@
       "action_close": "Close Opportunity",
       "action_open": "Reopen Opportunity",
       "alert_status_updated": "Updated opportunity status to {{status}}.",
+      "alert_status_requires_approval": "This opportunity must be approved before you can change its status.",
       "searchPlaceholder": "Search by name/description...",
       "filterByType": "Filter by Type",
-      "allTypes": "All Types"
+      "allTypes": "All Types",
+      "approval_pending": "Pending review",
+      "approval_approved": "Approved",
+      "approval_rejected": "Rejected",
+      "approval_note": "All newly created opportunities must be reviewed and approved by an administrator before they appear to students.",
+      "approval_create_hint": "After submitting, this opportunity will remain in \"Pending review\" status until an admin approves it.",
+      "detail_status": "Current Status",
+      "detail_approval": "Approval Status"
     },
     "applicants": {
       "title": "Applicant List",
@@ -306,6 +318,90 @@
       "chat_title": "Chat with {{name}}",
       "chat_empty": "There are no messages yet.",
       "chat_placeholder": "Type your message..."
+    }
+  },
+  "adminDashboard": {
+    "title": "Administrator Dashboard",
+    "subtitle": "Manage user accounts and review provider opportunities before publication.",
+    "youAre": "Signed in as {{email}}",
+    "stats": {
+      "totalUsers": "Total Users",
+      "students": "Students",
+      "providers": "Providers",
+      "pendingOpportunities": "Pending Opportunities"
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Review and adjust roles across the platform.",
+      "columns": {
+        "email": "Email",
+        "role": "Role",
+        "actions": "Status"
+      },
+      "filters": {
+        "all": "All roles",
+        "student": "Students",
+        "provider": "Providers"
+      },
+      "roles": {
+        "student": "Student",
+        "provider": "Provider"
+      },
+      "messages": {
+        "roleUpdated": "User role updated successfully.",
+        "roleUpdateFailed": "Failed to update user role."
+      },
+      "empty": "No users match the selected filter.",
+      "locked": "System Admin",
+      "verified": "Verified",
+      "pending": "Not verified"
+    },
+    "opportunities": {
+      "title": "Opportunity Approvals",
+      "subtitle": "Review and approve provider submissions before they go live.",
+      "columns": {
+        "title": "Opportunity",
+        "provider": "Provider",
+        "status": "Status",
+        "approval": "Approval",
+        "actions": "Actions"
+      },
+      "filters": {
+        "pending": "Pending review",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "all": "All statuses"
+      },
+      "status": {
+        "pending": "Pending review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "view": "View details",
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "messages": {
+        "approved": "Opportunity approved and published.",
+        "rejected": "Opportunity rejected.",
+        "updateFailed": "Failed to update opportunity status."
+      },
+      "empty": "No opportunities found for this filter.",
+      "providerId": "Provider #{{id}}",
+      "type": "Type: {{type}}",
+      "detailTitle": "Opportunity Details",
+      "detailSubtitle": "Opportunity #{{id}}",
+      "detailFields": {
+        "title": "Title",
+        "description": "Description",
+        "criteria": "Criteria",
+        "gpa": "Minimum GPA: {{value}}",
+        "skills": "Skills: {{value}}",
+        "documents": "Required documents: {{value}}",
+        "deadline": "Deadline: {{value}}",
+        "noCriteria": "No additional criteria provided."
+      }
     }
   }
 }

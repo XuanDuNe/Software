@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import StudentDashboard from './pages/StudentDashboard.jsx';
 import ProviderDashboard from './pages/ProviderDashboard.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { getStoredUser } from './utils/auth.js';
 import Notifications from './pages/Notifications.jsx';
@@ -56,6 +57,14 @@ function App() {
         }
       />
       <Route
+        path="/admin/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/notifications"
         element={
           <ProtectedRoute allowedRoles={["student", "provider"]}>
@@ -79,6 +88,8 @@ function App() {
             <Navigate to="/student/dashboard" replace />
           ) : user?.role === 'provider' ? (
             <Navigate to="/provider/dashboard" replace />
+          ) : user?.role === 'admin' ? (
+            <Navigate to="/admin/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />
           )

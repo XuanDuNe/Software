@@ -12,6 +12,12 @@ class OpportunityStatus(str, enum.Enum):
     OPEN = "open"
     CLOSED = "closed"
 
+
+class OpportunityApprovalStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class ApplicationStatus(str, enum.Enum):
     PENDING = "pending"
     VIEWED = "viewed"
@@ -32,6 +38,7 @@ class OpportunityCreate(OpportunityBase):
 class OpportunityRead(OpportunityBase):
     id: int
     status: Optional[OpportunityStatus]
+    approval_status: OpportunityApprovalStatus
     created_at: datetime
 
 
@@ -42,6 +49,10 @@ class OpportunityUpdate(SQLModel):
     criteria: Optional["CriteriaCreate"] = None
     type: Optional[OpportunityType] = None
     status: Optional[OpportunityStatus] = None
+
+
+class OpportunityApprovalUpdate(SQLModel):
+    approval_status: OpportunityApprovalStatus
 
 class OpportunityStatusUpdate(SQLModel):
     status: OpportunityStatus

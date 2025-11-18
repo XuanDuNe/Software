@@ -543,7 +543,7 @@ function StudentDashboard() {
         // api.listOpportunities() trả về OpportunityReadWithCriteria, bao gồm criteria
         const [apps, opps] = await Promise.all([
             api.listMyApplications(studentUserId),
-            api.listOpportunities() 
+            api.listOpportunities({ approval_status: 'approved' }) 
         ]);
         setApplications(apps || []);
         // Đảm bảo mỗi cơ hội có criteria (đã được fetch trong listOpportunities)

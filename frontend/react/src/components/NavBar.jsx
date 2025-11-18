@@ -17,7 +17,7 @@ function NavBar() {
   
   // NEW: Hàm kiểm tra thông báo chưa đọc
   const checkUnreadNotifications = async () => {
-    if (!user?.id) {
+    if (!user?.id || user.role === 'admin') {
         setHasUnread(false);
         return;
     }
@@ -62,7 +62,7 @@ function NavBar() {
           EduMatch
         </Link>
 
-        {user?.role === 'student' && (
+{user?.role === 'student' && (
           <>
             <Link to="/student/dashboard" className={styles.link}>{t('nav.student')}</Link> 
             <Link to="/student/profile" className={styles.link}>{t('nav.profile')}</Link> 
@@ -75,7 +75,7 @@ function NavBar() {
 
           </>
         )}
-        {user?.role === 'provider' && (
+{user?.role === 'provider' && (
           <>
 
             <Link to="/provider/dashboard" className={styles.link}>{t('nav.provider')}</Link>
@@ -86,6 +86,9 @@ function NavBar() {
                 {hasUnread && <span className={styles.unreadDot}></span>}
             </Link>
           </>
+        )}
+        {user?.role === 'admin' && (
+          <Link to="/admin/dashboard" className={styles.link}>{t('nav.admin')}</Link>
         )}
       </div>
 
@@ -104,7 +107,7 @@ function NavBar() {
 
         {user ? (
           <>
-            <span>{t('nav.welcome', { userId: user.id, role: user.role })}</span>
+            <span>{t('nav.welcomeNamed', { name: user.email || `User #${user.id}`, role: user.role })}</span>
             <button onClick={handleLogout} className="btn btn-primary btn-sm"> 
               {t('common.logout')}
             </button>

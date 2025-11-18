@@ -90,7 +90,12 @@ export const api = {
     body: JSON.stringify(data)
   }),
 
-  listOpportunities: () => request('/opportunity/'),
+  listOpportunities: (params = {}) => {
+    const query = new URLSearchParams(params || {}).toString();
+    const suffix = query ? `?${query}` : '';
+    return request(`/opportunity/${suffix}`);
+  },
+  listProviderOpportunities: (providerUserId) => request(`/opportunity/provider/${providerUserId}`),
   getOpportunity: (id) => request(`/opportunity/${id}`),
   createOpportunity: (payload) => request('/opportunity/', {
     method: 'POST',
@@ -120,6 +125,20 @@ export const api = {
   updateApplicationStatus: (appId, status) => request(`/provider_app/${appId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status })
+  }),
+  adminListUsers: () => request('/auth/users'),
+  adminUpdateUserRole: (userId, role) => request(`/auth/users/${userId}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify({ role })
+  }),
+  adminListOpportunities: (params = {}) => {
+    const query = new URLSearchParams(params || {}).toString();
+    const path = query ? `/opportunity/admin?${query}` : '/opportunity/admin';
+    return request(path);
+  },
+  adminUpdateOpportunityApproval: (opportunityId, approvalStatus) => request(`/opportunity/${opportunityId}/approval`, {
+    method: 'PATCH',
+    body: JSON.stringify({ approval_status: approvalStatus })
   }),
 
   createConversation: (participant1UserId, participant2UserId, applicationId) => request('/notification/conversations', { // THAY ĐỔI: Thêm applicationId
