@@ -80,6 +80,7 @@
     "saveButton": "Save Changes",
     "savingButton": "Saving...",
     "successMessage": "Profile updated successfully",
+    "successRedirectMessage": "Profile updated successfully. Redirecting to your dashboard...",
     "errorUpload": "CV upload failed",
     "errorUpdate": "Profile update failed",
     "errorChooseFile": "Please select a CV file before uploading",
@@ -102,6 +103,7 @@
     "saveButton": "Save Changes",
     "savingButton": "Saving...",
     "successMessage": "Profile updated successfully",
+    "successRedirectMessage": "Profile updated successfully. Redirecting to your dashboard...",
     "errorUpdate": "Profile update failed",
     "note": "<strong>Note:</strong> Having a complete profile helps build trust and attracts high-quality applicants."
   },

@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Profile.module.css'; // Reusing Student Profile styles
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 function ProviderProfile() {
   const { t } = useTranslation();
   const user = getStoredUser();
+  const navigate = useNavigate();
+  const redirectTimeoutRef = useRef(null);
 
   const [form, setForm] = useState({
     company_name: '',
     contact_name: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     website: '',
     description: ''
@@ -29,23 +32,42 @@ function ProviderProfile() {
           setForm({
             company_name: data.company_name || '',
             contact_name: data.contact_name || '',
-            email: data.email || '',
+            email: data.email || user?.email || '',
             phone: data.phone || '',
             website: data.website || '',
             description: data.description || ''
           });
+        } else if (mounted && user?.email) {
+          setForm((prev) => ({ ...prev, email: user.email }));
         }
       } catch (_) {
+        if (mounted && user?.email) {
+          setForm((prev) => ({ ...prev, email: user.email }));
+        }
       }
     })();
-    return () => { mounted = false; };
-  }, []);
+    return () => {
+      mounted = false;
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, [user?.email]);
 
   function handleChange(field) {
     return (e) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
   }
+
+  const redirectToDashboard = () => {
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
+    redirectTimeoutRef.current = setTimeout(() => {
+      navigate('/provider/dashboard', { replace: true });
+    }, 1500);
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -54,7 +76,7 @@ function ProviderProfile() {
     setMessage('');
     try {
       const saved = await api.updateProviderProfile(form);
-      setMessage(t('providerProfilePage.successMessage'));
+      setMessage(t('providerProfilePage.successRedirectMessage'));
       setForm({
         company_name: saved.company_name || '',
         contact_name: saved.contact_name || '',
@@ -63,6 +85,7 @@ function ProviderProfile() {
         website: saved.website || '',
         description: saved.description || ''
       });
+      redirectToDashboard();
     } catch (err) {
       setError(err.message || t('providerProfilePage.errorUpdate'));
     } finally {

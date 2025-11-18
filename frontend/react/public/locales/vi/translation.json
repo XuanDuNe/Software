@@ -80,6 +80,7 @@
     "saveButton": "Lưu thay đổi",
     "savingButton": "Đang lưu...",
     "successMessage": "Cập nhật thành công",
+    "successRedirectMessage": "Cập nhật thành công! Đang chuyển về trang chính...",
     "errorUpload": "Lỗi upload CV",
     "errorUpdate": "Lỗi cập nhật hồ sơ",
     "errorChooseFile": "Vui lòng chọn file CV trước khi upload",
@@ -102,6 +103,7 @@
     "saveButton": "Lưu thay đổi",
     "savingButton": "Đang lưu...",
     "successMessage": "Cập nhật thành công",
+    "successRedirectMessage": "Cập nhật thành công! Đang chuyển về trang chính...",
     "errorUpdate": "Lỗi cập nhật hồ sơ",
     "note": "<strong>Lưu ý:</strong> Việc có một hồ sơ hoàn chỉnh giúp xây dựng niềm tin và thu hút ứng viên chất lượng."
   },

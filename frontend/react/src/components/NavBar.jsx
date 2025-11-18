@@ -64,21 +64,16 @@ function NavBar() {
 
 {user?.role === 'student' && (
           <>
-            <Link to="/student/dashboard" className={styles.link}>{t('nav.student')}</Link> 
             <Link to="/student/profile" className={styles.link}>{t('nav.profile')}</Link> 
             {/* THAY ĐỔI: Thêm chấm đỏ vào link Notifications */}
             <Link to="/notifications" className={styles.link}>
                 {t('nav.notifications')}
                 {hasUnread && <span className={styles.unreadDot}></span>}
             </Link> 
-            <Link to="/matching" className={styles.link}>{t('nav.matching')}</Link> 
-
           </>
         )}
 {user?.role === 'provider' && (
           <>
-
-            <Link to="/provider/dashboard" className={styles.link}>{t('nav.provider')}</Link>
             <Link to="/provider/profile" className={styles.link}>{t('nav.profile')}</Link>
             {/* THAY ĐỔI: Thêm chấm đỏ vào link Notifications */}
             <Link to="/notifications" className={styles.link}>
@@ -86,9 +81,6 @@ function NavBar() {
                 {hasUnread && <span className={styles.unreadDot}></span>}
             </Link>
           </>
-        )}
-        {user?.role === 'admin' && (
-          <Link to="/admin/dashboard" className={styles.link}>{t('nav.admin')}</Link>
         )}
       </div>
 

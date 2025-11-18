@@ -3,7 +3,7 @@ import { api } from '../services/api.js';
 import styles from './AdminDashboard.module.css';
 import { useTranslation } from 'react-i18next';
 import { getStoredUser } from '../utils/auth.js';
-import ProviderProfileModal from '../components/ProviderProfileModal.jsx';
+import ProviderProfileModal from './ProviderProfileModal.jsx';
 
 const roleOptions = [
   { value: 'all', labelKey: 'adminDashboard.users.filters.all' },
@@ -232,20 +232,20 @@ function AdminDashboard() {
       </td>
       <td className={styles.actionsCell}>
         <button
-          className="btn btn-sm btn-secondary"
+          className={`${styles.btn} ${styles.btnSm} ${styles.btnSecondary}`}
           onClick={() => setSelectedOpportunity(opp)}
         >
           {t('adminDashboard.opportunities.actions.view')}
         </button>
         <button
-          className="btn btn-sm btn-primary"
+          className={`${styles.btn} ${styles.btnSm} ${styles.btnPrimary}`}
           onClick={() => handleApprovalAction(opp.id, 'approved')}
           disabled={opp.approval_status === 'approved'}
         >
           {t('adminDashboard.opportunities.actions.approve')}
         </button>
         <button
-          className="btn btn-sm btn-danger"
+          className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
           onClick={() => handleApprovalAction(opp.id, 'rejected')}
           disabled={opp.approval_status === 'rejected'}
         >
@@ -267,9 +267,9 @@ function AdminDashboard() {
         </div>
       </header>
 
-      {pageError && <div className="alert-error">{pageError}</div>}
+      {pageError && <div className={styles.alertError}>{pageError}</div>}
       {actionMessage && (
-        <div className="alert-success">
+        <div className={styles.alertSuccess}>
           {actionMessage}
           <button onClick={() => setActionMessage('')} className={styles.dismissBtn}>x</button>
         </div>
@@ -295,7 +295,7 @@ function AdminDashboard() {
                 <p>{t('adminDashboard.users.subtitle')}</p>
               </div>
               <select
-                className="input"
+                className={styles.input}
                 value={userFilter}
                 onChange={(e) => setUserFilter(e.target.value)}
               >
@@ -306,7 +306,7 @@ function AdminDashboard() {
                 ))}
               </select>
             </div>
-            {usersError && <div className="alert-error">{usersError}</div>}
+            {usersError && <div className={styles.alertError}>{usersError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -342,20 +342,18 @@ function AdminDashboard() {
                         </td>
                         <td className={styles.actionsCell}>
                           <button
-                            className="btn btn-sm btn-secondary"
+                            className={`${styles.btn} ${styles.btnSm} ${styles.btnSecondary}`}
                             onClick={() => handleViewUser(user)}
                           >
                             {t('adminDashboard.users.actions.view')}
                           </button>
                           {user.email.toLowerCase() !== 'admin@gmail.com' && (
-                            <>
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleBlockUser(user)}
-                              >
-                                {t('adminDashboard.users.actions.block')}
-                              </button>
-                            </>
+                            <button
+                              className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
+                              onClick={() => handleBlockUser(user)}
+                            >
+                              {t('adminDashboard.users.actions.block')}
+                            </button>
                           )}
                         </td>
                       </tr>
@@ -373,7 +371,7 @@ function AdminDashboard() {
                 <p>{t('adminDashboard.opportunities.subtitle')}</p>
               </div>
               <select
-                className="input"
+                className={styles.input}
                 value={approvalFilter}
                 onChange={(e) => setApprovalFilter(e.target.value)}
               >
@@ -384,7 +382,7 @@ function AdminDashboard() {
                 ))}
               </select>
             </div>
-            {oppsError && <div className="alert-error">{oppsError}</div>}
+            {oppsError && <div className={styles.alertError}>{oppsError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -418,7 +416,7 @@ function AdminDashboard() {
                   <h2>{t('adminDashboard.opportunities.detailTitle')}</h2>
                   <p>{t('adminDashboard.opportunities.detailSubtitle', { id: selectedOpportunity.id })}</p>
                 </div>
-                <button className="btn btn-secondary" onClick={() => setSelectedOpportunity(null)}>
+                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setSelectedOpportunity(null)}>
                   {t('common.close')}
                 </button>
               </div>
@@ -478,18 +476,18 @@ function AdminDashboard() {
       />
 
       {userModalState.isOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: 520 }}>
-            <div className="modal-header">
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{ maxWidth: 520 }}>
+            <div className={styles.modalHeader}>
               <h3>{t('adminDashboard.users.detailTitle')}</h3>
-              <button className="modal-close-btn" onClick={handleCloseUserModal}>
+              <button className={styles.modalCloseBtn} onClick={handleCloseUserModal}>
                 &times;
               </button>
             </div>
             {userModalState.loading ? (
               <div className={styles.loading}>{t('common.loading')}</div>
             ) : userModalState.error ? (
-              <div className="alert-error">{userModalState.error}</div>
+              <div className={styles.alertError}>{userModalState.error}</div>
             ) : (
               <div className={styles.modalSection}>
                 <p><strong>Email:</strong> {userModalState.user?.email}</p>
@@ -539,4 +537,3 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-

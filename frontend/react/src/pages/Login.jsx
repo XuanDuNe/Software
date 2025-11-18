@@ -6,6 +6,19 @@ import styles from './Login.module.css';
 import { useTranslation } from 'react-i18next';
 
 
+async function seedProfileEmail(userInfo) {
+  if (!userInfo?.email) return;
+  try {
+    if (userInfo.role === 'student') {
+      await api.updateStudentProfile({ email: userInfo.email });
+    } else if (userInfo.role === 'provider') {
+      await api.updateProviderProfile({ email: userInfo.email });
+    }
+  } catch (err) {
+    console.error('Failed to seed profile email', err);
+  }
+}
+
 function Login() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -41,6 +54,7 @@ function Login() {
       };
 
       storeAuth(token, user);
+      await seedProfileEmail(user);
 
       if (user.role === 'student') navigate('/student/dashboard', { replace: true });
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });
@@ -92,6 +106,7 @@ function Login() {
       };
 
       storeAuth(token, user);
+      await seedProfileEmail(user);
 
       if (user.role === 'student') navigate('/student/dashboard', { replace: true });
       else if (user.role === 'provider') navigate('/provider/dashboard', { replace: true });

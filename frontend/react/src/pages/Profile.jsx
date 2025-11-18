@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../services/api.js';
 import { getStoredUser } from '../utils/auth.js';
 import styles from './Profile.module.css'; 
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 function Profile() {
   const { t } = useTranslation();
   const user = getStoredUser();
+  const navigate = useNavigate();
+  const redirectTimeoutRef = useRef(null);
 
   const [form, setForm] = useState({
     full_name: '',
-    email: '',
+    email: user?.email || '',
     avatar_url: '',
     phone: '',
     gpa: '',
@@ -36,7 +39,7 @@ function Profile() {
         if (mounted && data) {
           setForm({
             full_name: data.full_name || '',
-            email: data.email || '',
+            email: data.email || user?.email || '',
             avatar_url: data.avatar_url || '',
             phone: data.phone || '',
             gpa: data.gpa ?? '',
@@ -48,18 +51,37 @@ function Profile() {
             thesis_topic: data.thesis_topic || ''
           });
           setCvFileId(data.cv_file_id || null);
+        } else if (mounted && user?.email) {
+          setForm((prev) => ({ ...prev, email: user.email }));
         }
-      } catch (_) {
+      } catch (err) {
+        if (mounted && user?.email) {
+          setForm((prev) => ({ ...prev, email: user.email }));
+        }
       }
     })();
-    return () => { mounted = false; };
-  }, []);
+    return () => {
+      mounted = false;
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, [user?.email]);
 
   function handleChange(field) {
     return (e) => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
   }
+
+  const redirectToDashboard = () => {
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
+    redirectTimeoutRef.current = setTimeout(() => {
+      navigate('/student/dashboard', { replace: true });
+    }, 1500);
+  };
 
   async function handleUploadCv() {
     if (!cvFile) {
@@ -102,7 +124,7 @@ function Profile() {
         cv_file_id: cvFileId 
       };
       const saved = await api.updateStudentProfile(payload);
-      setMessage(t('profilePage.successMessage'));
+      setMessage(t('profilePage.successRedirectMessage'));
       setForm({
         full_name: saved.full_name || '',
         email: saved.email || '',
@@ -117,6 +139,7 @@ function Profile() {
         thesis_topic: saved.thesis_topic || ''
       });
       setCvFileId(saved.cv_file_id || null);
+      redirectToDashboard();
     } catch (err) {
       setError(err.message || t('profilePage.errorUpdate'));
     } finally {
