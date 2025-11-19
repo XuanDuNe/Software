@@ -9,45 +9,55 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  border-bottom: 1px solid var(--color-border); /* Thêm đường kẻ dưới */
+  padding-bottom: 10px;
 }
 
 .adminInfo {
   font-size: 14px;
-  color: #475569;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Tăng min-width */
+  gap: 20px;
+  margin-bottom: 30px;
 }
 
 .statCard {
   background: var(--color-surface);
-  border-radius: 10px;
-  padding: 16px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border-radius: 12px; /* Tăng border-radius */
+  padding: 20px; /* Tăng padding */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Shadow nhẹ hơn */
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .statValue {
-  font-size: 28px;
+  font-size: 32px; /* Tăng font size */
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text-default);
 }
 
 .statLabel {
-  font-size: 13px;
-  color: #64748b;
-  margin-top: 6px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
 }
 
 .panel {
   background: var(--color-surface);
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  margin-bottom: 24px;
+  padding: 24px; /* Tăng padding */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Điều chỉnh shadow */
+  margin-bottom: 30px;
 }
 
 .panelHeader {
@@ -56,7 +66,9 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9; /* Đường kẻ dưới tiêu đề panel */
+  padding-bottom: 15px;
 }
 
 .tableWrapper {
@@ -68,22 +80,42 @@ table {
   border-collapse: collapse;
 }
 
+/* Thêm kiểu dải cho hàng và hover */
+tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+tbody tr:hover {
+    background-color: #eff6ff;
+    transition: background-color 0.2s;
+}
+
 th, td {
-  padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 15px 12px;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #64748b;
+  background-color: #f1f5f9; /* Thêm màu nền cho header */
+  border-bottom: 2px solid var(--color-border);
 }
+td {
+    border-bottom: none;
+}
+.tableWrapper table tbody tr td {
+    border-bottom: 1px solid var(--color-border);
+}
+.tableWrapper table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 
 .userEmail, .oppTitle {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text-default);
 }
 
 .userEmailButton {
@@ -91,26 +123,37 @@ th {
   border: none;
   padding: 0;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-primary); /* Dùng màu primary cho button */
   cursor: pointer;
   text-align: left;
+  text-decoration: underline;
+}
+.userEmailButton:hover {
+    color: #1d4ed8;
 }
 
 .userMeta, .oppMeta {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
 }
 
 .actionsCell {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+.actionsCell .btn {
+    font-size: 13px;
+    padding: 8px 12px;
 }
 
 .emptyCell {
   text-align: center;
-  padding: 30px;
-  color: #94a3b8;
+  padding: 40px;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 .badge {
@@ -119,11 +162,12 @@ th {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
 }
-
+/* Điều chỉnh màu sắc badges để đồng bộ */
 .badgeSuccess {
   background: #d1fae5;
-  color: #047857;
+  color: #057a55;
 }
 
 .badgeDanger {
@@ -132,29 +176,31 @@ th {
 }
 
 .badgeWarning {
-  background: #fef9c3;
+  background: #fef3c7;
   color: #92400e;
 }
 
 .badgeNeutral {
-  background: #e2e8f0;
-  color: #475569;
+  background: #e5e7eb;
+  color: #4b5563;
 }
 
 .userStatus {
   font-size: 13px;
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .detailGrid {
   display: grid;
-  gap: 16px;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  font-size: 14px;
 }
 
 .criteriaList {
-  margin: 0;
-  padding-left: 16px;
-  color: #475569;
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  color: var(--color-text-secondary);
 }
 
 .muted {
@@ -165,16 +211,21 @@ th {
 .loading {
   text-align: center;
   padding: 40px;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .dismissBtn {
   background: none;
   border: none;
   color: inherit;
-  font-size: 16px;
-  margin-left: 12px;
+  font-size: 18px;
+  margin-left: 15px;
   cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.dismissBtn:hover {
+    opacity: 1;
 }
 
 .linkButton {
@@ -188,6 +239,5 @@ th {
 
 .modalSection {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
-

@@ -3,7 +3,6 @@ import { api } from '../services/api.js';
 import styles from './AdminDashboard.module.css';
 import { useTranslation } from 'react-i18next';
 import { getStoredUser } from '../utils/auth.js';
-import ProviderProfileModal from './ProviderProfileModal.jsx';
 
 const roleOptions = [
   { value: 'all', labelKey: 'adminDashboard.users.filters.all' },
@@ -18,6 +17,29 @@ const approvalFilters = [
   { value: 'all', labelKey: 'adminDashboard.opportunities.filters.all' }
 ];
 
+// Định nghĩa màu và icon cho 4 chỉ số thống kê chính
+const statConfig = [
+    { icon: '👥', color: 'var(--color-primary)' },       // Total Users
+    { icon: '👨‍🎓', color: 'var(--color-secondary)' },    // Students
+    { icon: '🏢', color: '#f59e0b' },                   // Providers (Orange)
+    { icon: '⏳', color: 'var(--color-danger)' },       // Pending Approvals (Red)
+];
+
+// Component StatCard mới
+const StatCard = ({ label, value, icon, color }) => (
+    <div className={styles.statCard} style={{ borderLeft: `5px solid ${color}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+                <div className={styles.statValue}>{value}</div>
+                <div className={styles.statLabel}>{label}</div>
+            </div>
+            <div style={{ fontSize: '30px', color: color, opacity: 0.8 }}>
+                {icon}
+            </div>
+        </div>
+    </div>
+);
+
 function AdminDashboard() {
   const { t } = useTranslation();
   const adminUser = getStoredUser();
@@ -26,6 +48,7 @@ function AdminDashboard() {
   const [opportunities, setOpportunities] = useState([]);
   const [userFilter, setUserFilter] = useState('all');
   const [approvalFilter, setApprovalFilter] = useState('pending');
+  const [opportunitySearchTerm, setOpportunitySearchTerm] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState('');
   const [usersError, setUsersError] = useState('');
@@ -34,8 +57,6 @@ function AdminDashboard() {
   const [selectedOpportunity, setSelectedOpportunity] = useState(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [userModalState, setUserModalState] = useState({ isOpen: false, loading: false, error: '', user: null, profile: null });
-  const [providerProfiles, setProviderProfiles] = useState({});
-  const [providerModalState, setProviderModalState] = useState({ isOpen: false, providerUserId: null });
 
   useEffect(() => {
     const loadData = async () => {
@@ -73,33 +94,6 @@ function AdminDashboard() {
     loadData();
   }, [t, refreshToken]);
 
-  useEffect(() => {
-    const uniqueIds = [...new Set(opportunities.map((opp) => opp.provider_user_id).filter(Boolean))];
-    if (!uniqueIds.length) {
-      setProviderProfiles({});
-      return;
-    }
-    let cancelled = false;
-    const fetchProfiles = async () => {
-      try {
-        const results = await Promise.allSettled(uniqueIds.map((id) => api.getProviderProfileById(id)));
-        if (cancelled) return;
-        const nextMap = {};
-        results.forEach((res, idx) => {
-          if (res.status === 'fulfilled' && res.value) {
-            nextMap[uniqueIds[idx]] = res.value;
-          }
-        });
-        setProviderProfiles(nextMap);
-      } catch (err) {
-        console.error('Failed to fetch provider profiles', err);
-      }
-    };
-    fetchProfiles();
-    return () => {
-      cancelled = true;
-    };
-  }, [opportunities]);
 
   const filteredUsers = useMemo(() => {
     if (userFilter === 'all') return users;
@@ -107,20 +101,37 @@ function AdminDashboard() {
   }, [users, userFilter]);
 
   const filteredOpportunities = useMemo(() => {
-    if (approvalFilter === 'all') return opportunities;
-    return opportunities.filter(opp => opp.approval_status === approvalFilter);
-  }, [opportunities, approvalFilter]);
+    const searchTermLower = opportunitySearchTerm.toLowerCase();
+
+    return opportunities.filter(opp => {
+        // Lọc theo Approval Status
+        const matchesApproval = approvalFilter === 'all' || opp.approval_status === approvalFilter;
+        
+        // Lọc theo Search Term (title hoặc description)
+        const matchesSearch = opp.title.toLowerCase().includes(searchTermLower) ||
+                              (opp.description || '').toLowerCase().includes(searchTermLower);
+
+        return matchesApproval && matchesSearch;
+    });
+  }, [opportunities, approvalFilter, opportunitySearchTerm]); 
 
   const stats = useMemo(() => {
     const studentCount = users.filter(u => u.role === 'student').length;
     const providerCount = users.filter(u => u.role === 'provider').length;
     const pendingApprovals = opportunities.filter(o => o.approval_status === 'pending').length;
-    return [
+    
+    const baseStats = [
       { label: t('adminDashboard.stats.totalUsers'), value: users.length },
       { label: t('adminDashboard.stats.students'), value: studentCount },
       { label: t('adminDashboard.stats.providers'), value: providerCount },
       { label: t('adminDashboard.stats.pendingOpportunities'), value: pendingApprovals }
     ];
+    
+    // Kết hợp baseStats với statConfig
+    return baseStats.map((stat, index) => ({
+        ...stat,
+        ...statConfig[index] 
+    }));
   }, [users, opportunities, t]);
 
   const handleApprovalAction = async (opportunityId, status) => {
@@ -149,8 +160,6 @@ function AdminDashboard() {
       let profile = null;
       if (user.role === 'student') {
         profile = await api.getStudentProfileById(user.id);
-      } else if (user.role === 'provider') {
-        profile = await api.getProviderProfileById(user.id);
       }
       setUserModalState(prev => ({ ...prev, loading: false, profile }));
     } catch (err) {
@@ -177,15 +186,7 @@ function AdminDashboard() {
     }
   };
 
-  const openProviderModal = (providerUserId) => {
-    setProviderModalState({ isOpen: true, providerUserId });
-  };
-
-  const closeProviderModal = () => {
-    setProviderModalState({ isOpen: false, providerUserId: null });
-  };
-
-  const renderUserRoleBadge = (role) => (
+    const renderUserRoleBadge = (role) => (
     <span className={`${styles.badge} ${styles.badgeNeutral}`}>
       {role === 'student' ? t('adminDashboard.users.roles.student') : t('adminDashboard.users.roles.provider')}
     </span>
@@ -200,16 +201,10 @@ function AdminDashboard() {
         </div>
       </td>
       <td>
-        <button
-          className={styles.linkButton}
-          onClick={() => openProviderModal(opp.provider_user_id)}
-        >
-          {providerProfiles[opp.provider_user_id]?.company_name ||
-            providerProfiles[opp.provider_user_id]?.contact_name ||
-            providerProfiles[opp.provider_user_id]?.email ||
-            users.find(u => u.id === opp.provider_user_id)?.email ||
+        <div className={styles.userEmail}>
+          {users.find(u => u.id === opp.provider_user_id)?.email ||
             t('adminDashboard.opportunities.providerId', { id: opp.provider_user_id })}
-        </button>
+        </div>
         <div className={styles.oppMeta}>{t('adminDashboard.opportunities.type', { type: opp.type })}</div>
       </td>
       <td>
@@ -235,21 +230,22 @@ function AdminDashboard() {
           className={`${styles.btn} ${styles.btnSm} ${styles.btnSecondary}`}
           onClick={() => setSelectedOpportunity(opp)}
         >
-          {t('adminDashboard.opportunities.actions.view')}
+          👁️ {t('adminDashboard.opportunities.actions.view')}
         </button>
         <button
-          className={`${styles.btn} ${styles.btnSm} ${styles.btnPrimary}`}
+          className={`${styles.btn} ${styles.btnSm} btn-secondary`} 
           onClick={() => handleApprovalAction(opp.id, 'approved')}
           disabled={opp.approval_status === 'approved'}
+          style={{ backgroundColor: opp.approval_status === 'approved' ? 'inherit' : '#10b981' }} 
         >
-          {t('adminDashboard.opportunities.actions.approve')}
+          ✓ {t('adminDashboard.opportunities.actions.approve')}
         </button>
         <button
           className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
           onClick={() => handleApprovalAction(opp.id, 'rejected')}
           disabled={opp.approval_status === 'rejected'}
         >
-          {t('adminDashboard.opportunities.actions.reject')}
+          ✕ {t('adminDashboard.opportunities.actions.reject')}
         </button>
       </td>
     </tr>
@@ -267,9 +263,9 @@ function AdminDashboard() {
         </div>
       </header>
 
-      {pageError && <div className={styles.alertError}>{pageError}</div>}
+      {pageError && <div className="alert-error" style={{ marginBottom: 16 }}>{pageError}</div>}
       {actionMessage && (
-        <div className={styles.alertSuccess}>
+        <div className="alert-success">
           {actionMessage}
           <button onClick={() => setActionMessage('')} className={styles.dismissBtn}>x</button>
         </div>
@@ -281,10 +277,7 @@ function AdminDashboard() {
         <>
           <section className={styles.statsGrid}>
             {stats.map((stat, idx) => (
-              <div key={idx} className={styles.statCard}>
-                <div className={styles.statValue}>{stat.value}</div>
-                <div className={styles.statLabel}>{stat.label}</div>
-              </div>
+              <StatCard key={idx} {...stat} /> 
             ))}
           </section>
 
@@ -306,7 +299,7 @@ function AdminDashboard() {
                 ))}
               </select>
             </div>
-            {usersError && <div className={styles.alertError}>{usersError}</div>}
+            {usersError && <div className="alert-error" style={{ marginBottom: 16 }}>{usersError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -342,14 +335,14 @@ function AdminDashboard() {
                         </td>
                         <td className={styles.actionsCell}>
                           <button
-                            className={`${styles.btn} ${styles.btnSm} ${styles.btnSecondary}`}
+                            className={`btn btn-sm btn-secondary`}
                             onClick={() => handleViewUser(user)}
                           >
                             {t('adminDashboard.users.actions.view')}
                           </button>
                           {user.email.toLowerCase() !== 'admin@gmail.com' && (
                             <button
-                              className={`${styles.btn} ${styles.btnSm} ${styles.btnDanger}`}
+                              className={`btn btn-sm btn-danger`}
                               onClick={() => handleBlockUser(user)}
                             >
                               {t('adminDashboard.users.actions.block')}
@@ -370,19 +363,30 @@ function AdminDashboard() {
                 <h2>{t('adminDashboard.opportunities.title')}</h2>
                 <p>{t('adminDashboard.opportunities.subtitle')}</p>
               </div>
-              <select
-                className={styles.input}
-                value={approvalFilter}
-                onChange={(e) => setApprovalFilter(e.target.value)}
-              >
-                {approvalFilters.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.labelKey)}
-                  </option>
-                ))}
-              </select>
+              <div style={{display: 'flex', gap: '10px'}}> 
+                <input
+                    type="text"
+                    className={`input ${styles.input}`}
+                    placeholder="Tìm kiếm Cơ hội (Tên/Mô tả)..."
+                    value={opportunitySearchTerm}
+                    onChange={(e) => setOpportunitySearchTerm(e.target.value)}
+                    style={{ minWidth: '200px' }}
+                />
+                
+                <select
+                    className={styles.input}
+                    value={approvalFilter}
+                    onChange={(e) => setApprovalFilter(e.target.value)}
+                >
+                    {approvalFilters.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                            {t(opt.labelKey)}
+                        </option>
+                    ))}
+                </select>
+              </div>
             </div>
-            {oppsError && <div className={styles.alertError}>{oppsError}</div>}
+            {oppsError && <div className="alert-error" style={{ marginBottom: 16 }}>{oppsError}</div>}
             <div className={styles.tableWrapper}>
               <table>
                 <thead>
@@ -416,7 +420,7 @@ function AdminDashboard() {
                   <h2>{t('adminDashboard.opportunities.detailTitle')}</h2>
                   <p>{t('adminDashboard.opportunities.detailSubtitle', { id: selectedOpportunity.id })}</p>
                 </div>
-                <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => setSelectedOpportunity(null)}>
+                <button className={`btn btn-secondary`} onClick={() => setSelectedOpportunity(null)}>
                   {t('common.close')}
                 </button>
               </div>
@@ -452,16 +456,9 @@ function AdminDashboard() {
                 </div>
                 <div>
                   <strong>{t('adminDashboard.opportunities.providerLabel')}</strong>
-                  <p>
-                    <button
-                      className={styles.linkButton}
-                      onClick={() => openProviderModal(selectedOpportunity.provider_user_id)}
-                    >
-                      {providerProfiles[selectedOpportunity.provider_user_id]?.company_name ||
-                        providerProfiles[selectedOpportunity.provider_user_id]?.contact_name ||
-                        providerProfiles[selectedOpportunity.provider_user_id]?.email ||
-                        t('adminDashboard.opportunities.providerId', { id: selectedOpportunity.provider_user_id })}
-                    </button>
+                  <p className={styles.userEmail}>
+                    {users.find(u => u.id === selectedOpportunity.provider_user_id)?.email ||
+                      t('adminDashboard.opportunities.providerId', { id: selectedOpportunity.provider_user_id })}
                   </p>
                 </div>
               </div>
@@ -470,31 +467,27 @@ function AdminDashboard() {
         </>
       )}
 
-      <ProviderProfileModal
-        providerId={providerModalState.providerUserId}
-        onClose={closeProviderModal}
-      />
-
+      
       {userModalState.isOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent} style={{ maxWidth: 520 }}>
-            <div className={styles.modalHeader}>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
               <h3>{t('adminDashboard.users.detailTitle')}</h3>
-              <button className={styles.modalCloseBtn} onClick={handleCloseUserModal}>
+              <button className="modal-close-btn" onClick={handleCloseUserModal}>
                 &times;
               </button>
             </div>
             {userModalState.loading ? (
               <div className={styles.loading}>{t('common.loading')}</div>
             ) : userModalState.error ? (
-              <div className={styles.alertError}>{userModalState.error}</div>
+              <div className="alert-error">{userModalState.error}</div>
             ) : (
               <div className={styles.modalSection}>
                 <p><strong>Email:</strong> {userModalState.user?.email}</p>
                 <p><strong>{t('adminDashboard.users.columns.role')}:</strong> {userModalState.user?.role}</p>
                 {userModalState.profile ? (
                   <>
-                    {userModalState.user?.role === 'student' ? (
+                    {userModalState.user?.role === 'student' && userModalState.profile ? (
                       <>
                         {userModalState.profile.full_name && (
                           <p><strong>{t('profilePage.fullName')}:</strong> {userModalState.profile.full_name}</p>
