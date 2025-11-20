@@ -69,6 +69,16 @@ export const api = {
     body: JSON.stringify({ token })
   }),
 
+  sendOTP: (payload) => request('/auth/send-otp', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }),
+
+  verifyOTPAndRegister: (payload) => request('/auth/verify-otp-register', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  }),
+
   getStudentProfile: () => request('/user/student/profile'),
   updateStudentProfile: (payload) => request('/user/student/profile', {
     method: 'PUT',

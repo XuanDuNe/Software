@@ -39,3 +39,15 @@ class UserRoleUpdate(BaseModel):
 class UserListResponse(BaseModel):
     total: int
     users: List[UserPublic]
+
+
+class OTPRequest(BaseModel):
+    email: EmailStr
+    role: str  # student or provider
+
+
+class OTPVerify(BaseModel):
+    email: EmailStr
+    otp_code: str
+    password: str
+    role: str

@@ -34,8 +34,14 @@ function Login() {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regRole, setRegRole] = useState('student');
   
+  // OTP state
+  const [otpStep, setOtpStep] = useState('form'); // 'form', 'otp'
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -67,9 +73,10 @@ function Login() {
     }
   }
 
-  async function handleRegister(e) {
+  async function handleSendOTP(e) {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     
     // Validation
     if (regPassword.length < 8) {
@@ -89,8 +96,36 @@ function Login() {
     
     setLoading(true);
     try {
-      const data = await api.register({
+      await api.sendOTP({
         email: regEmail,
+        role: regRole
+      });
+      
+      setOtpSent(true);
+      setOtpStep('otp');
+      setSuccessMessage(t('loginPage.otp_sent_message', { email: regEmail }));
+    } catch (err) {
+      setError(err.message || t('loginPage.error_send_otp_failed'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOTP(e) {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    if (!otpCode || otpCode.length !== 6) {
+      setError(t('loginPage.error_otp_invalid'));
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const data = await api.verifyOTPAndRegister({
+        email: regEmail,
+        otp_code: otpCode,
         password: regPassword,
         role: regRole
       });
@@ -113,7 +148,32 @@ function Login() {
       else if (user.role === 'admin') navigate('/admin/dashboard', { replace: true });
       else navigate('/', { replace: true });
     } catch (err) {
-      setError(err.message || t('loginPage.error_register_failed'));
+      setError(err.message || t('loginPage.error_verify_otp_failed'));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleBackToForm() {
+    setOtpStep('form');
+    setOtpCode('');
+    setOtpSent(false);
+    setError('');
+    setSuccessMessage('');
+  }
+
+  async function handleResendOTP() {
+    setError('');
+    setSuccessMessage('');
+    setLoading(true);
+    try {
+      await api.sendOTP({
+        email: regEmail,
+        role: regRole
+      });
+      setSuccessMessage(t('loginPage.otp_sent_message', { email: regEmail }));
+    } catch (err) {
+      setError(err.message || t('loginPage.error_send_otp_failed'));
     } finally {
       setLoading(false);
     }
@@ -140,6 +200,10 @@ function Login() {
             onClick={() => {
               setIsRegister(true);
               setError('');
+              setOtpStep('form');
+              setOtpCode('');
+              setOtpSent(false);
+              setSuccessMessage('');
             }}
             className={`${styles.tabButton} ${isRegister ? styles.tabButtonActive : ''}`} 
           >
@@ -188,9 +252,9 @@ function Login() {
                 {loading ? t('loginPage.loginButtonLoading') : t('loginPage.loginButton')}
               </button>
             </form>
-          ) : (
-            // Register Form
-            <form onSubmit={handleRegister}>
+          ) : otpStep === 'form' ? (
+            // Register Form - Step 1: Enter details
+            <form onSubmit={handleSendOTP}>
               <h2 className={styles.title}>{t('loginPage.registerTitle')}</h2> 
               <div className="form-group">
                 <label className="label">{t('common.email')}</label>
@@ -283,8 +347,73 @@ function Login() {
                     : styles.submitButton
                 }`} 
               >
-                {loading ? t('loginPage.registerButtonLoading') : t('loginPage.registerButton')}
+                {loading ? t('loginPage.sendingOTP') : t('loginPage.sendOTP')}
               </button>
+            </form>
+          ) : (
+            // OTP Verification Form - Step 2: Enter OTP
+            <form onSubmit={handleVerifyOTP}>
+              <h2 className={styles.title}>{t('loginPage.verifyOTPTitle')}</h2>
+              
+              {successMessage && (
+                <div className="alert-success" style={{ marginBottom: 16 }}>
+                  {successMessage}
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label className="label">{t('loginPage.otpCode')}</label>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtpCode(value);
+                  }}
+                  placeholder={t('loginPage.otpPlaceholder')}
+                  className="input"
+                  required
+                  maxLength={6}
+                  style={{ textAlign: 'center', fontSize: '24px', letterSpacing: '8px' }}
+                />
+                <small style={{ display: 'block', marginTop: '8px', color: '#666' }}>
+                  {t('loginPage.otpHint')}
+                </small>
+              </div>
+
+              {error && (
+                <div className="alert-error" style={{ marginBottom: 16 }}>{error}</div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleBackToForm}
+                  className="btn btn-secondary"
+                  style={{ flex: 1 }}
+                >
+                  {t('loginPage.back')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || otpCode.length !== 6}
+                  className={`btn btn-primary ${styles.submitButton}`}
+                  style={{ flex: 1 }}
+                >
+                  {loading ? t('loginPage.verifying') : t('loginPage.verifyAndRegister')}
+                </button>
+              </div>
+
+              <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={loading}
+                  style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: loading ? 'not-allowed' : 'pointer', textDecoration: 'underline', opacity: loading ? 0.6 : 1 }}
+                >
+                  {t('loginPage.resendOTP')}
+                </button>
+              </div>
             </form>
           )}
         </div>

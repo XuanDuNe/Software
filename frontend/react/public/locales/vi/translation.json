@@ -46,7 +46,21 @@
     "error_login_failed": "Đăng nhập thất bại",
     "error_register_failed": "Đăng ký thất bại",
     "error_invalid_response": "Phản hồi không hợp lệ",
-    "adminNotice": "Tài khoản quản trị được hệ thống tạo sẵn. Vui lòng dùng tài khoản Admin mặc định để truy cập bảng điều khiển quản trị."
+    "adminNotice": "Tài khoản quản trị được hệ thống tạo sẵn. Vui lòng dùng tài khoản Admin mặc định để truy cập bảng điều khiển quản trị.",
+    "sendOTP": "Gửi mã OTP",
+    "sendingOTP": "Đang gửi mã OTP...",
+    "verifyOTPTitle": "Xác thực mã OTP",
+    "otpCode": "Mã OTP",
+    "otpPlaceholder": "Nhập 6 chữ số",
+    "otpHint": "Vui lòng nhập mã OTP 6 chữ số đã được gửi đến email của bạn",
+    "verifyAndRegister": "Xác thực và đăng ký",
+    "verifying": "Đang xác thực...",
+    "back": "Quay lại",
+    "resendOTP": "Gửi lại mã OTP",
+    "otp_sent_message": "Mã OTP đã được gửi đến {{email}}. Vui lòng kiểm tra hộp thư của bạn.",
+    "error_send_otp_failed": "Gửi mã OTP thất bại",
+    "error_verify_otp_failed": "Xác thực mã OTP thất bại",
+    "error_otp_invalid": "Mã OTP không hợp lệ. Vui lòng nhập đúng 6 chữ số."
   },
   "profilePage": {
     "title": "Hồ sơ sinh viên",

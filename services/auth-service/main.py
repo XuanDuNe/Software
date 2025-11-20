@@ -5,6 +5,13 @@ import models, schemas, auth_utils
 from database import engine, get_db, SessionLocal
 import schemas
 from typing import Optional
+import random
+import string
+from datetime import datetime, timedelta
+import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
  # Tạo bảng khi service khởi động, đảm bảo DB đã sẵn sàng
@@ -30,6 +37,61 @@ def auth_root():
 
 DEFAULT_ADMIN_EMAIL = "Admin@gmail.com"
 DEFAULT_ADMIN_PASSWORD = "Admin123"
+
+# Cấu hình Gmail SMTP
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "nguyenxuandu0401@gmail.com")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "noduyuwsgykampbl")
+APP_NAME = os.getenv("APP_NAME", "Edumatch")
+
+
+def generate_otp(length=6):
+    """Tạo mã OTP ngẫu nhiên"""
+    return ''.join(random.choices(string.digits, k=length))
+
+
+def send_otp_email(recipient_email: str, otp_code: str):
+    """Gửi email OTP qua Gmail SMTP"""
+    try:
+        subject = f"{APP_NAME} - Mã xác thực đăng ký"
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #4CAF50;">Xin chào!</h2>
+                <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>{APP_NAME}</strong>.</p>
+                <p>Mã xác thực OTP của bạn là:</p>
+                <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0; border-radius: 5px;">
+                    <h1 style="color: #4CAF50; margin: 0; font-size: 32px; letter-spacing: 5px;">{otp_code}</h1>
+                </div>
+                <p>Mã này có hiệu lực trong <strong>10 phút</strong>.</p>
+                <p>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="color: #666; font-size: 12px;">Email này được gửi tự động, vui lòng không trả lời.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_EMAIL
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html', 'utf-8'))
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_EMAIL, SMTP_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(SMTP_EMAIL, recipient_email, text)
+        server.quit()
+        
+        print(f"✅ OTP email sent to {recipient_email}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to send OTP email: {e}")
+        return False
 
 
 def ensure_default_admin():
@@ -160,3 +222,102 @@ def delete_user(user_id: int, authorization: Optional[str] = Header(None), db: S
     db.delete(user)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post("/auth/send-otp")
+def send_otp(request: schemas.OTPRequest, db: Session = Depends(get_db)):
+    """Gửi mã OTP đến email"""
+    # Kiểm tra email đã đăng ký chưa
+    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Kiểm tra role hợp lệ
+    normalized_role = request.role.lower()
+    if normalized_role not in ["student", "provider"]:
+        raise HTTPException(status_code=400, detail="Role must be student or provider")
+    
+    # Xóa các OTP cũ của email này (nếu có)
+    db.query(models.OTP).filter(
+        models.OTP.email == request.email,
+        models.OTP.purpose == "registration",
+        models.OTP.is_used == False
+    ).delete()
+    
+    # Tạo mã OTP mới
+    otp_code = generate_otp()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    
+    # Lưu OTP vào database
+    new_otp = models.OTP(
+        email=request.email,
+        otp_code=otp_code,
+        purpose="registration",
+        expires_at=expires_at
+    )
+    db.add(new_otp)
+    db.commit()
+    
+    # Gửi email OTP
+    if send_otp_email(request.email, otp_code):
+        return {"message": "OTP sent successfully", "email": request.email}
+    else:
+        # Xóa OTP nếu gửi email thất bại
+        db.delete(new_otp)
+        db.commit()
+        raise HTTPException(status_code=500, detail="Failed to send OTP email")
+
+
+@app.post("/auth/verify-otp-register", response_model=schemas.Token)
+def verify_otp_and_register(request: schemas.OTPVerify, db: Session = Depends(get_db)):
+    """Xác thực OTP và đăng ký tài khoản"""
+    # Kiểm tra email đã đăng ký chưa
+    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Tìm OTP hợp lệ
+    otp_record = db.query(models.OTP).filter(
+        models.OTP.email == request.email,
+        models.OTP.otp_code == request.otp_code,
+        models.OTP.purpose == "registration",
+        models.OTP.is_used == False,
+        models.OTP.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not otp_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    
+    # Kiểm tra role hợp lệ
+    normalized_role = request.role.lower()
+    if normalized_role not in ["student", "provider"]:
+        raise HTTPException(status_code=400, detail="Role must be student or provider")
+    
+    # Kiểm tra mật khẩu
+    if len(request.password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password too long (max 72 bytes)")
+    
+    # Tạo user mới
+    hashed_password = auth_utils.hash_password(request.password)
+    new_user = models.User(
+        email=request.email,
+        password_hash=hashed_password,
+        role=normalized_role,
+        is_verified=True  # Đã xác thực qua OTP
+    )
+    db.add(new_user)
+    
+    # Đánh dấu OTP đã sử dụng
+    otp_record.is_used = True
+    
+    db.commit()
+    db.refresh(new_user)
+    
+    # Tạo token
+    token = auth_utils.create_access_token({
+        "sub": new_user.email,
+        "role": new_user.role,
+        "user_id": new_user.id
+    })
+    
+    return {"access_token": token, "token_type": "bearer"}

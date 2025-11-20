@@ -46,7 +46,21 @@
     "error_login_failed": "Login failed",
     "error_register_failed": "Registration failed",
     "error_invalid_response": "Invalid response",
-    "adminNotice": "Administrator accounts are managed by the system. Please use the default admin credentials to access the admin dashboard."
+    "adminNotice": "Administrator accounts are managed by the system. Please use the default admin credentials to access the admin dashboard.",
+    "sendOTP": "Send OTP Code",
+    "sendingOTP": "Sending OTP code...",
+    "verifyOTPTitle": "Verify OTP Code",
+    "otpCode": "OTP Code",
+    "otpPlaceholder": "Enter 6 digits",
+    "otpHint": "Please enter the 6-digit OTP code sent to your email",
+    "verifyAndRegister": "Verify and Register",
+    "verifying": "Verifying...",
+    "back": "Back",
+    "resendOTP": "Resend OTP Code",
+    "otp_sent_message": "OTP code has been sent to {{email}}. Please check your inbox.",
+    "error_send_otp_failed": "Failed to send OTP code",
+    "error_verify_otp_failed": "Failed to verify OTP code",
+    "error_otp_invalid": "Invalid OTP code. Please enter exactly 6 digits."
   },
   "profilePage": {
     "title": "Student Profile",
