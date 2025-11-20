@@ -535,15 +535,16 @@ function StudentDashboard() {
   const user = getStoredUser();
   const studentUserId = user?.id;
   // Lấy tên để truyền vào banner
-  const studentName = user?.email || `User #${studentUserId}`; // THAY ĐỔI: Thêm biến studentName
+  const [studentName, setStudentName] = useState(user?.email || `User #${studentUserId}`);
 
   async function fetchAllData() {
     if (!studentUserId) return;
     try {
         // api.listOpportunities() trả về OpportunityReadWithCriteria, bao gồm criteria
-        const [apps, opps] = await Promise.all([
+        const [apps, opps, profile] = await Promise.all([
             api.listMyApplications(studentUserId),
-            api.listOpportunities({ approval_status: 'approved' }) 
+            api.listOpportunities({ approval_status: 'approved' }),
+            api.getStudentProfile().catch(() => null) // Fetch profile để lấy tên
         ]);
         setApplications(apps || []);
         // Đảm bảo mỗi cơ hội có criteria (đã được fetch trong listOpportunities)
@@ -552,6 +553,10 @@ function StudentDashboard() {
             criteria: opp.criteria // Lấy criteria từ kết quả API
         }));
         setOpportunities(oppsWithCriteria);
+        // Cập nhật tên từ profile
+        if (profile?.full_name) {
+            setStudentName(profile.full_name);
+        }
     } catch (err) {
         setError(err.message || t('common.error'));
     }

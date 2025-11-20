@@ -14,6 +14,7 @@ function NavBar() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const [hasUnread, setHasUnread] = useState(false); // THAY ĐỔI: Trạng thái thông báo chưa đọc
+  const [userName, setUserName] = useState(user?.email || `User #${user?.id}`);
   
   // NEW: Hàm kiểm tra thông báo chưa đọc
   const checkUnreadNotifications = async () => {
@@ -38,11 +39,35 @@ function NavBar() {
     // 2. Lắng nghe sự kiện tùy chỉnh từ Notifications.jsx (để cập nhật trạng thái chấm đỏ)
     window.addEventListener('unreadCountUpdated', checkUnreadNotifications);
 
-    // 3. Cleanup listener
+    // 3. Fetch user profile để lấy tên
+    const fetchUserName = async () => {
+      if (!user?.id) return;
+      try {
+        if (user.role === 'student') {
+          const profile = await api.getStudentProfile();
+          if (profile?.full_name) {
+            setUserName(profile.full_name);
+          }
+        } else if (user.role === 'provider') {
+          const profile = await api.getProviderProfile();
+          if (profile) {
+            const name = profile.company_name || profile.contact_name;
+            if (name) {
+              setUserName(name);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user profile:", err);
+      }
+    };
+    fetchUserName();
+
+    // 4. Cleanup listener
     return () => {
         window.removeEventListener('unreadCountUpdated', checkUnreadNotifications);
     };
-  }, [user?.id]); // Phụ thuộc vào user.id
+  }, [user?.id, user?.role]); // Phụ thuộc vào user.id và user.role
 
   const handleChangeLanguage = () => {
     const newLang = currentLang.startsWith('vi') ? 'en' : 'vi';
@@ -99,7 +124,7 @@ function NavBar() {
 
         {user ? (
           <>
-            <span>{t('nav.welcomeNamed', { name: user.email || `User #${user.id}`, role: user.role })}</span>
+            <span>{t('nav.welcomeNamed', { name: userName, role: user.role })}</span>
             <button onClick={handleLogout} className="btn btn-primary btn-sm"> 
               {t('common.logout')}
             </button>

@@ -959,7 +959,7 @@ const ProviderDashboard = () => {
     const [messageModalState, setMessageModalState] = useState({ isOpen: false, loading: false, error: '', conversation: null, messages: [], input: '', sending: false, application: null });
     const user = getStoredUser();
     const providerUserId = user?.id;
-    const providerName = user?.email || `User #${providerUserId}`; 
+    const [providerName, setProviderName] = useState(user?.email || `User #${providerUserId}`); 
 
     async function fetchData() {
         if (!providerUserId) {
@@ -972,11 +972,19 @@ const ProviderDashboard = () => {
         try {
             const oppsPromise = api.listProviderOpportunities(providerUserId); 
             const appsPromise = api.listProviderApplicationsEnriched(providerUserId);
+            const profilePromise = api.getProviderProfile().catch(() => null); // Fetch profile để lấy tên
 
-            const [opps, apps] = await Promise.all([oppsPromise, appsPromise]);
+            const [opps, apps, profile] = await Promise.all([oppsPromise, appsPromise, profilePromise]);
             
             setOpportunities(opps || []);
             setApplications(apps || []);
+            // Cập nhật tên từ profile (ưu tiên company_name, sau đó contact_name)
+            if (profile) {
+                const name = profile.company_name || profile.contact_name;
+                if (name) {
+                    setProviderName(name);
+                }
+            }
         } catch (err) {
             setError(err.message || t('common.error'));
         } finally {

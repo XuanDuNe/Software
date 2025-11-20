@@ -14,7 +14,6 @@ function Profile() {
   const [form, setForm] = useState({
     full_name: '',
     email: user?.email || '',
-    avatar_url: '',
     phone: '',
     gpa: '',
     education_level: '',
@@ -40,7 +39,6 @@ function Profile() {
           setForm({
             full_name: data.full_name || '',
             email: data.email || user?.email || '',
-            avatar_url: data.avatar_url || '',
             phone: data.phone || '',
             gpa: data.gpa ?? '',
             education_level: data.education_level || '',
@@ -128,7 +126,6 @@ function Profile() {
       setForm({
         full_name: saved.full_name || '',
         email: saved.email || '',
-        avatar_url: saved.avatar_url || '',
         phone: saved.phone || '',
         gpa: saved.gpa ?? '',
         education_level: saved.education_level || '',
@@ -171,11 +168,6 @@ function Profile() {
           <div className={styles.field}> 
             <label>{t('profilePage.phone')}</label>
             <input className={styles.input} value={form.phone} onChange={handleChange('phone')} placeholder={t('profilePage.phonePlaceholder')} />
-          </div>
-          <div className={styles.field}> 
-            <label>{t('profilePage.avatar')}</label>
-            <input className={styles.input} value={form.avatar_url} onChange={handleChange('avatar_url')} placeholder={t('profilePage.avatarPlaceholder')} />
-
           </div>
         </section>
 
